@@ -18,13 +18,13 @@ Sony Spresense を使用した、サイクルコンピュータのプロジェ�
 ### ディレクトリ構成
 
 ```
-├── cyclecomputer.ino                  # Arduinoスケッチのエントリーポイント
-├── docs/                    # ドキュメント (要件定義書など)
-└── src/
-    ├── Config.h             # ディスプレイタイプ等の全体設定
-    ├── interfaces/          # インターフェース定義 (IDisplay等)
-    ├── drivers/             # ハードウェア制御 (LCD, Button, GPS)
-    └── system/              # アプリケーションロジック (CycleComputer, InputManager等)
+cyclecomputer.ino                  # Arduinoスケッチのエントリーポイント
+docs/                    # ドキュメント (要件定義書など)
+src/
+ ├── Config.h             # ディスプレイタイプ等の全体設定
+ ├── interfaces/          # インターフェース定義 (IDisplay等)
+ ├── drivers/             # ハードウェア制御 (LCD, Button, GPS)
+ └── system/              # アプリケーションロジック (CycleComputer, InputManager等)
 ```
 
 ## ビルドと書き込み方法
