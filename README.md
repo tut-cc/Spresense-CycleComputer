@@ -53,6 +53,15 @@ arduino-cli core install SPRESENSE:spresense
 arduino-cli core install arduino:avr
 ```
 
+### 必要なライブラリのインストール
+
+以下のコマンドで必要なライブラリをインストール。
+
+```bash
+# I2C LCD用ライブラリ
+arduino-cli lib install "LiquidCrystal I2C"
+```
+
 ### ビルド手順
 
 プロジェクトのルートで以下のコマンドを実行。
