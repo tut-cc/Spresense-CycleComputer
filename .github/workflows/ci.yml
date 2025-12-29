@@ -16,8 +16,9 @@ jobs:
       - name: Install Spresense Core
         run: |
           arduino-cli config init
-          arduino-cli core update-index --additional-urls https://github.com/sonydevworld/spresense-arduino-compatible/releases/download/generic/package_spresense_index.json
-          arduino-cli core install Spresense:spresense --additional-urls https://github.com/sonydevworld/spresense-arduino-compatible/releases/download/generic/package_spresense_index.json
+          arduino-cli config set board_manager.additional_urls https://github.com/sonydevworld/spresense-arduino-compatible/releases/download/generic/package_spresense_index.json
+          arduino-cli core update-index
+          arduino-cli core install Spresense:spresense
 
       - name: Install Libraries
         run: |
