@@ -18,7 +18,7 @@ Sony Spresense を使用した、サイクルコンピュータのプロジェ�
 ### ディレクトリ構成
 
 ```
-cyclecomputer.ino                  # Arduinoスケッチのエントリーポイント
+Spresense-CycleComputer.ino                  # Arduinoスケッチのエントリーポイント
 docs/                    # ドキュメント (要件定義書など)
 src/
  ├── Config.h             # ディスプレイタイプ等の全体設定

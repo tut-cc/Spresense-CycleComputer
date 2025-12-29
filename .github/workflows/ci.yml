@@ -24,4 +24,4 @@ jobs:
           arduino-cli lib install LiquidCrystal
 
       - name: Compile Sketch
-        run: arduino-cli compile --fqbn Spresense:spresense:spresense ./cyclecomputer.ino --warnings all
+        run: arduino-cli compile --fqbn Spresense:spresense:spresense . --warnings all
