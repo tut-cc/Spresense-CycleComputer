@@ -1,0 +1,32 @@
+/*
+ * ファイル: ModeManager.h
+ * 説明: ディスプレイモード（速度、時間、距離など）を管理する。
+ */
+
+#ifndef MODEMANAGER_H
+#define MODEMANAGER_H
+
+enum Mode { 
+    MODE_SPEED, 
+    MODE_TIME, 
+    MODE_MAX_SPEED, 
+    MODE_DISTANCE, 
+    MODE_MOVING_TIME, 
+    MODE_ELAPSED_TIME, 
+    MODE_AVG_SPEED, 
+    TOTAL_MODES 
+};
+
+class ModeManager {
+private:
+    Mode _currentMode = MODE_SPEED;
+
+public:
+    void nextMode() {
+        _currentMode = static_cast<Mode>((_currentMode + 1) % TOTAL_MODES);
+    }
+
+    Mode getMode() { return _currentMode; }
+};
+
+#endif

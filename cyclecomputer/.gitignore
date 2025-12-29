@@ -1,0 +1,6 @@
+*.elf
+*.hex
+*.bin
+*.lock
+build/
+output/
