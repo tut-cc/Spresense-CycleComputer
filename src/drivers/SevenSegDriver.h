@@ -6,11 +6,12 @@
 #ifndef SEVENSEGDRIVER_H
 #define SEVENSEGDRIVER_H
 
-#include "../interfaces/IDisplay.h"
 #include <Arduino.h>
 
+#include "../interfaces/IDisplay.h"
+
 class SevenSegDriver : public IDisplay {
-public:
+   public:
     void begin() override {
         Serial.begin(115200);
         Serial.println("SevenSegDriver initialized");

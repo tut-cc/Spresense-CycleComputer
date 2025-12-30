@@ -10,8 +10,8 @@
 #include <LowPower.h>
 #endif
 
-#include "src/drivers/LCDDriver.h"
 #include "src/drivers/I2CLCDDriver.h"
+#include "src/drivers/LCDDriver.h"
 #include "src/drivers/SevenSegDriver.h"
 #include "src/system/CycleComputer.h"
 

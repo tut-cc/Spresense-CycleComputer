@@ -7,20 +7,19 @@
 #ifndef LCDDRIVER_H
 #define LCDDRIVER_H
 
-#include "../interfaces/IDisplay.h"
-#include "../Config.h"
-
 #include <LiquidCrystal.h>
+
+#include "../Config.h"
+#include "../interfaces/IDisplay.h"
 
 // Config.h で定義されたピン
 
 class LCDDriver : public IDisplay {
-private:
+   private:
     LiquidCrystal lcd;
 
-public:
-    LCDDriver()
-        : lcd(LCD_RS, LCD_E, LCD_D4, LCD_D5, LCD_D6, LCD_D7) {}
+   public:
+    LCDDriver() : lcd(LCD_RS, LCD_E, LCD_D4, LCD_D5, LCD_D6, LCD_D7) {}
 
     void begin() override {
         lcd.begin(16, 2);
@@ -32,8 +31,8 @@ public:
 
     void show(DisplayDataType type, const char* value) override {
         clear();
-        lcd.setCursor(0, 0); // 1行目
-        
+        lcd.setCursor(0, 0);  // 1行目
+
         switch (type) {
             case DISPLAY_DATA_SPEED:
                 lcd.print("Speed");

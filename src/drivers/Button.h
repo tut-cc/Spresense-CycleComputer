@@ -8,14 +8,14 @@
 #define BUTTON_H
 
 class Button {
-private:
+   private:
     int _pin;
     bool _state;        // 入力ピンからの現在の安定した状態
     bool _lastReading;  // 入力ピンからの前回の読み取り値
     unsigned long _lastDebounceTime = 0;
-    unsigned long _debounceDelay = 50; // 50ms 待機
+    unsigned long _debounceDelay = 50;  // 50ms 待機
 
-public:
+   public:
     Button(int pin) : _pin(pin) {}
 
     void begin() {
