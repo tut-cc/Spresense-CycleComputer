@@ -7,22 +7,17 @@
 #ifndef INPUTMANAGER_H
 #define INPUTMANAGER_H
 
-#include "../drivers/Button.h"
 #include "../Config.h"
+#include "../drivers/Button.h"
 
-enum InputEvent {
-    INPUT_NONE,
-    INPUT_BTN_A,
-    INPUT_BTN_B,
-    INPUT_BTN_BOTH
-};
+enum InputEvent { INPUT_NONE, INPUT_BTN_A, INPUT_BTN_B, INPUT_BTN_BOTH };
 
 class InputManager {
-private:
+   private:
     Button btnA;
     Button btnB;
 
-public:
+   public:
     InputManager() : btnA(BTN_A_PIN), btnB(BTN_B_PIN) {}
 
     void begin() {
@@ -33,7 +28,7 @@ public:
     InputEvent update() {
         bool aPressed = btnA.isPressed();
         bool bPressed = btnB.isPressed();
-        
+
         // 同時押しの確認
         if (aPressed && btnB.isHeld()) return INPUT_BTN_BOTH;
         if (bPressed && btnA.isHeld()) return INPUT_BTN_BOTH;

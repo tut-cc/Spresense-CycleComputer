@@ -4,6 +4,7 @@
  */
 
 #include "CycleComputer.h"
+
 #include "Utils.h"
 
 #ifdef ENABLE_POWER_SAVING
@@ -17,41 +18,41 @@ void CycleComputer::begin() {
     _inputManager.begin();
     _gps.begin();
     _tripComputer.begin();
-    
-    #ifdef ENABLE_POWER_SAVING
+
+#ifdef ENABLE_POWER_SAVING
     pinMode(WARN_LED, OUTPUT);
     digitalWrite(WARN_LED, LOW);
-    #endif
+#endif
 }
 
 void CycleComputer::update() {
     handleInput();
-    
+
     _gps.update();
     _tripComputer.update(_gps.getSpeedKmh(), millis());
-    
+
     checkBattery();
-    
+
     updateDisplay();
 }
 
 void CycleComputer::handleInput() {
     InputEvent event = _inputManager.update();
-    
+
     switch (event) {
         case INPUT_BTN_A:
             _modeManager.nextMode();
-            // 画面が乱れることがあるため、I2C LCDの場合のみ再初期化して復帰させる
-            #if DISPLAY_TYPE == DISPLAY_I2C_LCD
+// 画面が乱れることがあるため、I2C LCDの場合のみ再初期化して復帰させる
+#if DISPLAY_TYPE == DISPLAY_I2C_LCD
             _display->begin();
-            #endif
+#endif
             _forceUpdate = true;
             break;
         case INPUT_BTN_BOTH:
             _tripComputer.reset();
-            #if DISPLAY_TYPE == DISPLAY_I2C_LCD
+#if DISPLAY_TYPE == DISPLAY_I2C_LCD
             _display->begin();
-            #endif
+#endif
             _forceUpdate = true;
             break;
         case INPUT_BTN_B:
@@ -108,9 +109,9 @@ void CycleComputer::updateDisplay() {
 }
 
 void CycleComputer::checkBattery() {
-    #ifdef ENABLE_POWER_SAVING
+#ifdef ENABLE_POWER_SAVING
     unsigned long currentMillis = millis();
-    
+
     // 10秒ごとに電圧をチェック
     if (currentMillis - _lastBatteryCheck >= BATTERY_CHECK_INTERVAL_MS) {
         _lastBatteryCheck = currentMillis;
@@ -120,7 +121,7 @@ void CycleComputer::checkBattery() {
             _isLowBattery = true;
         } else {
             _isLowBattery = false;
-            digitalWrite(WARN_LED, LOW); // 安全な場合はLEDがオフであることを保証する
+            digitalWrite(WARN_LED, LOW);  // 安全な場合はLEDがオフであることを保証する
         }
     }
 
@@ -135,5 +136,5 @@ void CycleComputer::checkBattery() {
             digitalWrite(WARN_LED, LOW);
         }
     }
-    #endif
+#endif
 }
