@@ -13,32 +13,32 @@
 enum InputEvent { INPUT_NONE, INPUT_BTN_A, INPUT_BTN_B, INPUT_BTN_BOTH };
 
 class InputManager {
-   private:
-    Button btnA;
-    Button btnB;
+ private:
+  Button btnA;
+  Button btnB;
 
-   public:
-    InputManager() : btnA(BTN_A_PIN), btnB(BTN_B_PIN) {}
+ public:
+  InputManager() : btnA(BTN_A_PIN), btnB(BTN_B_PIN) {}
 
-    void begin() {
-        btnA.begin();
-        btnB.begin();
-    }
+  void begin() {
+    btnA.begin();
+    btnB.begin();
+  }
 
-    InputEvent update() {
-        bool aPressed = btnA.isPressed();
-        bool bPressed = btnB.isPressed();
+  InputEvent update() {
+    bool aPressed = btnA.isPressed();
+    bool bPressed = btnB.isPressed();
 
-        // 同時押しの確認
-        if (aPressed && btnB.isHeld()) return INPUT_BTN_BOTH;
-        if (bPressed && btnA.isHeld()) return INPUT_BTN_BOTH;
+    // 同時押しの確認
+    if (aPressed && btnB.isHeld()) return INPUT_BTN_BOTH;
+    if (bPressed && btnA.isHeld()) return INPUT_BTN_BOTH;
 
-        // 単押しの確認
-        if (aPressed) return INPUT_BTN_A;
-        if (bPressed) return INPUT_BTN_B;
+    // 単押しの確認
+    if (aPressed) return INPUT_BTN_A;
+    if (bPressed) return INPUT_BTN_B;
 
-        return INPUT_NONE;
-    }
+    return INPUT_NONE;
+  }
 };
 
 #endif
