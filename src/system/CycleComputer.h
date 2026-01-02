@@ -13,34 +13,36 @@
 #include "TripComputer.h"
 
 class CycleComputer {
-   private:
-    IDisplay* _display;
-    InputManager _inputManager;
-    ModeManager _modeManager;
-    GPSWrapper _gps;
-    TripComputer _tripComputer;
+ private:
+  IDisplay *display;
+  InputManager inputManager;
+  ModeManager modeManager;
+  GPSWrapper gps;
+  TripComputer tripComputer;
 
-    // 電源電圧監視
-    unsigned long _lastBatteryCheck = 0;
-    bool _isLowBattery = false;
-    void checkBattery();
+  // 電源電圧監視
+  unsigned long lastBatteryCheck = 0;
+  bool isLowBattery = false;
+  void checkBattery();
 
-    // ディスプレイ更新制御
-    unsigned long _lastDisplayUpdate = 0;
-    bool _forceUpdate = false;
+  // ディスプレイ更新制御
+  unsigned long lastDisplayUpdate = 0;
+  bool forceUpdate = false;
 #if DISPLAY_TYPE == DISPLAY_I2C_LCD
-    static const unsigned long DISPLAY_UPDATE_INTERVAL_MS = 1000;  // 1 FPS for I2C
+  static const unsigned long DISPLAY_UPDATE_INTERVAL_MS =
+      1000;  // 1 FPS for I2C
 #else
-    static const unsigned long DISPLAY_UPDATE_INTERVAL_MS = 200;  // 5 FPS for others
+  static const unsigned long DISPLAY_UPDATE_INTERVAL_MS =
+      200;  // 5 FPS for others
 #endif
 
-    void handleInput();
-    void updateDisplay();
+  void handleInput();
+  void updateDisplay();
 
-   public:
-    CycleComputer(IDisplay* display);
-    void begin();
-    void update();
+ public:
+  CycleComputer(IDisplay *display);
+  void begin();
+  void update();
 };
 
 #endif

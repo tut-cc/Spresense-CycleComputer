@@ -7,28 +7,26 @@
 #define MODEMANAGER_H
 
 enum Mode {
-    MODE_SPEED,
-    MODE_TIME,
-    MODE_MAX_SPEED,
-    MODE_DISTANCE,
-    MODE_MOVING_TIME,
-    MODE_ELAPSED_TIME,
-    MODE_AVG_SPEED,
-    TOTAL_MODES
+  MODE_SPEED,
+  MODE_TIME,
+  MODE_MAX_SPEED,
+  MODE_DISTANCE,
+  MODE_MOVING_TIME,
+  MODE_ELAPSED_TIME,
+  MODE_AVG_SPEED,
+  TOTAL_MODES
 };
 
 class ModeManager {
-   private:
-    Mode _currentMode = MODE_SPEED;
+ private:
+  Mode currentMode = MODE_SPEED;
 
-   public:
-    void nextMode() {
-        _currentMode = static_cast<Mode>((_currentMode + 1) % TOTAL_MODES);
-    }
+ public:
+  void nextMode() {
+    currentMode = static_cast<Mode>((currentMode + 1) % TOTAL_MODES);
+  }
 
-    Mode getMode() {
-        return _currentMode;
-    }
+  Mode getMode() { return currentMode; }
 };
 
 #endif
