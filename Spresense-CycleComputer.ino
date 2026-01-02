@@ -1,5 +1,5 @@
 /*
- * ファイル: lcd.ino
+ * ファイル: Spresense-CycleComputer.ino
  * 説明: サイクルコンピューターのエントリーポイント。
  *       設定に基づいてドライバーとシステムコンポーネントを初期化します。
  */
@@ -10,8 +10,8 @@
 #include <LowPower.h>
 #endif
 
-#include "src/drivers/LCDDriver.h"
 #include "src/drivers/I2CLCDDriver.h"
+#include "src/drivers/LCDDriver.h"
 #include "src/drivers/SevenSegDriver.h"
 #include "src/system/CycleComputer.h"
 

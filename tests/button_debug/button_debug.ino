@@ -1,6 +1,6 @@
 /*
  * Button Debug Sketch
- * 
+ *
  * Simple tool to verify button hardware connections.
  * Prints the state of Pin 8 and Pin 9 to the Serial Monitor.
  */
@@ -10,7 +10,7 @@
 
 void setup() {
     Serial.begin(115200);
-    while (!Serial); // Wait for Serial to connect
+    while (!Serial);  // Wait for Serial to connect
 
     pinMode(BTN_A_PIN, INPUT_PULLUP);
     pinMode(BTN_B_PIN, INPUT_PULLUP);
