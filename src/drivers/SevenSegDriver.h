@@ -19,6 +19,7 @@ int dig2=0;
 int dig3=0;
 int dig4=0;
 
+const int placePin[] = {PIN_D10, PIN_D11, PIN_D12, PIN_D13}; 
 // 7セグメントのデータ
 // 0, 1, 2, ... 9,ハイフン(表示するまで待つ用のやつ)
 //左からabcdefg,dotに対応する
@@ -62,8 +63,23 @@ class SevenSegDriver : public IDisplay {
     }
 
     void show(DisplayDataType type, const char* value) override {
+
+      // ピンモード設定
+      pinMode(SDI_PIN, OUTPUT);
+      pinMode(RCLK_PIN, OUTPUT);
+      pinMode(SRCLK_PIN, OUTPUT);
+
+      for (int i = 0; i < 4; i++) {
+        pinMode(placePin[i], OUTPUT);
+        digitalWrite(placePin[i], LOW); // 初期状態はOFFにしておく(High ActiveならLOWでOFF)
+      }
+
       // --- ダイナミック点灯処理 (高速切り替え) ---
-      molding=value*100;
+      // atofを使って、文字列を一度「小数(float)」に変換する
+      float f_val = atof(value); 
+
+      // その数値を100倍して整数に入れる
+      molding = (int)(f_val * 100);
       dig1=(molding/1000);
 
       #ifndef IS_SPRESENSE
@@ -72,14 +88,14 @@ class SevenSegDriver : public IDisplay {
 
       //受け取った値が元の値が1000以上だったら
       if(dig1!=0){
-        dig2=(intspeed/100)%10;
-        dig3=(intspeed/10)%10;
-        dig4=intspeed%10;
+        dig2=(molding/100)%10;
+        dig3=(molding/10)%10;
+        dig4=molding%10;
       }
       else{
-        dig2=(intspeed/100);
-        dig3=(intspeed/10)%10;
-        dig4=intspeed%10;
+        dig2=(molding/100);
+        dig3=(molding/10)%10;
+        dig4=molding%10;
       }
 
         Serial.print("[7SEG] ");
