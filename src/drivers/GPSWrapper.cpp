@@ -4,6 +4,7 @@
  */
 
 #include "GPSWrapper.h"
+
 #include <Arduino.h>
 
 GPSWrapper::GPSWrapper() : isFixed(false) {
@@ -64,8 +65,7 @@ void GPSWrapper::update() {
       if (mockMinute >= 60) {
         mockMinute = 0;
         mockHour++;
-        if (mockHour >= 24)
-          mockHour = 0;
+        if (mockHour >= 24) mockHour = 0;
       }
     }
 

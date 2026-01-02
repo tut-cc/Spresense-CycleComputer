@@ -18,10 +18,10 @@ enum Mode {
 };
 
 class ModeManager {
-private:
+ private:
   Mode currentMode = MODE_SPEED;
 
-public:
+ public:
   void nextMode() {
     currentMode = static_cast<Mode>((currentMode + 1) % TOTAL_MODES);
   }

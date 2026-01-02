@@ -4,6 +4,7 @@
  */
 
 #include "CycleComputer.h"
+
 #include "Utils.h"
 
 #ifdef ENABLE_POWER_SAVING
@@ -39,26 +40,26 @@ void CycleComputer::handleInput() {
   InputEvent event = inputManager.update();
 
   switch (event) {
-  case INPUT_BTN_A:
-    modeManager.nextMode();
+    case INPUT_BTN_A:
+      modeManager.nextMode();
 // 画面が乱れることがあるため、I2C LCDの場合のみ再初期化して復帰させる
 #if DISPLAY_TYPE == DISPLAY_I2C_LCD
-    display->begin();
+      display->begin();
 #endif
-    forceUpdate = true;
-    break;
-  case INPUT_BTN_BOTH:
-    tripComputer.reset();
+      forceUpdate = true;
+      break;
+    case INPUT_BTN_BOTH:
+      tripComputer.reset();
 #if DISPLAY_TYPE == DISPLAY_I2C_LCD
-    display->begin();
+      display->begin();
 #endif
-    forceUpdate = true;
-    break;
-  case INPUT_BTN_B:
-    // 将来のプレースホルダー
-    break;
-  default:
-    break;
+      forceUpdate = true;
+      break;
+    case INPUT_BTN_B:
+      // 将来のプレースホルダー
+      break;
+    default:
+      break;
   }
 }
 
@@ -77,34 +78,34 @@ void CycleComputer::updateDisplay() {
   char buf[20];
 
   switch (modeManager.getMode()) {
-  case MODE_SPEED:
-    formatFloat(gps.getSpeedKmh(), 4, 1, buf, sizeof(buf));
-    display->show(DISPLAY_DATA_SPEED, buf);
-    break;
-  case MODE_TIME:
-    gps.getTimeJST(buf, sizeof(buf));
-    display->show(DISPLAY_DATA_TIME, buf);
-    break;
-  case MODE_MAX_SPEED:
-    formatFloat(tripComputer.getMaxSpeedKmh(), 4, 1, buf, sizeof(buf));
-    display->show(DISPLAY_DATA_MAX_SPEED, buf);
-    break;
-  case MODE_DISTANCE:
-    formatFloat(tripComputer.getDistanceKm(), 5, 2, buf, sizeof(buf));
-    display->show(DISPLAY_DATA_DISTANCE, buf);
-    break;
-  case MODE_MOVING_TIME:
-    tripComputer.getMovingTimeStr(buf, sizeof(buf));
-    display->show(DISPLAY_DATA_MOVING_TIME, buf);
-    break;
-  case MODE_ELAPSED_TIME:
-    tripComputer.getElapsedTimeStr(buf, sizeof(buf));
-    display->show(DISPLAY_DATA_ELAPSED_TIME, buf);
-    break;
-  case MODE_AVG_SPEED:
-    formatFloat(tripComputer.getAvgSpeedKmh(), 4, 1, buf, sizeof(buf));
-    display->show(DISPLAY_DATA_AVG_SPEED, buf);
-    break;
+    case MODE_SPEED:
+      formatFloat(gps.getSpeedKmh(), 4, 1, buf, sizeof(buf));
+      display->show(DISPLAY_DATA_SPEED, buf);
+      break;
+    case MODE_TIME:
+      gps.getTimeJST(buf, sizeof(buf));
+      display->show(DISPLAY_DATA_TIME, buf);
+      break;
+    case MODE_MAX_SPEED:
+      formatFloat(tripComputer.getMaxSpeedKmh(), 4, 1, buf, sizeof(buf));
+      display->show(DISPLAY_DATA_MAX_SPEED, buf);
+      break;
+    case MODE_DISTANCE:
+      formatFloat(tripComputer.getDistanceKm(), 5, 2, buf, sizeof(buf));
+      display->show(DISPLAY_DATA_DISTANCE, buf);
+      break;
+    case MODE_MOVING_TIME:
+      tripComputer.getMovingTimeStr(buf, sizeof(buf));
+      display->show(DISPLAY_DATA_MOVING_TIME, buf);
+      break;
+    case MODE_ELAPSED_TIME:
+      tripComputer.getElapsedTimeStr(buf, sizeof(buf));
+      display->show(DISPLAY_DATA_ELAPSED_TIME, buf);
+      break;
+    case MODE_AVG_SPEED:
+      formatFloat(tripComputer.getAvgSpeedKmh(), 4, 1, buf, sizeof(buf));
+      display->show(DISPLAY_DATA_AVG_SPEED, buf);
+      break;
   }
 }
 
@@ -121,7 +122,7 @@ void CycleComputer::checkBattery() {
       isLowBattery = true;
     } else {
       isLowBattery = false;
-      digitalWrite(WARN_LED, LOW); // 安全な場合はLEDがオフであることを保証する
+      digitalWrite(WARN_LED, LOW);  // 安全な場合はLEDがオフであることを保証する
     }
   }
 

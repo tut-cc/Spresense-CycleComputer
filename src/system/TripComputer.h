@@ -9,17 +9,17 @@
 #include <Arduino.h>
 
 class TripComputer {
-private:
+ private:
   float maxSpeedKmh = 0.0f;
-  double totalDistanceKm = 0.0; // 長距離での精度のため double を使用 (AVR では
-                                // float と同じだが、Spresense は ARM)
+  double totalDistanceKm = 0.0;  // 長距離での精度のため double を使用 (AVR では
+                                 // float と同じだが、Spresense は ARM)
   unsigned long movingTimeMs = 0;
   unsigned long elapsedTimeMs = 0;
 
   unsigned long lastUpdateMs = 0;
-  const float moveThresholdKmh = 3.0f; // 「移動中」とみなすための閾値
+  const float moveThresholdKmh = 3.0f;  // 「移動中」とみなすための閾値
 
-public:
+ public:
   TripComputer() {}
 
   void begin() {
@@ -92,8 +92,7 @@ public:
   }
 
   float getAvgSpeedKmh() {
-    if (movingTimeMs == 0)
-      return 0.0f;
+    if (movingTimeMs == 0) return 0.0f;
 
     double hours = (double)movingTimeMs / 3600000.0;
     return (float)(totalDistanceKm / hours);

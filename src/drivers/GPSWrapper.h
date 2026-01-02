@@ -12,14 +12,14 @@
 #endif
 
 class GPSWrapper {
-public:
+ public:
   GPSWrapper();
   bool begin();
   void update();
   float getSpeedKmh();
   void getTimeJST(char *buffer, size_t size);
 
-private:
+ private:
 #ifdef IS_SPRESENSE
   SpGnss gnss;
   SpNavData navData;
@@ -34,4 +34,4 @@ private:
   bool isFixed;
 };
 
-#endif // GPS_WRAPPER_H
+#endif  // GPS_WRAPPER_H

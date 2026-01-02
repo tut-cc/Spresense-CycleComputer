@@ -6,18 +6,19 @@
 #ifndef I2CLCDDRIVER_H
 #define I2CLCDDRIVER_H
 
-#include "../Config.h"
-#include "../interfaces/IDisplay.h"
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
 
+#include "../Config.h"
+#include "../interfaces/IDisplay.h"
+
 class I2CLCDDriver : public IDisplay {
-private:
+ private:
   LiquidCrystal_I2C lcd;
   char shadowLine1[17];
   char shadowLine2[17];
 
-public:
+ public:
   I2CLCDDriver() : lcd(LCD_I2C_ADDR, LCD_COLS, LCD_ROWS) {
     memset(shadowLine1, 0, sizeof(shadowLine1));
     memset(shadowLine2, 0, sizeof(shadowLine2));
@@ -45,41 +46,41 @@ public:
     const char *suffix = "";
 
     switch (type) {
-    case DISPLAY_DATA_SPEED:
-      label = "Speed";
-      suffix = " km/h";
-      break;
-    case DISPLAY_DATA_TIME:
-      label = "Time (JST)";
-      suffix = "";
-      break;
-    case DISPLAY_DATA_MAX_SPEED:
-      label = "Max Speed";
-      suffix = " km/h";
-      break;
-    case DISPLAY_DATA_DISTANCE:
-      label = "Distance";
-      suffix = " km";
-      break;
-    case DISPLAY_DATA_MOVING_TIME:
-      label = "Moving Time";
-      suffix = "";
-      break;
-    case DISPLAY_DATA_ELAPSED_TIME:
-      label = "Total Time";
-      suffix = "";
-      break;
-    case DISPLAY_DATA_AVG_SPEED:
-      label = "Avg Speed";
-      suffix = " km/h";
-      break;
+      case DISPLAY_DATA_SPEED:
+        label = "Speed";
+        suffix = " km/h";
+        break;
+      case DISPLAY_DATA_TIME:
+        label = "Time (JST)";
+        suffix = "";
+        break;
+      case DISPLAY_DATA_MAX_SPEED:
+        label = "Max Speed";
+        suffix = " km/h";
+        break;
+      case DISPLAY_DATA_DISTANCE:
+        label = "Distance";
+        suffix = " km";
+        break;
+      case DISPLAY_DATA_MOVING_TIME:
+        label = "Moving Time";
+        suffix = "";
+        break;
+      case DISPLAY_DATA_ELAPSED_TIME:
+        label = "Total Time";
+        suffix = "";
+        break;
+      case DISPLAY_DATA_AVG_SPEED:
+        label = "Avg Speed";
+        suffix = " km/h";
+        break;
     }
 
     // 行1の構築: ラベルを左詰め、余白はスペースで埋める (16文字固定)
     snprintf(nextLine1, sizeof(nextLine1), "%-16s", label);
 
     // 行2の構築: 値 + 接尾辞
-    char tempBuf[25]; // 余裕を持たせる
+    char tempBuf[25];  // 余裕を持たせる
     snprintf(tempBuf, sizeof(tempBuf), "%s%s", value, suffix);
     snprintf(nextLine2, sizeof(nextLine2), "%-16s", tempBuf);
 
@@ -88,7 +89,7 @@ public:
     updateLine(1, shadowLine2, nextLine2);
   }
 
-private:
+ private:
   // ヘルパー: 行更新
   void updateLine(int row, char *shadow, const char *newContent) {
     if (strncmp(shadow, newContent, 16) != 0) {
