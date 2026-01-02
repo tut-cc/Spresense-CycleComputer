@@ -6,41 +6,42 @@
 #ifndef CYCLECOMPUTER_H
 #define CYCLECOMPUTER_H
 
+#include "../drivers/GPSWrapper.h"
 #include "../interfaces/IDisplay.h"
 #include "InputManager.h"
 #include "ModeManager.h"
-#include "../drivers/GPSWrapper.h"
 #include "TripComputer.h"
 
 class CycleComputer {
 private:
-    IDisplay* _display;
-    InputManager _inputManager;
-    ModeManager _modeManager;
-    GPSWrapper _gps;
-    TripComputer _tripComputer;
-    
-    // 電源電圧監視
-    unsigned long _lastBatteryCheck = 0;
-    bool _isLowBattery = false;
-    void checkBattery();
+  IDisplay *display;
+  InputManager inputManager;
+  ModeManager modeManager;
+  GPSWrapper gps;
+  TripComputer tripComputer;
 
-    // ディスプレイ更新制御
-    unsigned long _lastDisplayUpdate = 0;
-    bool _forceUpdate = false;
-    #if DISPLAY_TYPE == DISPLAY_I2C_LCD
-    static const unsigned long DISPLAY_UPDATE_INTERVAL_MS = 1000; // 1 FPS for I2C
-    #else
-    static const unsigned long DISPLAY_UPDATE_INTERVAL_MS = 200; // 5 FPS for others
-    #endif
+  // 電源電圧監視
+  unsigned long lastBatteryCheck = 0;
+  bool isLowBattery = false;
+  void checkBattery();
 
-    void handleInput();
-    void updateDisplay();
+  // ディスプレイ更新制御
+  unsigned long lastDisplayUpdate = 0;
+  bool forceUpdate = false;
+#if DISPLAY_TYPE == DISPLAY_I2C_LCD
+  static const unsigned long DISPLAY_UPDATE_INTERVAL_MS = 1000; // 1 FPS for I2C
+#else
+  static const unsigned long DISPLAY_UPDATE_INTERVAL_MS =
+      200; // 5 FPS for others
+#endif
+
+  void handleInput();
+  void updateDisplay();
 
 public:
-    CycleComputer(IDisplay* display);
-    void begin();
-    void update();
+  CycleComputer(IDisplay *display);
+  void begin();
+  void update();
 };
 
 #endif
