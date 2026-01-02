@@ -12,7 +12,7 @@
 #endif
 
 CycleComputer::CycleComputer(IDisplay* display) : _display(display) {}
-
+                
 void CycleComputer::begin() {
     _display->begin();
     _inputManager.begin();

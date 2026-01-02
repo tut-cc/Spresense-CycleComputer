@@ -9,7 +9,7 @@
 
 GPSWrapper::GPSWrapper() : isFixed(false) {
 #ifndef IS_SPRESENSE
-    mockSpeed = 0.0;
+    mockSpeed = 00.0;
     lastUpdate = 0;
     mockHour = 12;
     mockMinute = 0;
