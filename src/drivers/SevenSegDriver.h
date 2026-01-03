@@ -8,6 +8,7 @@
 
 #include <Arduino.h>
 
+#include "../Config.h"
 #include "../interfaces/IDisplay.h"
 
 // 速度が代入される
@@ -77,28 +78,33 @@ class SevenSegDriver : public IDisplay {
         // atofを使って、文字列を一度「小数(float)」に変換する
         float f_val = atof(value);
 
+        // Serial.println(f_val);
         // その数値を100倍して整数に入れる
         molding = (int)(f_val * 100);
         dig1 = (molding / 1000);
 
-#ifndef IS_SPRESENSE
-        dig1 = 1.234
-#endif
-
-            // 受け取った値が元の値が1000以上だったら
+        // 受け取った値が元の値が1000以上だったら
             if (dig1 != 0) {
             dig2 = (molding / 100) % 10;
             dig3 = (molding / 10) % 10;
             dig4 = molding % 10;
-        }
-        else {
+        } else {
             dig2 = (molding / 100);
             dig3 = (molding / 10) % 10;
             dig4 = molding % 10;
         }
 
-        Serial.print("[7SEG] ");
-        Serial.println(value);
+        #ifdef DEBUGDAO
+            if(type==0){
+                dig1 = 1;
+                dig2=2;
+                dig3=3;
+                dig4=4;
+            }
+        #endif
+
+        // Serial.print("[7SEG] ");
+        // Serial.println(value);
 
         clearDisplay();
         pickDigit(0);
