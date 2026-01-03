@@ -3,30 +3,29 @@
  * 説明: ディスプレイモード（速度、時間、距離など）を管理する。
  */
 
-#ifndef MODEMANAGER_H
-#define MODEMANAGER_H
+#pragma once
 
 enum Mode {
-  MODE_SPEED,
-  MODE_TIME,
-  MODE_MAX_SPEED,
-  MODE_DISTANCE,
-  MODE_MOVING_TIME,
-  MODE_ELAPSED_TIME,
-  MODE_AVG_SPEED,
-  TOTAL_MODES
+    MODE_SPEED,
+    MODE_TIME,
+    MODE_MAX_SPEED,
+    MODE_DISTANCE,
+    MODE_MOVING_TIME,
+    MODE_ELAPSED_TIME,
+    MODE_AVG_SPEED,
+    TOTAL_MODES
 };
 
 class ModeManager {
- private:
-  Mode currentMode = MODE_SPEED;
+   private:
+    Mode currentMode = MODE_SPEED;
 
- public:
-  void nextMode() {
-    currentMode = static_cast<Mode>((currentMode + 1) % TOTAL_MODES);
-  }
+   public:
+    void nextMode() {
+        currentMode = static_cast<Mode>((currentMode + 1) % TOTAL_MODES);
+    }
 
-  Mode getMode() { return currentMode; }
+    Mode getMode() {
+        return currentMode;
+    }
 };
-
-#endif

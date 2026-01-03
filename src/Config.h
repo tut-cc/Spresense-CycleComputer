@@ -4,8 +4,7 @@
  *       ピン、ディスプレイ設定、および機能フラグを定義します。
  */
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#pragma once
 
 #include <Arduino.h>
 
@@ -23,31 +22,24 @@
 enum ButtonConfig { BTN_A_PIN = 8, BTN_B_PIN = 9 };
 
 // LCD設定
-enum LCDConfig {
-  LCD_RS = 2,
-  LCD_E = 3,
-  LCD_D4 = 4,
-  LCD_D5 = 5,
-  LCD_D6 = 6,
-  LCD_D7 = 7
-};
+enum LCDConfig { LCD_RS = 2, LCD_E = 3, LCD_D4 = 4, LCD_D5 = 5, LCD_D6 = 6, LCD_D7 = 7 };
 
 // I2C LCD設定
 enum I2CLCDConfig { LCD_I2C_ADDR = 0x27, LCD_COLS = 16, LCD_ROWS = 2 };
 
-//7セグメント設定
-//シフトレジスタ
-#define SDI_PIN  PIN_D09
+// 7セグメント設定
+// シフトレジスタ
+#define SDI_PIN PIN_D09
 #define RCLK_PIN PIN_D08
 #define SRCLK_PIN PIN_D07
 
-//桁の指定ピン
+// 桁の指定ピン
 #define D1_PIN PIN_D10
 #define D2_PIN PIN_D11
 #define D3_PIN PIN_D12
 #define D4_PIN PIN_D13
 
-//アノードコモンにおける数字表示用16進数
+// アノードコモンにおける数字表示用16進数
 #define DIS_NUM_0 0xc0
 #define DIS_NUM_1 0xf9
 #define DIS_NUM_2 0xa4
@@ -60,7 +52,7 @@ enum I2CLCDConfig { LCD_I2C_ADDR = 0x27, LCD_COLS = 16, LCD_ROWS = 2 };
 #define DIS_NUM_9 0x90
 #define DIS_NUM_HYPHEN 0xbf
 
-//ドット付表示をさせるための、アノードコモンにおける数字表示用16進数
+// ドット付表示をさせるための、アノードコモンにおける数字表示用16進数
 #define DOT_NUM_0 0x40
 #define DOT_NUM_1 0x79
 #define DOT_NUM_2 0x24
@@ -84,6 +76,4 @@ const int WARN_LED = LED0;
 #else
 // Arduino またはその他のプラットフォーム
 #undef ENABLE_POWER_SAVING
-#endif
-
 #endif

@@ -2,8 +2,7 @@
  * ファイル: GPSWrapper.h
  */
 
-#ifndef GPS_WRAPPER_H
-#define GPS_WRAPPER_H
+#pragma once
 
 #include "../Config.h"
 
@@ -12,26 +11,24 @@
 #endif
 
 class GPSWrapper {
- public:
-  GPSWrapper();
-  bool begin();
-  void update();
-  float getSpeedKmh();
-  void getTimeJST(char *buffer, size_t size);
+   public:
+    GPSWrapper();
+    bool begin();
+    void update();
+    float getSpeedKmh();
+    void getTimeJST(char *buffer, size_t size);
 
- private:
+   private:
 #ifdef IS_SPRESENSE
-  SpGnss gnss;
-  SpNavData navData;
+    SpGnss gnss;
+    SpNavData navData;
 #else
-  // Arduino 用のモックデータ
-  float mockSpeed;
-  unsigned long lastUpdate;
-  int mockHour;
-  int mockMinute;
-  int mockSecond;
+    // Arduino 用のモックデータ
+    float mockSpeed;
+    unsigned long lastUpdate;
+    int mockHour;
+    int mockMinute;
+    int mockSecond;
 #endif
-  bool isFixed;
+    bool isFixed;
 };
-
-#endif  // GPS_WRAPPER_H
