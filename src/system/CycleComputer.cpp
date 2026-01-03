@@ -111,6 +111,7 @@ void CycleComputer::updateDisplay() {
 }
 
 void CycleComputer::checkBattery() {
+    /*
 #ifdef ENABLE_POWER_SAVING
     unsigned long currentMillis = millis();
 
@@ -140,4 +141,5 @@ void CycleComputer::checkBattery() {
         }
     }
 #endif
+*/
 }
