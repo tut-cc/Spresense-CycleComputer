@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include "../Config.h"
 #include "../drivers/Button.h"
 
 enum InputEvent { INPUT_NONE, INPUT_BTN_A, INPUT_BTN_B, INPUT_BTN_BOTH };
@@ -17,25 +16,9 @@ class InputManager {
     Button btnB;
 
    public:
-    InputManager() : btnA(BTN_A_PIN), btnB(BTN_B_PIN) {}
+    InputManager();
 
-    void begin() {
-        btnA.begin();
-        btnB.begin();
-    }
+    void begin();
 
-    InputEvent update() {
-        bool aPressed = btnA.isPressed();
-        bool bPressed = btnB.isPressed();
-
-        // 同時押しの確認
-        if (aPressed && btnB.isHeld()) return INPUT_BTN_BOTH;
-        if (bPressed && btnA.isHeld()) return INPUT_BTN_BOTH;
-
-        // 単押しの確認
-        if (aPressed) return INPUT_BTN_A;
-        if (bPressed) return INPUT_BTN_B;
-
-        return INPUT_NONE;
-    }
+    InputEvent update();
 };

@@ -19,85 +19,26 @@ class TripComputer {
     const float moveThresholdKmh = 3.0f;  // 「移動中」とみなすための閾値
 
    public:
-    TripComputer() {}
+    TripComputer();
 
-    void begin() {
-        reset();
-        lastUpdateMs = millis();
-    }
+    void begin();
 
-    void update(float currentSpeedKmh, unsigned long currentMs) {
-        if (lastUpdateMs == 0) {
-            lastUpdateMs = currentMs;
-            return;
-        }
+    void update(float currentSpeedKmh, unsigned long currentMs);
 
-        unsigned long deltaMs = currentMs - lastUpdateMs;
-        lastUpdateMs = currentMs;
+    void reset();
 
-        // 常に合計経過時間を更新
-        elapsedTimeMs += deltaMs;
+    float getMaxSpeedKmh();
 
-        // 最大速度を更新
-        if (currentSpeedKmh > maxSpeedKmh) {
-            maxSpeedKmh = currentSpeedKmh;
-        }
-
-        // 距離と時間の計算
-        // 単純な積分: 距離 = 速度 * 時間
-        // 速度は km/h、時間は ms。
-        // 距離 (km) = 速度 (km/h) * (deltaMs / 1000.0 / 3600.0)
-
-        if (currentSpeedKmh > moveThresholdKmh) {
-            // 移動時間を加算
-            movingTimeMs += deltaMs;
-
-            // 距離を加算
-            double hours = (double)deltaMs / 3600000.0;
-            totalDistanceKm += (double)currentSpeedKmh * hours;
-        }
-    }
-
-    void reset() {
-        maxSpeedKmh = 0.0f;
-        totalDistanceKm = 0.0;
-        movingTimeMs = 0;
-        elapsedTimeMs = 0;
-        lastUpdateMs = millis();
-    }
-
-    float getMaxSpeedKmh() {
-        return maxSpeedKmh;
-    }
-
-    float getDistanceKm() {
-        return (float)totalDistanceKm;
-    }
+    float getDistanceKm();
 
     // ms を文字列にフォーマットするヘルパー
-    void msToTimeStr(unsigned long ms, char *buffer, size_t size) {
-        unsigned long totalSeconds = ms / 1000;
-        unsigned long hours = totalSeconds / 3600;
-        unsigned long minutes = (totalSeconds % 3600) / 60;
-        unsigned long seconds = totalSeconds % 60;
-
-        snprintf(buffer, size, "%02lu:%02lu:%02lu", hours, minutes, seconds);
-    }
+    void msToTimeStr(unsigned long ms, char *buffer, size_t size);
 
     // 移動時間を "HH:MM:SS" 形式で返す
-    void getMovingTimeStr(char *buffer, size_t size) {
-        msToTimeStr(movingTimeMs, buffer, size);
-    }
+    void getMovingTimeStr(char *buffer, size_t size);
 
     // 合計経過時間を "HH:MM:SS" 形式で返す
-    void getElapsedTimeStr(char *buffer, size_t size) {
-        msToTimeStr(elapsedTimeMs, buffer, size);
-    }
+    void getElapsedTimeStr(char *buffer, size_t size);
 
-    float getAvgSpeedKmh() {
-        if (movingTimeMs == 0) return 0.0f;
-
-        double hours = (double)movingTimeMs / 3600000.0;
-        return (float)(totalDistanceKm / hours);
-    }
+    float getAvgSpeedKmh();
 };

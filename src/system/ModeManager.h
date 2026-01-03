@@ -21,11 +21,7 @@ class ModeManager {
     Mode currentMode = MODE_SPEED;
 
    public:
-    void nextMode() {
-        currentMode = static_cast<Mode>((currentMode + 1) % TOTAL_MODES);
-    }
+    void nextMode();
 
-    Mode getMode() {
-        return currentMode;
-    }
+    Mode getMode();
 };
