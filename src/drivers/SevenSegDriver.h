@@ -8,6 +8,7 @@
 
 #include <Arduino.h>
 
+#include "../Config.h"
 #include "../interfaces/IDisplay.h"
 
 // 速度が代入される
@@ -90,8 +91,7 @@ class SevenSegDriver : public IDisplay {
             dig2 = (molding / 100) % 10;
             dig3 = (molding / 10) % 10;
             dig4 = molding % 10;
-        }
-        else {
+        } else {
             dig2 = (molding / 100);
             dig3 = (molding / 10) % 10;
             dig4 = molding % 10;
