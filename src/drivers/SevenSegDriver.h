@@ -83,11 +83,11 @@ class SevenSegDriver : public IDisplay {
         dig1 = (molding / 1000);
 
 #ifndef IS_SPRESENSE
-        dig1 = 1234;
+        dig1 = 1.234;
 #endif
 
         // 受け取った値が元の値が1000以上だったら
-        if (dig1 != 0) {
+            if (dig1 != 0) {
             dig2 = (molding / 100) % 10;
             dig3 = (molding / 10) % 10;
             dig4 = molding % 10;
@@ -97,8 +97,8 @@ class SevenSegDriver : public IDisplay {
             dig4 = molding % 10;
         }
 
-        Serial.print("[7SEG] ");
-        Serial.println(value);
+        // Serial.print("[7SEG] ");
+        // Serial.println(value);
 
         clearDisplay();
         pickDigit(0);
