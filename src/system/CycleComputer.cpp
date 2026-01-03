@@ -38,9 +38,11 @@ void CycleComputer::update() {
 
 void CycleComputer::handleInput() {
     InputEvent event = inputManager.update();
+    // Serial.println(event);
 
     switch (event) {
         case INPUT_BTN_A:
+            // Serial.println("押されてる");
             modeManager.nextMode();
 // 画面が乱れることがあるため、I2C LCDの場合のみ再初期化して復帰させる
 #if DISPLAY_TYPE == DISPLAY_I2C_LCD

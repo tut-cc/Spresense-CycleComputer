@@ -54,7 +54,10 @@ class Button {
         return pressed;
     }
 
+    //押しっぱなしの状態で十分反応する
     bool isHeld() {
+        // Serial.print("stateは");
+        // Serial.println(state);
         return (state == LOW);
     }
 };
