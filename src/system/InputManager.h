@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include "../Config.h"
 #include "../drivers/Button.h"
 
 enum InputEvent { INPUT_BTN_A=PIN_D00, INPUT_BTN_B=PIN_D01, INPUT_BTN_BOTH ,INPUT_NONE,  };
@@ -19,12 +18,9 @@ class InputManager {
     Button btnB;
 
    public:
-    InputManager() : btnA(INPUT_BTN_A), btnB(INPUT_BTN_B) {}
+    InputManager();
 
-    void begin() {
-        btnA.begin();
-        btnB.begin();
-    }
+    void begin();
 
     //毎フレーム呼ばれてはいる
     InputEvent update() {

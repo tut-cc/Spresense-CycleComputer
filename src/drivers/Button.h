@@ -17,19 +17,14 @@ class Button {
     unsigned long debounceDelay = 50;  // 50ms 待機
 
    public:
-    Button(int pin) : pin(pin) {}
+    Button(int pin);
 
-    void begin() {
-        pinMode(pin, INPUT_PULLUP);
-        state = digitalRead(pin);
-        lastReading = state;
-    }
+    void begin();
 
     // 立ち下がりエッジ（押下）の時のみ true を返す
-    bool isPressed() {
-        bool reading = digitalRead(pin);
-        bool pressed = false;
+    bool isPressed();
 
+    bool isHeld();
         // スイッチの値が変更された場合、デバウンスタイマーをリセット
         if (reading != lastReading) {
             lastDebounceTime = millis();
