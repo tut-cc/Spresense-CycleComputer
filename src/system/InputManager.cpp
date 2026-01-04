@@ -37,10 +37,16 @@ InputEvent InputManager::update() {
         // 単押しの確認用
         if (aPressed) {
             // Serial.println("Aだよ");
+            digitalWrite( WARN_LED, HIGH );
+
+
+
+            
             return INPUT_BTN_A;
         }
         if (bPressed) {
             // Serial.println("Bだよ");
+            digitalWrite( WARN_LED, LOW );
             return INPUT_BTN_B;
         }
         #endif
