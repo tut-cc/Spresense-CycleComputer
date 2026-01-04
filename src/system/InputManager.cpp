@@ -23,12 +23,12 @@ InputEvent InputManager::update() {
 
         // 同時押しの確認表示用
         if (aPressed && btnB.isHeld()){
-             Serial.println("同時に押された");
+            //  Serial.println("同時に押された");
              return INPUT_BTN_BOTH;
         }
 
         if (bPressed && btnA.isHeld()){
-             Serial.println("同時に押された");
+            //  Serial.println("同時に押された");
              return INPUT_BTN_BOTH;
         }
         #endif
@@ -36,11 +36,11 @@ InputEvent InputManager::update() {
         #ifdef IS_SPRESENSE
         // 単押しの確認用
         if (aPressed) {
-            Serial.println("Aだよ");
+            // Serial.println("Aだよ");
             return INPUT_BTN_A;
         }
         if (bPressed) {
-            Serial.println("Bだよ");
+            // Serial.println("Bだよ");
             return INPUT_BTN_B;
         }
         #endif

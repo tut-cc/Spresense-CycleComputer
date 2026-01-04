@@ -81,30 +81,59 @@ void CycleComputer::updateDisplay() {
     switch (modeManager.getMode()) {
         case MODE_SPEED:
             formatFloat(gps.getSpeedKmh(), 4, 1, buf, sizeof(buf));
+            #ifdef DEBUGDAO
+
+            Serial.print("速度です");
+            Serial.println(buf);
+            #endif
             display->show(DISPLAY_DATA_SPEED, buf);
             break;
         case MODE_TIME:
             gps.getTimeJST(buf, sizeof(buf));
+            #ifdef DEBUGDAO
+            Serial.print("TimeJSTです");
+            Serial.println(buf);
+            #endif
             display->show(DISPLAY_DATA_TIME, buf);
             break;
         case MODE_MAX_SPEED:
             formatFloat(tripComputer.getMaxSpeedKmh(), 4, 1, buf, sizeof(buf));
+            #ifdef DEBUGDAO
+            Serial.print("MAXSPEEDです");
+            Serial.println(buf);
+            #endif
             display->show(DISPLAY_DATA_MAX_SPEED, buf);
             break;
         case MODE_DISTANCE:
             formatFloat(tripComputer.getDistanceKm(), 5, 2, buf, sizeof(buf));
+            #ifdef DEBUGDAO
+            Serial.print("走行距離です");
+            Serial.println(buf);
+            #endif
             display->show(DISPLAY_DATA_DISTANCE, buf);
             break;
         case MODE_MOVING_TIME:
             tripComputer.getMovingTimeStr(buf, sizeof(buf));
+            #ifdef DEBUGDAO
+            Serial.print("走行時間です");
+            Serial.println(buf);
+            #endif
             display->show(DISPLAY_DATA_MOVING_TIME, buf);
             break;
         case MODE_ELAPSED_TIME:
             tripComputer.getElapsedTimeStr(buf, sizeof(buf));
+            #ifdef DEBUGDAO
+            Serial.print("経過時間です");
+            Serial.println(buf);
+            #endif
             display->show(DISPLAY_DATA_ELAPSED_TIME, buf);
             break;
         case MODE_AVG_SPEED:
             formatFloat(tripComputer.getAvgSpeedKmh(), 4, 1, buf, sizeof(buf));
+            #ifdef DEBUGDAO
+            Serial.print("平均速度");
+            Serial.println(buf);
+            #endif
             display->show(DISPLAY_DATA_AVG_SPEED, buf);
             break;
     }
