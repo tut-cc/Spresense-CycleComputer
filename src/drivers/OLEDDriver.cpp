@@ -1,14 +1,9 @@
-/*
- * ファイル: OLEDDriver.cpp
- * 説明: Spresense OLEDディスプレイ用のディスプレイドライバー。
- */
-
 #include "OLEDDriver.h"
 #include "../Config.h"
 #include <Arduino.h>
 
 OLEDDriver::OLEDDriver() : display(Config::OLED::Width, Config::OLED::Height, &Wire, -1) {
-    currentType = DISPLAY_INVALID; // Invalid initial type
+    currentType = DisplayDataType::INVALID; // Invalid initial type
 }
 
 void OLEDDriver::begin() {
@@ -29,7 +24,7 @@ void OLEDDriver::clear() {
     display.clearDisplay();
     display.display();
     currentValue = "";
-    currentType = DISPLAY_INVALID;
+    currentType = DisplayDataType::INVALID;
 }
 
 void OLEDDriver::show(DisplayDataType type, const char* value) {
@@ -48,14 +43,14 @@ void OLEDDriver::show(DisplayDataType type, const char* value) {
     String title = "";
 
     switch (type) {
-        case DISPLAY_DATA_SPEED:        title = "SPEED";        unit = "km/h";  break;
-        case DISPLAY_DATA_TIME:         title = "TIME";                         break;
-        case DISPLAY_DATA_MAX_SPEED:    title = "MAX SPEED";    unit = "km/h";  break;
-        case DISPLAY_DATA_DISTANCE:     title = "DISTANCE";     unit = "km";    break;
-        case DISPLAY_DATA_MOVING_TIME:  title = "MOVING TIME";                  break;
-        case DISPLAY_DATA_ELAPSED_TIME: title = "ELAPSED TIME";                 break;
-        case DISPLAY_DATA_AVG_SPEED:    title = "AVG SPEED";    unit = "km/h";  break;
-        default:                        title = "UNKNOWN";                      break;
+        case DisplayDataType::SPEED:        title = "SPEED";        unit = "km/h";  break;
+        case DisplayDataType::TIME:         title = "TIME";                         break;
+        case DisplayDataType::MAX_SPEED:    title = "MAX SPEED";    unit = "km/h";  break;
+        case DisplayDataType::DISTANCE:     title = "DISTANCE";     unit = "km";    break;
+        case DisplayDataType::MOVING_TIME:  title = "MOVING TIME";                  break;
+        case DisplayDataType::ELAPSED_TIME: title = "ELAPSED TIME";                 break;
+        case DisplayDataType::AVG_SPEED:    title = "AVG SPEED";    unit = "km/h";  break;
+        default:                            title = "UNKNOWN";                      break;
     }
 
     display.println(title);

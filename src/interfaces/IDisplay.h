@@ -1,25 +1,20 @@
-/*
- * ファイル: IDisplay.h
- * 説明: ディスプレイドライバーのインターフェース
- */
-
 #pragma once
 
 #include <Arduino.h>
 
-enum DisplayDataType {
-    DISPLAY_DATA_SPEED,
-    DISPLAY_DATA_TIME,
-    DISPLAY_DATA_MAX_SPEED,
-    DISPLAY_DATA_DISTANCE,
-    DISPLAY_DATA_MOVING_TIME,
-    DISPLAY_DATA_ELAPSED_TIME,
-    DISPLAY_DATA_AVG_SPEED,
-    DISPLAY_INVALID,
+enum class DisplayDataType {
+    SPEED,
+    TIME,
+    MAX_SPEED,
+    DISTANCE,
+    MOVING_TIME,
+    ELAPSED_TIME,
+    AVG_SPEED,
+    INVALID,
 };
 
 class IDisplay {
-   public:
+public:
     virtual ~IDisplay() {}
     virtual void begin() = 0;
     virtual void clear() = 0;

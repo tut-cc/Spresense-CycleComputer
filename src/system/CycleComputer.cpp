@@ -4,6 +4,7 @@
  */
 
 #include "CycleComputer.h"
+#include "../Config.h"
 
 #include "Utils.h"
 
@@ -59,7 +60,7 @@ void CycleComputer::updateDisplay() {
     unsigned long currentMillis = millis();
 
     // 強制更新フラグがなく、かつ更新間隔未満であればスキップ
-    if (!forceUpdate && (currentMillis - lastDisplayUpdate < DISPLAY_UPDATE_INTERVAL_MS)) return;
+    if (!forceUpdate && (currentMillis - lastDisplayUpdate < Config::DISPLAY_UPDATE_INTERVAL_MS)) return;
 
     lastDisplayUpdate = currentMillis;
     forceUpdate = false;
@@ -90,36 +91,36 @@ void CycleComputer::updateDisplay() {
 
 void CycleComputer::getDisplayData(Mode mode, DisplayDataType& type, char* buf, size_t size) {
     switch (mode) {
-        case MODE_SPEED:
-            type = DISPLAY_DATA_SPEED;
+        case Mode::SPEED:
+            type = DisplayDataType::SPEED;
             formatFloat(gps.getSpeedKmh(), 4, 1, buf, size);
             break;
-        case MODE_TIME:
-            type = DISPLAY_DATA_TIME;
+        case Mode::TIME:
+            type = DisplayDataType::TIME;
             gps.getTimeJST(buf, size);
             break;
-        case MODE_MAX_SPEED:
-            type = DISPLAY_DATA_MAX_SPEED;
+        case Mode::MAX_SPEED:
+            type = DisplayDataType::MAX_SPEED;
             formatFloat(tripComputer.getMaxSpeedKmh(), 4, 1, buf, size);
             break;
-        case MODE_DISTANCE:
-            type = DISPLAY_DATA_DISTANCE;
+        case Mode::DISTANCE:
+            type = DisplayDataType::DISTANCE;
             formatFloat(tripComputer.getDistanceKm(), 5, 2, buf, size);
             break;
-        case MODE_MOVING_TIME:
-            type = DISPLAY_DATA_MOVING_TIME;
+        case Mode::MOVING_TIME:
+            type = DisplayDataType::MOVING_TIME;
             tripComputer.getMovingTimeStr(buf, size);
             break;
-        case MODE_ELAPSED_TIME:
-            type = DISPLAY_DATA_ELAPSED_TIME;
+        case Mode::ELAPSED_TIME:
+            type = DisplayDataType::ELAPSED_TIME;
             tripComputer.getElapsedTimeStr(buf, size);
             break;
-        case MODE_AVG_SPEED:
-            type = DISPLAY_DATA_AVG_SPEED;
+        case Mode::AVG_SPEED:
+            type = DisplayDataType::AVG_SPEED;
             formatFloat(tripComputer.getAvgSpeedKmh(), 4, 1, buf, size);
             break;
         default:
-            type = DISPLAY_INVALID; // Assuming DISPLAY_INVALID exists or use a default
+            type = DisplayDataType::INVALID; // Assuming DISPLAY_INVALID exists or use a default
             buf[0] = '\0';
             break;
     }
