@@ -21,6 +21,7 @@ int dig3 = 0;
 int dig4 = 0;
 
 const int placePin[] = {PIN_D10, PIN_D11, PIN_D12, PIN_D13};
+const int colonPin[] = {PIN_D03, PIN_D04, PIN_D05, PIN_D06,PIN_D07};
 // 7セグメントのデータ
 // 0, 1, 2, ... 9,ハイフン(表示するまで待つ用のやつ)
 // 左からabcdefg,dotに対応する
@@ -33,6 +34,11 @@ void pickDigit(int digit) {
         digitalWrite(placePin[i], LOW);  // 全てOFF
     }
     digitalWrite(placePin[digit], HIGH);  // 指定の桁だけON
+
+    for (int i = 0; i < 4; i++) {
+        digitalWrite(colonPin[i], LOW);  // 全てOFF
+    }
+    digitalWrite(colonPin[digit], HIGH);  // 指定の桁だけON
 }
 
 // シフトレジスタにデータを送る関数
@@ -41,6 +47,7 @@ void hc595_shift(byte data) {
     digitalWrite(RCLK_PIN, LOW);  // 送信準備
 
     // MSBFIRST: 最上位ビットから順に送信
+    shiftOut(SDI_PIN, SRCLK_PIN, MSBFIRST, data);
     shiftOut(SDI_PIN, SRCLK_PIN, MSBFIRST, data);
 
     digitalWrite(RCLK_PIN, HIGH);  // ラッチ(出力反映)
@@ -72,6 +79,11 @@ class SevenSegDriver : public IDisplay {
         for (int i = 0; i < 4; i++) {
             pinMode(placePin[i], OUTPUT);
             digitalWrite(placePin[i], LOW);  // 初期状態はOFFにしておく(High ActiveならLOWでOFF)
+        }
+
+        for (int i = 0; i < 5; i++) {
+            pinMode(colonPin[i], OUTPUT);
+            digitalWrite(colonPin[i], LOW);  // 初期状態はOFFにしておく(High ActiveならLOWでOFF)
         }
 
         // --- ダイナミック点灯処理 (高速切り替え) ---

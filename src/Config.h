@@ -49,6 +49,13 @@ enum I2CLCDConfig { LCD_I2C_ADDR = 0x27, LCD_COLS = 16, LCD_ROWS = 2 };
 #define D3_PIN PIN_D12
 #define D4_PIN PIN_D13
 
+//コロン付きの桁指定ピン
+#define D1_COLON PIN_D03
+#define D2_COLON PIN_D04
+#define D3_COLON PIN_D05
+#define D4_COLON PIN_D06
+#define DOT_COLON PIN_D07
+
 // アノードコモンにおける数字表示用16進数
 #define DIS_NUM_0 0xc0
 #define DIS_NUM_1 0xf9
