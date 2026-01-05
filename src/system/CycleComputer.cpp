@@ -66,7 +66,7 @@ void CycleComputer::updateDisplay() {
     DisplayDataType type;
     getDisplayData(modeManager.getMode(), type, buf, sizeof(buf));
 
-#ifdef DEBUGDAO
+#ifdef DEBUG_MODE
     // 前回のモードを記憶しておく変数 (staticなので値を保持し続けます)
     static int lastDebugMode = -1;
 

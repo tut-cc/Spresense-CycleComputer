@@ -70,7 +70,7 @@ void SevenSegDriver::show(DisplayDataType type, const char* value) {
 
     // --- ダイナミック点灯処理 (高速切り替え) ---
 
-#ifdef DEBUGDAO
+#ifdef DEBUG_MODE
     dig1 = 1;
     dig2 = 2;
     dig3 = 3;

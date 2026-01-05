@@ -3,7 +3,7 @@
 #include <Arduino.h>
 
 // デバッグ用定数
-#define DEBUGDAO
+#define DEBUG_MODE
 
 // ディスプレイタイプ定数
 #define DISPLAY_SEVENSEG 1
