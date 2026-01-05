@@ -1,7 +1,6 @@
 /*
  * ファイル: Spresense-CycleComputer.ino
  * 説明: サイクルコンピューターのエントリーポイント。
- *       設定に基づいてドライバーとシステムコンポーネントを初期化します。
  */
 
 #include "src/Config.h"
@@ -11,10 +10,13 @@
 #endif
 
 #include "src/drivers/SevenSegDriver.h"
+#include "src/drivers/OLEDDriver.h"
 #include "src/system/CycleComputer.h"
 
 #if DISPLAY_TYPE == DISPLAY_SEVENSEG
 SevenSegDriver display;
+#elif DISPLAY_TYPE == DISPLAY_OLED
+OLEDDriver display;
 #endif
 
 CycleComputer computer(&display);
@@ -29,5 +31,4 @@ void setup() {
 
 void loop() {
     computer.update();
-    // 入力に対する応答性を最大化するため、ブロッキング遅延はなし
 }
