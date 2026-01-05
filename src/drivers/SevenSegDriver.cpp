@@ -35,39 +35,26 @@ void SevenSegDriver::begin() {
 }
 
 void SevenSegDriver::clear() {
-    for (int i = 0; i < 4; i++) digitBuffer[i] = 0;
     for (int i = 0; i < 4; i++) digitBuffer[i] = 0xFF; 
 }
 
 void SevenSegDriver::show(DisplayDataType type, const char* value) {
     // Parse string to number
     float f_val = atof(value);
-    int molding = (int)(f_val * 100);
+    int molding = (int)(f_val * 100); // 12.34 -> 1234
 
-    int d1, d2, d3, d4;
-    
     int temp = molding;
-    if (molding >= 1000) {
-        d1 = (temp / 1000) % 10;
-        d2 = (temp / 100) % 10;
-        d3 = (temp / 10) % 10;
-        d4 = temp % 10;
+    
+    // Extract digits (works for both >= 10.00 and < 10.00)
+    int d1 = (temp / 1000) % 10;
+    int d2 = (temp / 100) % 10;
+    int d3 = (temp / 10) % 10;
+    int d4 = temp % 10;
 
-        digitBuffer[0] = number[d1];
-        digitBuffer[1] = numdot[d2]; 
-        digitBuffer[2] = number[d3];
-        digitBuffer[3] = number[d4];
-    } else {
-        d1 = 0;                
-        d2 = (temp / 100); 
-        d3 = (temp / 10) % 10;
-        d4 = temp % 10;
-
-        digitBuffer[0] = number[d1]; 
-        digitBuffer[1] = numdot[d2];
-        digitBuffer[2] = number[d3];
-        digitBuffer[3] = number[d4];
-    }
+    digitBuffer[0] = number[d1];
+    digitBuffer[1] = numdot[d2]; 
+    digitBuffer[2] = number[d3];
+    digitBuffer[3] = number[d4];
 }
 
 void SevenSegDriver::update() {
