@@ -1,21 +1,16 @@
-/*
- * ファイル: Spresense-CycleComputer.ino
- * 説明: サイクルコンピューターのエントリーポイント。
- */
-
 #include "src/Config.h"
 
 #ifdef ENABLE_POWER_SAVING
 #include <LowPower.h>
 #endif
 
-#include "src/drivers/OLEDDriver.h"
-#include "src/drivers/SevenSegDriver.h"
 #include "src/system/CycleComputer.h"
 
 #if DISPLAY_TYPE == DISPLAY_SEVENSEG
+#include "src/drivers/SevenSegDriver.h"
 SevenSegDriver display;
 #elif DISPLAY_TYPE == DISPLAY_OLED
+#include "src/drivers/OLEDDriver.h"
 OLEDDriver display;
 #endif
 
