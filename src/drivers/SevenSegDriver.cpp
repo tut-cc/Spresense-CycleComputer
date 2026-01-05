@@ -1,8 +1,3 @@
-/*
- * ファイル: SevenSegDriver.cpp
- * 説明: SevenSegDriverの実装
- */
-
 #include "SevenSegDriver.h"
 
 #include "../Config.h"

@@ -1,8 +1,3 @@
-/*
- * ファイル: TripComputer.h
- * 説明: 距離、移動時間、最大速度、平均速度を計算する。
- */
-
 #pragma once
 
 #include <Arduino.h>

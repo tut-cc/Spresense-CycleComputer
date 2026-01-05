@@ -1,9 +1,3 @@
-/*
- * ファイル: OLEDDriver.h
- * 説明:
- * OLEDディスプレイ用のディスプレイドライバー。
- */
-
 #pragma once
 
 #include <Adafruit_GFX.h>

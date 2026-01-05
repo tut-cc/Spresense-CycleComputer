@@ -1,8 +1,3 @@
-/*
- * ファイル: GPSWrapper.cpp
- * 説明: Spresense GNSS システムの初期化とデータ取得を処理する。
- */
-
 #include "GPSWrapper.h"
 
 #include <Arduino.h>

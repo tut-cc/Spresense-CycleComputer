@@ -1,9 +1,3 @@
-/*
- * ファイル: SevenSegDriver.h
- * 説明:
- * 7セグメントディスプレイ用のディスプレイドライバー。
- */
-
 #pragma once
 
 #include <Arduino.h>

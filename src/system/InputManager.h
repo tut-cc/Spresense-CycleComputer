@@ -1,10 +1,3 @@
-/*
- * ファイル: InputManager.h
- * 説明: 入力ソース（ボタン）を管理し、抽象的な入力イベントを生成する。
- *       ボタンの押下および同時押しのロジックを処理する。
- */
-// 入力管理といってもボタンだけです
-
 #pragma once
 
 #include "../drivers/Button.h"
@@ -26,6 +19,5 @@ class InputManager {
 
     void begin();
 
-    // 毎フレーム呼ばれてはいる
     InputEvent update();
 };

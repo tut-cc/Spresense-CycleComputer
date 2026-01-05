@@ -1,8 +1,3 @@
-/*
- * ファイル: CycleComputer.cpp
- * 説明: 入力、GPSデータ、およびディスプレイ更新を調整するメインロジック。
- */
-
 #include "CycleComputer.h"
 
 #include "../Config.h"

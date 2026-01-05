@@ -1,7 +1,3 @@
-/*
- * ファイル: GPSWrapper.h
- */
-
 #pragma once
 
 #include "../Config.h"
