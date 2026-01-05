@@ -18,10 +18,12 @@
 
 // ディスプレイタイプ選択は条件付きコンパイルに使用されるため、#defineのままにする
 // ディスプレイ設定
-#define DISPLAY_SEVENSEG 2
+#define DISPLAY_SEVENSEG 1
+#define DISPLAY_OLED 2
 
 // ディスプレイタイプの選択（使用するものを1つだけ有効にしてください）
-#define DISPLAY_TYPE DISPLAY_SEVENSEG   // 7セグメントディスプレsイ
+// #define DISPLAY_TYPE DISPLAY_SEVENSEG   // 7セグメントディスプレイ
+#define DISPLAY_TYPE DISPLAY_OLED   // OLEDディスプレイ
 
 //ボタンのピン
 enum ButtonConfig { BTN_A_PIN = PIN_D00, BTN_B_PIN = PIN_D01 };
@@ -71,6 +73,12 @@ enum ButtonConfig { BTN_A_PIN = PIN_D00, BTN_B_PIN = PIN_D01 };
 #define DOT_NUM_9 0x10
 #define DOT_NUM_HYPHEN 0xbf
 
+// OLED設定
+#define OLED_WIDTH 128
+#define OLED_HEIGHT 64
+#define OLED_ADDRESS 0x3C
+#define OLED_SCL PIN_D15
+#define OLED_SDA PIN_D14
 
 // 省電力設定
 #ifdef ARDUINO_ARCH_SPRESENSE
