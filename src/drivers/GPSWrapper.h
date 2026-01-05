@@ -1,8 +1,6 @@
 #pragma once
 
-#include "../Config.h"
-
-#ifdef IS_SPRESENSE
+#ifdef ARDUINO_ARCH_SPRESENSE
 #include <GNSS.h>
 #endif
 
@@ -15,7 +13,7 @@ class GPSWrapper {
     void getTimeJST(char *buffer, size_t size);
 
    private:
-#ifdef IS_SPRESENSE
+#ifdef ARDUINO_ARCH_SPRESENSE
     SpGnss gnss;
     SpNavData navData;
 #else

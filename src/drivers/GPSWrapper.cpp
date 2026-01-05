@@ -3,7 +3,7 @@
 #include <Arduino.h>
 
 GPSWrapper::GPSWrapper() : isFixed(false) {
-#ifndef IS_SPRESENSE
+#ifndef ARDUINO_ARCH_SPRESENSE
     mockSpeed = 0.0;
     lastUpdate = 0;
     mockHour = 12;
@@ -13,7 +13,7 @@ GPSWrapper::GPSWrapper() : isFixed(false) {
 }
 
 bool GPSWrapper::begin() {
-#ifdef IS_SPRESENSE
+#ifdef ARDUINO_ARCH_SPRESENSE
     int ret;
     ret = gnss.begin();
     if (ret != 0) {
@@ -38,7 +38,7 @@ bool GPSWrapper::begin() {
 }
 
 void GPSWrapper::update() {
-#ifdef IS_SPRESENSE
+#ifdef ARDUINO_ARCH_SPRESENSE
     // 可能であればノンブロッキングチェック、または短いタイムアウト
     // データがない場合に即座に戻るためにタイムアウトとして 0 を使用
     if (gnss.waitUpdate(0)) {
@@ -71,7 +71,7 @@ void GPSWrapper::update() {
 }
 
 float GPSWrapper::getSpeedKmh() {
-#ifdef IS_SPRESENSE
+#ifdef ARDUINO_ARCH_SPRESENSE
     if (!isFixed) {
         return 0.0f;
     }
@@ -83,7 +83,7 @@ float GPSWrapper::getSpeedKmh() {
 }
 
 void GPSWrapper::getTimeJST(char *buffer, size_t size) {
-#ifdef IS_SPRESENSE
+#ifdef ARDUINO_ARCH_SPRESENSE
     if (navData.time.year == 0) {
         snprintf(buffer, size, "00:00");
         return;
