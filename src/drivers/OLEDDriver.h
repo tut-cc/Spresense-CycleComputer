@@ -11,7 +11,6 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-#include "../Config.h"
 #include "../interfaces/IDisplay.h"
 
 class OLEDDriver : public IDisplay {
