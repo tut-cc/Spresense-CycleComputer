@@ -24,6 +24,6 @@ class Button {
     // 立ち下がりエッジ（押下）の時のみ true を返す
     bool isPressed();
 
-    //押しっぱなしの状態で十分反応する
+    // 押しっぱなしの状態で十分反応する
     bool isHeld();
 };

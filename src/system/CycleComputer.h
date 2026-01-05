@@ -7,8 +7,8 @@
 #include "TripComputer.h"
 
 class CycleComputer {
-private:
-    IDisplay *display;
+   private:
+    IDisplay* display;
     InputManager inputManager;
     ModeManager modeManager;
     GPSWrapper gps;
@@ -27,8 +27,8 @@ private:
     void updateDisplay();
     void getDisplayData(Mode mode, DisplayDataType& type, char* buf, size_t size);
 
-public:
-    CycleComputer(IDisplay *display);
+   public:
+    CycleComputer(IDisplay* display);
     void begin();
     void update();
 };

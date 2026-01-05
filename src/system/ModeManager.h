@@ -12,10 +12,10 @@ enum class Mode {
 };
 
 class ModeManager {
-private:
+   private:
     Mode currentMode = Mode::SPEED;
 
-public:
+   public:
     void nextMode();
 
     Mode getMode();

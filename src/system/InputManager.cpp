@@ -10,39 +10,39 @@ void InputManager::begin() {
 }
 
 InputEvent InputManager::update() {
-        // ボタンの押下状態を取得
-        bool aPressed = btnA.isPressed();
-        bool bPressed = btnB.isPressed();
+    // ボタンの押下状態を取得
+    bool aPressed = btnA.isPressed();
+    bool bPressed = btnB.isPressed();
 
-        // 同時押しの確認
-        if (aPressed && btnB.isHeld()) {
+    // 同時押しの確認
+    if (aPressed && btnB.isHeld()) {
 #ifdef DEBUGDAO
-            Serial.println("[InputManager] 同時に押されたァ");
+        Serial.println("[InputManager] 同時に押されたァ");
 #endif
-            return INPUT_BTN_BOTH;
-        }
+        return INPUT_BTN_BOTH;
+    }
 
-        if (bPressed && btnA.isHeld()) {
+    if (bPressed && btnA.isHeld()) {
 #ifdef DEBUGDAO
-            Serial.println("[InputManager] 同時に押されたァ");
+        Serial.println("[InputManager] 同時に押されたァ");
 #endif
-            return INPUT_BTN_BOTH;
-        }
+        return INPUT_BTN_BOTH;
+    }
 
-        // 単押しの確認
-        if (aPressed) {
+    // 単押しの確認
+    if (aPressed) {
 #ifdef DEBUGDAO
-            Serial.println("[InputManager] Aボタンが押された");
+        Serial.println("[InputManager] Aボタンが押された");
 #endif
-            return INPUT_BTN_A;
-        }
+        return INPUT_BTN_A;
+    }
 
-        if (bPressed) {
+    if (bPressed) {
 #ifdef DEBUGDAO
-            Serial.println("[InputManager] Bボタンが押された");
+        Serial.println("[InputManager] Bボタンが押された");
 #endif
-            return INPUT_BTN_B;
-        }
+        return INPUT_BTN_B;
+    }
 
-        return INPUT_NONE;
+    return INPUT_NONE;
 }

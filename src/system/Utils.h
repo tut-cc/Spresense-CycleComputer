@@ -20,6 +20,6 @@ inline void formatFloat(float val, int width, int prec, char* buf, size_t size) 
 #else
     // Arduino (AVR) -> snprintf %f はサポートされていないため、dtostrf を使用
     dtostrf(val, width, prec, buf);
-    (void)size; // unused parameter suppression
+    (void)size;  // unused parameter suppression
 #endif
 }

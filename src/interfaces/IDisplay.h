@@ -14,7 +14,7 @@ enum class DisplayDataType {
 };
 
 class IDisplay {
-public:
+   public:
     virtual ~IDisplay() {}
     virtual void begin() = 0;
     virtual void clear() = 0;

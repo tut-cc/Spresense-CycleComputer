@@ -4,15 +4,15 @@
  */
 
 #include "SevenSegDriver.h"
+
 #include "../Config.h"
 
 // 静的メンバ変数の定義
-const int SevenSegDriver::placePin[] = {
-    Config::Pin::D1, Config::Pin::D2, Config::Pin::D3, Config::Pin::D4
-};
-const int SevenSegDriver::colonPin[] = {
-    Config::Pin::D1_Colon, Config::Pin::D2_Colon, Config::Pin::D3_Colon, Config::Pin::D4_Colon, Config::Pin::Dot_Colon
-};
+const int SevenSegDriver::placePin[] = {Config::Pin::D1, Config::Pin::D2, Config::Pin::D3,
+                                        Config::Pin::D4};
+const int SevenSegDriver::colonPin[] = {Config::Pin::D1_Colon, Config::Pin::D2_Colon,
+                                        Config::Pin::D3_Colon, Config::Pin::D4_Colon,
+                                        Config::Pin::Dot_Colon};
 
 // 7セグメントのデータ
 // Configから参照
@@ -58,7 +58,7 @@ void SevenSegDriver::clearDisplay() {
 }
 
 void SevenSegDriver::show(DisplayDataType type, const char* value) {
-    (void)type; // unused parameter
+    (void)type;  // unused parameter
     pinMode(Config::Pin::SDI, OUTPUT);
     pinMode(Config::Pin::RCLK, OUTPUT);
     pinMode(Config::Pin::SRCLK, OUTPUT);

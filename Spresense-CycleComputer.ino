@@ -9,8 +9,8 @@
 #include <LowPower.h>
 #endif
 
-#include "src/drivers/SevenSegDriver.h"
 #include "src/drivers/OLEDDriver.h"
+#include "src/drivers/SevenSegDriver.h"
 #include "src/system/CycleComputer.h"
 
 #if DISPLAY_TYPE == DISPLAY_SEVENSEG

@@ -4,8 +4,8 @@
  */
 
 #include "CycleComputer.h"
-#include "../Config.h"
 
+#include "../Config.h"
 #include "Utils.h"
 
 #ifdef ENABLE_POWER_SAVING
@@ -60,7 +60,8 @@ void CycleComputer::updateDisplay() {
     unsigned long currentMillis = millis();
 
     // 強制更新フラグがなく、かつ更新間隔未満であればスキップ
-    if (!forceUpdate && (currentMillis - lastDisplayUpdate < Config::DISPLAY_UPDATE_INTERVAL_MS)) return;
+    if (!forceUpdate && (currentMillis - lastDisplayUpdate < Config::DISPLAY_UPDATE_INTERVAL_MS))
+        return;
 
     lastDisplayUpdate = currentMillis;
     forceUpdate = false;
@@ -73,7 +74,7 @@ void CycleComputer::updateDisplay() {
 #ifdef DEBUGDAO
     // 前回のモードを記憶しておく変数 (staticなので値を保持し続けます)
     static int lastDebugMode = -1;
-    
+
     // 現在のモードを取得して比較
     int currentDebugMode = (int)modeManager.getMode();
     if (lastDebugMode != currentDebugMode) {
@@ -120,7 +121,7 @@ void CycleComputer::getDisplayData(Mode mode, DisplayDataType& type, char* buf, 
             formatFloat(tripComputer.getAvgSpeedKmh(), 4, 1, buf, size);
             break;
         default:
-            type = DisplayDataType::INVALID; // Assuming DISPLAY_INVALID exists or use a default
+            type = DisplayDataType::INVALID;  // Assuming DISPLAY_INVALID exists or use a default
             buf[0] = '\0';
             break;
     }
@@ -146,8 +147,10 @@ void CycleComputer::checkBattery() {
     // バッテリー残量が少ない場合、LEDを点滅させる
     if (isLowBattery) {
         // ブロッキングなしの単純な点滅のために時間の剰余を使用
-        if ((currentMillis / Config::Power::LedBlinkIntervalMs) % 2 == 0)   digitalWrite(Config::Pin::WarnLed, HIGH);
-        else                                                                digitalWrite(Config::Pin::WarnLed, LOW);
+        if ((currentMillis / Config::Power::LedBlinkIntervalMs) % 2 == 0)
+            digitalWrite(Config::Pin::WarnLed, HIGH);
+        else
+            digitalWrite(Config::Pin::WarnLed, LOW);
     }
 #endif
 }
