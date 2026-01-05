@@ -85,16 +85,8 @@ namespace Config {
     }
 
     namespace Power {
-        #ifdef ARDUINO_ARCH_SPRESENSE
-            constexpr bool IsSpresense = true;
-            constexpr int BatteryLowThreshold = 3600;  // 3.6V
-            constexpr int BatteryCheckIntervalMs = 10000;
-            constexpr int LedBlinkIntervalMs = 500;
-        #else
-            constexpr bool IsSpresense = false;
-            constexpr int BatteryLowThreshold = 0;
-            constexpr int BatteryCheckIntervalMs = 10000;
-            constexpr int LedBlinkIntervalMs = 500;
-        #endif
+        constexpr int BatteryLowThreshold = 3600;  // 3.6V
+        constexpr int BatteryCheckIntervalMs = 10000;
+        constexpr int LedBlinkIntervalMs = 500;
     }
 }
