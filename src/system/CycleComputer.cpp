@@ -154,6 +154,8 @@ void CycleComputer::updateDisplay() {
 #endif
             display->show(DISPLAY_DATA_AVG_SPEED, buf);
             break;
+        default:
+            break;
     }
 }
 

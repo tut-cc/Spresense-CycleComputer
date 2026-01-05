@@ -58,6 +58,7 @@ void SevenSegDriver::clearDisplay() {
 }
 
 void SevenSegDriver::show(DisplayDataType type, const char* value) {
+    (void)type; // unused parameter
     pinMode(Config::Pin::SDI, OUTPUT);
     pinMode(Config::Pin::RCLK, OUTPUT);
     pinMode(Config::Pin::SRCLK, OUTPUT);
