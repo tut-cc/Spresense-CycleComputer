@@ -15,14 +15,7 @@ InputEvent InputManager::update() {
     bool bPressed = btnB.isPressed();
 
     // 同時押しの確認
-    if (aPressed && btnB.isHeld()) {
-#ifdef DEBUGDAO
-        Serial.println("[InputManager] 同時に押されたァ");
-#endif
-        return InputEvent::BTN_BOTH;
-    }
-
-    if (bPressed && btnA.isHeld()) {
+    if ((aPressed && btnB.isHeld()) || (bPressed && btnA.isHeld())) {
 #ifdef DEBUGDAO
         Serial.println("[InputManager] 同時に押されたァ");
 #endif
