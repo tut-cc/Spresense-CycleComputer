@@ -22,6 +22,9 @@ void CycleComputer::update() {
     powerManager.update();
 
     updateDisplay();
+    
+    // Refresh display hardware (e.g. multiplexing)
+    display->update();
 }
 
 void CycleComputer::handleInput() {

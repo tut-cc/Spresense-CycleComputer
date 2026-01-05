@@ -48,7 +48,7 @@ namespace Config {
         constexpr int WARN_LED = PIN_D02;
     }
 
-    constexpr unsigned long DISPLAY_UPDATE_INTERVAL_MS = 0;
+    constexpr unsigned long DISPLAY_UPDATE_INTERVAL_MS = 100;
 
     namespace SevenSeg {
         // アノードコモンにおける数字表示用16進数
