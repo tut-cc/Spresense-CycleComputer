@@ -5,6 +5,7 @@
 #include "InputManager.h"
 #include "ModeManager.h"
 #include "TripComputer.h"
+#include "PowerManager.h"
 
 class CycleComputer {
    private:
@@ -13,11 +14,7 @@ class CycleComputer {
     ModeManager modeManager;
     GPSWrapper gps;
     TripComputer tripComputer;
-
-    // 電源電圧監視
-    unsigned long lastBatteryCheck = 0;
-    bool isLowBattery = false;
-    void checkBattery();
+    PowerManager powerManager;
 
     // ディスプレイ更新制御
     unsigned long lastDisplayUpdate = 0;

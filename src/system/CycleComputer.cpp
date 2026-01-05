@@ -3,10 +3,6 @@
 #include "../Config.h"
 #include "Utils.h"
 
-#ifdef ENABLE_POWER_SAVING
-#include <LowPower.h>
-#endif
-
 CycleComputer::CycleComputer(IDisplay* display) : display(display) {}
 
 void CycleComputer::begin() {
@@ -14,11 +10,7 @@ void CycleComputer::begin() {
     inputManager.begin();
     gps.begin();
     tripComputer.begin();
-
-#ifdef ENABLE_POWER_SAVING
-    pinMode(Config::Pin::WARN_LED, OUTPUT);
-    digitalWrite(Config::Pin::WARN_LED, LOW);
-#endif
+    powerManager.begin();
 }
 
 void CycleComputer::update() {
@@ -26,8 +18,8 @@ void CycleComputer::update() {
 
     gps.update();
     tripComputer.update(gps.getSpeedKmh(), millis());
-
-    checkBattery();
+    
+    powerManager.update();
 
     updateDisplay();
 }
@@ -120,32 +112,4 @@ void CycleComputer::getDisplayData(Mode mode, DisplayDataType& type, char* buf, 
             buf[0] = '\0';
             break;
     }
-}
-
-void CycleComputer::checkBattery() {
-#ifdef ENABLE_POWER_SAVING
-    unsigned long currentMillis = millis();
-
-    // 10秒ごとに電圧をチェック
-    if (currentMillis - lastBatteryCheck >= Config::Power::BATTERY_CHECK_INTERVAL_MS) {
-        lastBatteryCheck = currentMillis;
-        int voltage = LowPower.getVoltage();
-        // 電圧が有効であり（USBでは0を返すことがある）、かつ閾値を下回っているかを確認
-        if (voltage > 0 && voltage < Config::Power::BATTERY_LOW_THRESHOLD) {
-            isLowBattery = true;
-        } else {
-            isLowBattery = false;
-            digitalWrite(Config::Pin::WARN_LED, LOW);  // 安全な場合はLEDがオフであることを保証する
-        }
-    }
-
-    // バッテリー残量が少ない場合、LEDを点滅させる
-    if (isLowBattery) {
-        // ブロッキングなしの単純な点滅のために時間の剰余を使用
-        if ((currentMillis / Config::Power::LED_BLINK_INTERVAL_MS) % 2 == 0)
-            digitalWrite(Config::Pin::WARN_LED, HIGH);
-        else
-            digitalWrite(Config::Pin::WARN_LED, LOW);
-    }
-#endif
 }

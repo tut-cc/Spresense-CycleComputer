@@ -1,9 +1,4 @@
 #include "src/Config.h"
-
-#ifdef ENABLE_POWER_SAVING
-#include <LowPower.h>
-#endif
-
 #include "src/system/CycleComputer.h"
 
 #if DISPLAY_TYPE == DISPLAY_SEVENSEG
@@ -17,10 +12,6 @@ OLEDDriver display;
 CycleComputer computer(&display);
 
 void setup() {
-#ifdef ENABLE_POWER_SAVING
-    LowPower.begin();
-    LowPower.clockMode(CLOCK_MODE_8MHz);
-#endif
     computer.begin();
 }
 
