@@ -2,16 +2,6 @@
 
 #include <Arduino.h>
 
-GPSWrapper::GPSWrapper() : isFixed(false) {
-#ifndef ARDUINO_ARCH_SPRESENSE
-    mockSpeed = 0.0;
-    lastUpdate = 0;
-    mockHour = 12;
-    mockMinute = 0;
-    mockSecond = 0;
-#endif
-}
-
 bool GPSWrapper::begin() {
 #ifdef ARDUINO_ARCH_SPRESENSE
     int ret;
@@ -45,27 +35,6 @@ void GPSWrapper::update() {
         gnss.getNavData(&navData);
         // 位置が特定されたかを確認
         isFixed = (navData.posFixMode >= Fix2D);
-    }
-#else
-    // モック更新: 時間を進め、速度をシミュレート
-    unsigned long current = millis();
-    if (current - lastUpdate >= 1000) {
-        lastUpdate = current;
-
-        // 時間シミュレーション
-        mockSecond++;
-        if (mockSecond >= 60) {
-            mockSecond = 0;
-            mockMinute++;
-            if (mockMinute >= 60) {
-                mockMinute = 0;
-                mockHour++;
-                if (mockHour >= 24) mockHour = 0;
-            }
-        }
-
-        // 速度シミュレーション (0 から 30 km/h の正弦波)
-        mockSpeed = 15.0 + 15.0 * sin(current / 10000.0);
     }
 #endif
 }

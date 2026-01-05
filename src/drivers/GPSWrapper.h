@@ -6,7 +6,6 @@
 
 class GPSWrapper {
    public:
-    GPSWrapper();
     bool begin();
     void update();
     float getSpeedKmh();
@@ -17,12 +16,11 @@ class GPSWrapper {
     SpGnss gnss;
     SpNavData navData;
 #else
-    // Arduino 用のモックデータ
-    float mockSpeed;
-    unsigned long lastUpdate;
-    int mockHour;
-    int mockMinute;
-    int mockSecond;
+    float mockSpeed = 0;
+    unsigned long lastUpdate = 0;
+    int mockHour = 0;
+    int mockMinute = 0;
+    int mockSecond = 0;
 #endif
     bool isFixed;
 };
