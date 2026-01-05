@@ -19,14 +19,14 @@ InputEvent InputManager::update() {
 #ifdef DEBUGDAO
         Serial.println("[InputManager] 同時に押されたァ");
 #endif
-        return INPUT_BTN_BOTH;
+        return InputEvent::BTN_BOTH;
     }
 
     if (bPressed && btnA.isHeld()) {
 #ifdef DEBUGDAO
         Serial.println("[InputManager] 同時に押されたァ");
 #endif
-        return INPUT_BTN_BOTH;
+        return InputEvent::BTN_BOTH;
     }
 
     // 単押しの確認
@@ -34,15 +34,15 @@ InputEvent InputManager::update() {
 #ifdef DEBUGDAO
         Serial.println("[InputManager] Aボタンが押された");
 #endif
-        return INPUT_BTN_A;
+        return InputEvent::BTN_A;
     }
 
     if (bPressed) {
 #ifdef DEBUGDAO
         Serial.println("[InputManager] Bボタンが押された");
 #endif
-        return INPUT_BTN_B;
+        return InputEvent::BTN_B;
     }
 
-    return INPUT_NONE;
+    return InputEvent::NONE;
 }

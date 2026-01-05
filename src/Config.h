@@ -1,8 +1,3 @@
-/*
- * ファイル: Config.h
- * 説明: システム全体の設定パラメータ
- */
-
 #pragma once
 
 #include <Arduino.h>

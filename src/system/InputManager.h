@@ -2,11 +2,11 @@
 
 #include "../drivers/Button.h"
 
-enum InputEvent {
-    INPUT_BTN_A = PIN_D00,
-    INPUT_BTN_B = PIN_D01,
-    INPUT_BTN_BOTH,
-    INPUT_NONE,
+enum class InputEvent {
+    BTN_A,
+    BTN_B,
+    BTN_BOTH,
+    NONE,
 };
 
 class InputManager {

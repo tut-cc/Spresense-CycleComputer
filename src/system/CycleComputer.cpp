@@ -36,15 +36,15 @@ void CycleComputer::handleInput() {
     InputEvent event = inputManager.update();
 
     switch (event) {
-        case INPUT_BTN_A:
+        case InputEvent::BTN_A:
             modeManager.nextMode();
             forceUpdate = true;
             break;
-        case INPUT_BTN_BOTH:
+        case InputEvent::BTN_BOTH:
             tripComputer.reset();
             forceUpdate = true;
             break;
-        case INPUT_BTN_B:
+        case InputEvent::BTN_B:
             break;
         default:
             break;
