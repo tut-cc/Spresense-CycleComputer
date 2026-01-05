@@ -10,14 +10,14 @@
 // 静的メンバ変数の定義
 const int SevenSegDriver::placePin[] = {Config::Pin::D1, Config::Pin::D2, Config::Pin::D3,
                                         Config::Pin::D4};
-const int SevenSegDriver::colonPin[] = {Config::Pin::D1_Colon, Config::Pin::D2_Colon,
-                                        Config::Pin::D3_Colon, Config::Pin::D4_Colon,
-                                        Config::Pin::Dot_Colon};
+const int SevenSegDriver::colonPin[] = {Config::Pin::D1_COLON, Config::Pin::D2_COLON,
+                                        Config::Pin::D3_COLON, Config::Pin::D4_COLON,
+                                        Config::Pin::DOT_COLON};
 
 // 7セグメントのデータ
 // Configから参照
-const unsigned char* SevenSegDriver::number = Config::SevenSeg::Numbers;
-const unsigned char* SevenSegDriver::numdot = Config::SevenSeg::NumbersWithDot;
+const unsigned char* SevenSegDriver::number = Config::SevenSeg::NUMBERS;
+const unsigned char* SevenSegDriver::numdot = Config::SevenSeg::NUMBERS_WITH_DOT;
 
 void SevenSegDriver::begin() {
     Serial.begin(115200);

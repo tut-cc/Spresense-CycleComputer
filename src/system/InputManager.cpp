@@ -2,7 +2,7 @@
 
 #include "../Config.h"
 
-InputManager::InputManager() : btnA(Config::Pin::BtnA), btnB(Config::Pin::BtnB) {}
+InputManager::InputManager() : btnA(Config::Pin::BTN_A), btnB(Config::Pin::BTN_B) {}
 
 void InputManager::begin() {
     btnA.begin();

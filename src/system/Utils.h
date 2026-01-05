@@ -8,8 +8,6 @@
 
 #include <Arduino.h>
 
-#include "../Config.h"
-
 // プラットフォームに依存しない方法でfloatを文字列にフォーマットするヘルパー関数
 inline void formatFloat(float val, int width, int prec, char* buf, size_t size) {
 #ifdef ARDUINO_ARCH_SPRESENSE

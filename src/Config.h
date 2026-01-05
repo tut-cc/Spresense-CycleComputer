@@ -28,59 +28,59 @@
 #endif
 
 namespace Config {
-namespace Pin {
-// ボタン
-constexpr int BtnA = PIN_D00;
-constexpr int BtnB = PIN_D01;
+    namespace Pin {
+        // ボタン
+        constexpr int BTN_A = PIN_D00;
+        constexpr int BTN_B = PIN_D01;
 
-// 7セグメントシフトレジスタ
-constexpr int SDI = PIN_D09;
-constexpr int RCLK = PIN_D08;
-constexpr int SRCLK = PIN_D07;
+        // 7セグメントシフトレジスタ
+        constexpr int SDI = PIN_D09;
+        constexpr int RCLK = PIN_D08;
+        constexpr int SRCLK = PIN_D07;
 
-// 7セグメント桁指定 (Common Anode/Cathode selection pins)
-constexpr int D1 = PIN_D10;
-constexpr int D2 = PIN_D11;
-constexpr int D3 = PIN_D12;
-constexpr int D4 = PIN_D13;
+        // 7セグメント桁指定 (Common Anode/Cathode selection pins)
+        constexpr int D1 = PIN_D10;
+        constexpr int D2 = PIN_D11;
+        constexpr int D3 = PIN_D12;
+        constexpr int D4 = PIN_D13;
 
-// 7セグメントコロン/ドット制御
-constexpr int D1_Colon = PIN_D03;
-constexpr int D2_Colon = PIN_D04;
-constexpr int D3_Colon = PIN_D05;
-constexpr int D4_Colon = PIN_D06;
-constexpr int Dot_Colon = PIN_D07;
+        // 7セグメントコロン/ドット制御
+        constexpr int D1_COLON = PIN_D03;
+        constexpr int D2_COLON = PIN_D04;
+        constexpr int D3_COLON = PIN_D05;
+        constexpr int D4_COLON = PIN_D06;
+        constexpr int DOT_COLON = PIN_D07;
 
-// OLED (I2C)
-constexpr int OLED_SCL = PIN_D15;
-constexpr int OLED_SDA = PIN_D14;
+        // OLED (I2C)
+        constexpr int OLED_SCL = PIN_D15;
+        constexpr int OLED_SDA = PIN_D14;
 
-// システム
-constexpr int WarnLed = PIN_D02;
-}  // namespace Pin
+        // システム
+        constexpr int WARN_LED = PIN_D02;
+    }
 
-constexpr unsigned long DISPLAY_UPDATE_INTERVAL_MS = 0;
+    constexpr unsigned long DISPLAY_UPDATE_INTERVAL_MS = 0;
 
-namespace SevenSeg {
-// アノードコモンにおける数字表示用16進数
-// 0, 1, 2, ... 9, ハイフン
-constexpr unsigned char Numbers[] = {0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92,
-                                     0x82, 0xf8, 0x80, 0x90, 0xbf};
+    namespace SevenSeg {
+        // アノードコモンにおける数字表示用16進数
+        // 0, 1, 2, ... 9, ハイフン
+        constexpr unsigned char NUMBERS[] = {0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92,
+                                            0x82, 0xf8, 0x80, 0x90, 0xbf};
 
-// ドット付表示用
-constexpr unsigned char NumbersWithDot[] = {0x40, 0x79, 0x24, 0x30, 0x19, 0x12,
-                                            0x02, 0x78, 0x00, 0x10, 0xbf};
-}  // namespace SevenSeg
+        // ドット付表示用
+        constexpr unsigned char NUMBERS_WITH_DOT[] = {0x40, 0x79, 0x24, 0x30, 0x19, 0x12,
+                                                    0x02, 0x78, 0x00, 0x10, 0xbf};
+    }
 
-namespace OLED {
-constexpr int Width = 128;
-constexpr int Height = 64;
-constexpr int Address = 0x3C;
-}  // namespace OLED
+    namespace OLED {
+        constexpr int WIDTH = 128;
+        constexpr int HEIGHT = 64;
+        constexpr int ADDRESS = 0x3C;
+    }
 
-namespace Power {
-constexpr int BatteryLowThreshold = 3600;  // 3.6V
-constexpr int BatteryCheckIntervalMs = 10000;
-constexpr int LedBlinkIntervalMs = 500;
-}  // namespace Power
-}  // namespace Config
+    namespace Power {
+        constexpr int BATTERY_LOW_THRESHOLD = 3600;  // 3.6V
+        constexpr int BATTERY_CHECK_INTERVAL_MS = 10000;
+        constexpr int LED_BLINK_INTERVAL_MS = 500;
+    }
+}

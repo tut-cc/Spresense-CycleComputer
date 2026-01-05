@@ -4,12 +4,12 @@
 
 #include "../Config.h"
 
-OLEDDriver::OLEDDriver() : display(Config::OLED::Width, Config::OLED::Height, &Wire, -1) {
+OLEDDriver::OLEDDriver() : display(Config::OLED::WIDTH, Config::OLED::HEIGHT, &Wire, -1) {
     currentType = DisplayDataType::INVALID;  // Invalid initial type
 }
 
 void OLEDDriver::begin() {
-    if (!display.begin(SSD1306_SWITCHCAPVCC, Config::OLED::Address)) {
+    if (!display.begin(SSD1306_SWITCHCAPVCC, Config::OLED::ADDRESS)) {
         Serial.println(F("SSD1306 allocation failed"));
         for (;;);  // Don't proceed, loop forever
     }
@@ -92,8 +92,8 @@ void OLEDDriver::show(DisplayDataType type, const char* value) {
     uint16_t w, h;
     display.getTextBounds(currentValue, 0, 0, &x1, &y1, &w, &h);
 
-    int x = (Config::OLED::Width - w) / 2;
-    int y = (Config::OLED::Height - h) / 2 + 8;  // shift down a bit below title
+    int x = (Config::OLED::WIDTH - w) / 2;
+    int y = (Config::OLED::HEIGHT - h) / 2 + 8;  // shift down a bit below title
 
     display.setCursor(x, y);
     display.print(currentValue);
@@ -102,7 +102,7 @@ void OLEDDriver::show(DisplayDataType type, const char* value) {
     if (unit.length() > 0) {
         display.setTextSize(1);
         display.getTextBounds(unit, 0, 0, &x1, &y1, &w, &h);
-        display.setCursor(Config::OLED::Width - w - 4, Config::OLED::Height - h - 2);
+        display.setCursor(Config::OLED::WIDTH - w - 4, Config::OLED::HEIGHT - h - 2);
         display.print(unit);
     }
 
