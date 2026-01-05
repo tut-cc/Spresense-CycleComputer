@@ -2,10 +2,6 @@
 
 #include <Arduino.h>
 
-#ifndef ARDUINO_ARCH_SPRESENSE
-#define ARDUINO_ARCH_SPRESENSE
-#endif
-
 // デバッグ用定数
 // #define DEBUGDAO
 
@@ -17,10 +13,8 @@
 // #define DISPLAY_TYPE DISPLAY_SEVENSEG   // 7セグメントディスプレイ
 #define DISPLAY_TYPE DISPLAY_OLED  // OLEDディスプレイ
 
-// 省電力設定の条件付きコンパイル用フラグ
-#ifdef ARDUINO_ARCH_SPRESENSE
-#define ENABLE_POWER_SAVING 1
-#endif
+// 省電力機能有効化フラグ
+#define ENABLE_POWER_SAVING
 
 namespace Config {
     namespace Pin {
