@@ -1,4 +1,5 @@
 #include "TripComputer.h"
+#include "../Config.h"
 
 TripComputer::TripComputer() {}
 
@@ -29,7 +30,7 @@ void TripComputer::update(float currentSpeedKmh, unsigned long currentMs) {
     // 速度は km/h、時間は ms。
     // 距離 (km) = 速度 (km/h) * (deltaMs / 1000.0 / 3600.0)
 
-    if (currentSpeedKmh > moveThresholdKmh) {
+    if (currentSpeedKmh > Config::Trip::MOVE_THRESHOLD_KMH) {
         // 移動時間を加算
         movingTimeMs += deltaMs;
 

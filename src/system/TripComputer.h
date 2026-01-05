@@ -11,7 +11,6 @@ class TripComputer {
     unsigned long elapsedTimeMs = 0;
 
     unsigned long lastUpdateMs = 0;
-    const float moveThresholdKmh = 3.0f;  // 「移動中」とみなすための閾値
 
    public:
     TripComputer();

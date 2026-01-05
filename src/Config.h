@@ -67,6 +67,14 @@ namespace Config {
         constexpr int ADDRESS = 0x3C;
     }
 
+    namespace Time {
+        constexpr int TIMEZONE_OFFSET = 9;  // JST (+9)
+    }
+
+    namespace Trip {
+        constexpr float MOVE_THRESHOLD_KMH = 3.0f;  // 「移動中」とみなすための閾値
+    }
+
     namespace Power {
         constexpr int BATTERY_LOW_THRESHOLD = 3600;  // 3.6V
         constexpr int BATTERY_CHECK_INTERVAL_MS = 10000;

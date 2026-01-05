@@ -1,6 +1,7 @@
 #include "GPSWrapper.h"
 
 #include <Arduino.h>
+#include "../Config.h"
 
 bool GPSWrapper::begin() {
 #ifdef ARDUINO_ARCH_SPRESENSE
@@ -58,9 +59,9 @@ void GPSWrapper::getTimeJST(char *buffer, size_t size) {
         return;
     }
 
-    // 単純な UTC から JST への変換 (+9 時間)
+    // 単純な UTC から JST への変換
     // 表示用の時間のみを処理 (日付の繰り越しは無視)
-    int hour = navData.time.hour + 9;
+    int hour = navData.time.hour + Config::Time::TIMEZONE_OFFSET;
     if (hour >= 24) {
         hour -= 24;
     }
