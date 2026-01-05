@@ -59,6 +59,8 @@ namespace Config {
         constexpr int WarnLed = PIN_D02;
     }
 
+    constexpr unsigned long DISPLAY_UPDATE_INTERVAL_MS = 0;
+
     namespace SevenSeg {
         // アノードコモンにおける数字表示用16進数
         // 0, 1, 2, ... 9, ハイフン

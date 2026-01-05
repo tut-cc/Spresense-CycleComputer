@@ -1,8 +1,3 @@
-/*
- * ファイル: CycleComputer.h
- * 説明: CycleComputerクラス
- */
-
 #pragma once
 
 #include "../drivers/GPSWrapper.h"
@@ -12,7 +7,7 @@
 #include "TripComputer.h"
 
 class CycleComputer {
-   private:
+private:
     IDisplay *display;
     InputManager inputManager;
     ModeManager modeManager;
@@ -27,12 +22,12 @@ class CycleComputer {
     // ディスプレイ更新制御
     unsigned long lastDisplayUpdate = 0;
     bool forceUpdate = false;
-    static const unsigned long DISPLAY_UPDATE_INTERVAL_MS = 0;  // 5 FPS for others
 
     void handleInput();
     void updateDisplay();
+    void getDisplayData(Mode mode, DisplayDataType& type, char* buf, size_t size);
 
-   public:
+public:
     CycleComputer(IDisplay *display);
     void begin();
     void update();
