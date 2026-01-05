@@ -44,17 +44,10 @@ void CycleComputer::handleInput() {
         case INPUT_BTN_A:
             // Serial.println("押されてる");
             modeManager.nextMode();
-// 画面が乱れることがあるため、I2C LCDの場合のみ再初期化して復帰させる
-#if DISPLAY_TYPE == DISPLAY_I2C_LCD
-            display->begin();
-#endif
             forceUpdate = true;
             break;
         case INPUT_BTN_BOTH:
             tripComputer.reset();
-#if DISPLAY_TYPE == DISPLAY_I2C_LCD
-            display->begin();
-#endif
             forceUpdate = true;
             break;
         case INPUT_BTN_B:

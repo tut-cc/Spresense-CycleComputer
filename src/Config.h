@@ -18,24 +18,13 @@
 
 // ディスプレイタイプ選択は条件付きコンパイルに使用されるため、#defineのままにする
 // ディスプレイ設定
-#define DISPLAY_LCD 1
 #define DISPLAY_SEVENSEG 2
-#define DISPLAY_I2C_LCD 3
 
 // ディスプレイタイプの選択（使用するものを1つだけ有効にしてください）
-// #define DISPLAY_TYPE DISPLAY_LCD        // 標準的なパラレル接続LCD
-// #define DISPLAY_TYPE DISPLAY_SEVENSEG   // 7セグメントディスプレイ
-// #define DISPLAY_TYPE DISPLAY_I2C_LCD  // I2C接続LCD (0x27)
 #define DISPLAY_TYPE DISPLAY_SEVENSEG   // 7セグメントディスプレsイ
 
 //ボタンのピン
 enum ButtonConfig { BTN_A_PIN = PIN_D00, BTN_B_PIN = PIN_D01 };
-
-// LCD設定
-enum LCDConfig { LCD_RS = 2, LCD_E = 3, LCD_D4 = 4, LCD_D5 = 5, LCD_D6 = 6, LCD_D7 = 7 };
-
-// I2C LCD設定
-enum I2CLCDConfig { LCD_I2C_ADDR = 0x27, LCD_COLS = 16, LCD_ROWS = 2 };
 
 // 7セグメント設定
 // シフトレジスタ

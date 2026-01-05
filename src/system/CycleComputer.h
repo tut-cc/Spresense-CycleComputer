@@ -27,11 +27,7 @@ class CycleComputer {
     // ディスプレイ更新制御
     unsigned long lastDisplayUpdate = 0;
     bool forceUpdate = false;
-#if DISPLAY_TYPE == DISPLAY_I2C_LCD
-    static const unsigned long DISPLAY_UPDATE_INTERVAL_MS = 1000;  // 1 FPS for I2C
-#else
     static const unsigned long DISPLAY_UPDATE_INTERVAL_MS = 0;  // 5 FPS for others
-#endif
 
     void handleInput();
     void updateDisplay();
