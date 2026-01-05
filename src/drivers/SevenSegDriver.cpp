@@ -86,12 +86,8 @@ void SevenSegDriver::update() {
         digitalWrite(placePin[currentDigit], HIGH);
         
         // Update colons (Original logic: colonPin[digit] HIGH, others LOW)
-        for (int i = 0; i < 5; i++) {
-             digitalWrite(colonPin[i], LOW);
-        }
-        if (currentDigit < 4) {
-             digitalWrite(colonPin[currentDigit], HIGH); 
-        }
+        for (int i = 0; i < 5; i++) digitalWrite(colonPin[i], LOW);
+        if (currentDigit < 4)       digitalWrite(colonPin[currentDigit], HIGH); 
     }
 }
 
