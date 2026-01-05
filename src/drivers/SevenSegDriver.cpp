@@ -59,23 +59,23 @@ void SevenSegDriver::show(DisplayDataType type, const char* value) {
 
 void SevenSegDriver::update() {
     unsigned long currentMicros = micros();
-    if (currentMicros - lastMultiplexTime >= MULTIPLEX_INTERVAL_US) {
-        lastMultiplexTime = currentMicros;
+    if (currentMicros - lastMultiplexTime >= MULTIPLEX_INTERVAL_US) return;
+    
+    lastMultiplexTime = currentMicros;
 
-        digitalWrite(placePin[currentDigit], LOW); // Turn off current digit
-        currentDigit = (currentDigit + 1) % 4; // Move to next digit
+    digitalWrite(placePin[currentDigit], LOW);  // Turn off current digit
+    currentDigit = (currentDigit + 1) % 4;      // Move to next digit
 
-        // Prepare new data
-        byte data = digitBuffer[currentDigit];
-        hc595_shift(data);
+    // Prepare new data
+    byte data = digitBuffer[currentDigit];
+    hc595_shift(data);
 
-        // Turn on new digit
-        digitalWrite(placePin[currentDigit], HIGH);
-        
-        // Update colons (Original logic: colonPin[digit] HIGH, others LOW)
-        for (int i = 0; i < 5; i++) digitalWrite(colonPin[i], LOW);
-        if (currentDigit < 4)       digitalWrite(colonPin[currentDigit], HIGH); 
-    }
+    // Turn on new digit
+    digitalWrite(placePin[currentDigit], HIGH);
+    
+    // Update colons
+    for (int i = 0; i < 5; i++) digitalWrite(colonPin[i], LOW);
+    if (currentDigit < 4)       digitalWrite(colonPin[currentDigit], HIGH);
 }
 
 void SevenSegDriver::hc595_shift(byte data) {
