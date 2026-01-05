@@ -7,36 +7,33 @@
 #include "../Config.h"
 #include <Arduino.h>
 
-OLEDDriver::OLEDDriver() : display(OLED_WIDTH, OLED_HEIGHT, &Wire, -1) {
-    currentType = (DisplayDataType)-1; // Invalid initial type
+OLEDDriver::OLEDDriver() : display(Config::OLED::Width, Config::OLED::Height, &Wire, -1) {
+    currentType = DISPLAY_INVALID; // Invalid initial type
 }
 
 void OLEDDriver::begin() {
-    if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDRESS)) {
+    if (!display.begin(SSD1306_SWITCHCAPVCC, Config::OLED::Address)) {
         Serial.println(F("SSD1306 allocation failed"));
         for (;;); // Don't proceed, loop forever
     }
+    
     display.clearDisplay();
     display.display();
     display.setTextColor(SSD1306_WHITE);
     display.setTextSize(1);
     
-    // Initial content
-    currentValue = "";
+    currentValue = ""; // Initial content
 }
 
 void OLEDDriver::clear() {
     display.clearDisplay();
     display.display();
     currentValue = "";
-    currentType = (DisplayDataType)-1;
+    currentType = DISPLAY_INVALID;
 }
 
 void OLEDDriver::show(DisplayDataType type, const char* value) {
-    // Check if we need to update
-    if (type == currentType && currentValue.equals(value)) {
-        return;
-    }
+    if (type == currentType && currentValue.equals(value)) return;
 
     currentType = type;
     currentValue = String(value);
@@ -51,34 +48,14 @@ void OLEDDriver::show(DisplayDataType type, const char* value) {
     String title = "";
 
     switch (type) {
-        case DISPLAY_DATA_SPEED:
-            title = "SPEED";
-            unit = "km/h";
-            break;
-        case DISPLAY_DATA_TIME:
-            title = "TIME";
-            break;
-        case DISPLAY_DATA_MAX_SPEED:
-            title = "MAX SPEED";
-            unit = "km/h";
-            break;
-        case DISPLAY_DATA_DISTANCE:
-            title = "DISTANCE";
-            unit = "km";
-            break;
-        case DISPLAY_DATA_MOVING_TIME:
-            title = "MOVING TIME";
-            break;
-        case DISPLAY_DATA_ELAPSED_TIME:
-            title = "ELAPSED TIME";
-            break;
-        case DISPLAY_DATA_AVG_SPEED:
-            title = "AVG SPEED";
-            unit = "km/h";
-            break;
-        default:
-            title = "UNKNOWN";
-            break;
+        case DISPLAY_DATA_SPEED:        title = "SPEED";        unit = "km/h";  break;
+        case DISPLAY_DATA_TIME:         title = "TIME";                         break;
+        case DISPLAY_DATA_MAX_SPEED:    title = "MAX SPEED";    unit = "km/h";  break;
+        case DISPLAY_DATA_DISTANCE:     title = "DISTANCE";     unit = "km";    break;
+        case DISPLAY_DATA_MOVING_TIME:  title = "MOVING TIME";                  break;
+        case DISPLAY_DATA_ELAPSED_TIME: title = "ELAPSED TIME";                 break;
+        case DISPLAY_DATA_AVG_SPEED:    title = "AVG SPEED";    unit = "km/h";  break;
+        default:                        title = "UNKNOWN";                      break;
     }
 
     display.println(title);
@@ -98,8 +75,8 @@ void OLEDDriver::show(DisplayDataType type, const char* value) {
     uint16_t w, h;
     display.getTextBounds(currentValue, 0, 0, &x1, &y1, &w, &h);
     
-    int x = (OLED_WIDTH - w) / 2;
-    int y = (OLED_HEIGHT - h) / 2 + 8; // shift down a bit below title
+    int x = (Config::OLED::Width - w) / 2;
+    int y = (Config::OLED::Height - h) / 2 + 8; // shift down a bit below title
 
     display.setCursor(x, y);
     display.print(currentValue);
@@ -108,7 +85,7 @@ void OLEDDriver::show(DisplayDataType type, const char* value) {
     if (unit.length() > 0) {
         display.setTextSize(1);
         display.getTextBounds(unit, 0, 0, &x1, &y1, &w, &h);
-        display.setCursor(OLED_WIDTH - w - 4, OLED_HEIGHT - h - 2);
+        display.setCursor(Config::OLED::Width - w - 4, Config::OLED::Height - h - 2);
         display.print(unit);
     }
 

@@ -7,22 +7,25 @@
 #include "../Config.h"
 
 // 静的メンバ変数の定義
-const int SevenSegDriver::placePin[] = {PIN_D10, PIN_D11, PIN_D12, PIN_D13};
-const int SevenSegDriver::colonPin[] = {PIN_D03, PIN_D04, PIN_D05, PIN_D06, PIN_D07};
+const int SevenSegDriver::placePin[] = {
+    Config::Pin::D1, Config::Pin::D2, Config::Pin::D3, Config::Pin::D4
+};
+const int SevenSegDriver::colonPin[] = {
+    Config::Pin::D1_Colon, Config::Pin::D2_Colon, Config::Pin::D3_Colon, Config::Pin::D4_Colon, Config::Pin::Dot_Colon
+};
 
 // 7セグメントのデータ
-// 0, 1, 2, ... 9, ハイフン
-// 左からabcdefg, dotに対応する
-const unsigned char SevenSegDriver::number[] = {0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90, 0xbf};
-const unsigned char SevenSegDriver::numdot[] = {0x40, 0x79, 0x24, 0x30, 0x19, 0x12, 0x02, 0x78, 0x00, 0x10, 0xbf};
+// Configから参照
+const unsigned char* SevenSegDriver::number = Config::SevenSeg::Numbers;
+const unsigned char* SevenSegDriver::numdot = Config::SevenSeg::NumbersWithDot;
 
 void SevenSegDriver::begin() {
     Serial.begin(115200);
-    Serial.println("SevenSegDriver initialized");
+    Serial.println("[SevenSegDriver] initialized");
 }
 
 void SevenSegDriver::clear() {
-    Serial.println("[7SEG] CLEAR");
+    Serial.println("[SevenSegDriver] CLEAR");
 }
 
 void SevenSegDriver::pickDigit(int digit) {
@@ -39,13 +42,13 @@ void SevenSegDriver::pickDigit(int digit) {
 
 // シフトレジスタにデータを送る関数
 void SevenSegDriver::hc595_shift(byte data) {
-    digitalWrite(RCLK_PIN, LOW);  // 送信準備
+    digitalWrite(Config::Pin::RCLK, LOW);  // 送信準備
 
     // MSBFIRST: 最上位ビットから順に送信
-    shiftOut(SDI_PIN, SRCLK_PIN, MSBFIRST, data);
-    shiftOut(SDI_PIN, SRCLK_PIN, MSBFIRST, data);
+    shiftOut(Config::Pin::SDI, Config::Pin::SRCLK, MSBFIRST, data);
+    shiftOut(Config::Pin::SDI, Config::Pin::SRCLK, MSBFIRST, data);
 
-    digitalWrite(RCLK_PIN, HIGH);  // ラッチ(出力反映)
+    digitalWrite(Config::Pin::RCLK, HIGH);  // ラッチ(出力反映)
 }
 
 // 表示をクリアする関数
@@ -55,23 +58,29 @@ void SevenSegDriver::clearDisplay() {
 }
 
 void SevenSegDriver::show(DisplayDataType type, const char* value) {
-    // ピンモード設定
-    pinMode(SDI_PIN, OUTPUT);
-    pinMode(RCLK_PIN, OUTPUT);
-    pinMode(SRCLK_PIN, OUTPUT);
+    pinMode(Config::Pin::SDI, OUTPUT);
+    pinMode(Config::Pin::RCLK, OUTPUT);
+    pinMode(Config::Pin::SRCLK, OUTPUT);
 
     for (int i = 0; i < 4; i++) {
         pinMode(placePin[i], OUTPUT);
-        digitalWrite(placePin[i], LOW);  // 初期状態はOFFにしておく(High ActiveならLOWでOFF)
+        digitalWrite(placePin[i], LOW);  // 初期状態はOFFにしておく(Active HighならLOWでOFF)
     }
 
     for (int i = 0; i < 5; i++) {
         pinMode(colonPin[i], OUTPUT);
-        digitalWrite(colonPin[i], LOW);  // 初期状態はOFFにしておく(High ActiveならLOWでOFF)
+        digitalWrite(colonPin[i], LOW);  // 初期状態はOFFにしておく(Active HighならLOWでOFF)
     }
 
     // --- ダイナミック点灯処理 (高速切り替え) ---
-    // atofを使って、文字列を一度「小数(float)」に変換する
+
+#ifdef DEBUGDAO
+    dig1 = 1;
+    dig2 = 2;
+    dig3 = 3;
+    dig4 = 4;
+#else
+    // atofを使って、文字列を一度「少数(float)」に変換する
     float f_val = atof(value);
 
     // Serial.println(f_val);
@@ -89,17 +98,8 @@ void SevenSegDriver::show(DisplayDataType type, const char* value) {
         dig3 = (molding / 10) % 10;
         dig4 = molding % 10;
     }
-
-    #ifdef DEBUGDAO
-        if(type==0){
-            dig1 = 1;
-            dig2=2;
-            dig3=3;
-            dig4=4;
-        }
-    #endif
-
-    // Serial.print("[7SEG] ");
+#endif
+    // Serial.print("[SevenSegDriver] ");
     // Serial.println(value);
 
     clearDisplay();

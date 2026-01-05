@@ -11,7 +11,7 @@
 #include <LowPower.h>
 #endif
 
-CycleComputer::CycleComputer(IDisplay *display) : display(display) {}
+CycleComputer::CycleComputer(IDisplay* display) : display(display) {}
 
 void CycleComputer::begin() {
     display->begin();
@@ -20,8 +20,8 @@ void CycleComputer::begin() {
     tripComputer.begin();
 
 #ifdef ENABLE_POWER_SAVING
-    pinMode(WARN_LED, OUTPUT);
-    digitalWrite(WARN_LED, LOW);
+    pinMode(Config::Pin::WarnLed, OUTPUT);
+    digitalWrite(Config::Pin::WarnLed, LOW);
 #endif
 }
 
@@ -38,11 +38,9 @@ void CycleComputer::update() {
 
 void CycleComputer::handleInput() {
     InputEvent event = inputManager.update();
-    // Serial.println(event);
 
     switch (event) {
         case INPUT_BTN_A:
-            // Serial.println("押されてる");
             modeManager.nextMode();
             forceUpdate = true;
             break;
@@ -51,7 +49,6 @@ void CycleComputer::handleInput() {
             forceUpdate = true;
             break;
         case INPUT_BTN_B:
-            // 将来のプレースホルダー
             break;
         default:
             break;
@@ -62,18 +59,15 @@ void CycleComputer::updateDisplay() {
     unsigned long currentMillis = millis();
 
     // 強制更新フラグがなく、かつ更新間隔未満であればスキップ
-    if (!forceUpdate && (currentMillis - lastDisplayUpdate < DISPLAY_UPDATE_INTERVAL_MS)) {
-        return;
-    }
+    if (!forceUpdate && (currentMillis - lastDisplayUpdate < DISPLAY_UPDATE_INTERVAL_MS)) return;
 
     lastDisplayUpdate = currentMillis;
     forceUpdate = false;
 
-
     // デバッグ用の処理
     #ifdef DEBUGDAO
     // 前回のモードを記憶しておく変数 (staticなので値を保持し続けます)
-    static int lastDebugMode = -1; 
+    static int lastDebugMode = -1;
     
     // 今回表示すべきかどうかのフラグ
     bool shouldPrintDebug = false;
@@ -86,79 +80,78 @@ void CycleComputer::updateDisplay() {
     }
     #endif
 
-
     char buf[20];
 
     switch (modeManager.getMode()) {
         case MODE_SPEED:
             formatFloat(gps.getSpeedKmh(), 4, 1, buf, sizeof(buf));
-            #ifdef DEBUGDAO
+#ifdef DEBUGDAO
             // ▼ モード切替時のみ表示
             if (shouldPrintDebug) {
-                Serial.print("速度です");
+                Serial.print("[CycleComputer] モード：速度");
                 Serial.println(buf);
             }
-            #endif
+#endif
             display->show(DISPLAY_DATA_SPEED, buf);
             break;
         case MODE_TIME:
             gps.getTimeJST(buf, sizeof(buf));
-            #ifdef DEBUGDAO
+#ifdef DEBUGDAO
             if (shouldPrintDebug) {
-                Serial.print("TimeJSTです");
+                Serial.print("[CycleComputer] モード：TimeJST");
                 Serial.println(buf);
             }
-            #endif
+#endif
             display->show(DISPLAY_DATA_TIME, buf);
             break;
         case MODE_MAX_SPEED:
             formatFloat(tripComputer.getMaxSpeedKmh(), 4, 1, buf, sizeof(buf));
-            #ifdef DEBUGDAO
+#ifdef DEBUGDAO
             if (shouldPrintDebug) {
-                Serial.print("MAXSPEEDです");
+                Serial.print("[CycleComputer] モード：MAXSPEED");
                 Serial.println(buf);
             }
-            #endif
+#endif
             display->show(DISPLAY_DATA_MAX_SPEED, buf);
             break;
         case MODE_DISTANCE:
             formatFloat(tripComputer.getDistanceKm(), 5, 2, buf, sizeof(buf));
-            #ifdef DEBUGDAO
+#ifdef DEBUGDAO
             if (shouldPrintDebug) {
-                Serial.print("走行距離です");
+                Serial.print("[CycleComputer] モード：走行距離");
                 Serial.println(buf);
             }
-            #endif
+#endif
             display->show(DISPLAY_DATA_DISTANCE, buf);
             break;
         case MODE_MOVING_TIME:
             tripComputer.getMovingTimeStr(buf, sizeof(buf));
-            #ifdef DEBUGDAO
+#ifdef DEBUGDAO
             if (shouldPrintDebug) {
-                Serial.print("走行時間です");
+                Serial.print("[CycleComputer] モード：走行時間");
                 Serial.println(buf);
             }
-            #endif
+#endif
             display->show(DISPLAY_DATA_MOVING_TIME, buf);
             break;
         case MODE_ELAPSED_TIME:
             tripComputer.getElapsedTimeStr(buf, sizeof(buf));
-            #ifdef DEBUGDAO
+#ifdef DEBUGDAO
             if (shouldPrintDebug) {
-                Serial.print("経過時間です");
+                Serial.print("[CycleComputer] モード：経過時間");
                 Serial.println(buf);
             }
-            #endif
+#endif
             display->show(DISPLAY_DATA_ELAPSED_TIME, buf);
             break;
         case MODE_AVG_SPEED:
             formatFloat(tripComputer.getAvgSpeedKmh(), 4, 1, buf, sizeof(buf));
-            #ifdef DEBUGDAO
+#ifdef DEBUGDAO
             if (shouldPrintDebug) {
-                Serial.print("平均速度");
+                Serial.print("[CycleComputer] モード：平均速度");
                 Serial.println(buf);
             }
-            #endif
+#endif
             display->show(DISPLAY_DATA_AVG_SPEED, buf);
             break;
     }
@@ -174,28 +167,26 @@ void CycleComputer::checkBattery() {
         lastBatteryCheck = currentMillis;
         int voltage = LowPower.getVoltage();
         // 電圧が有効であり（USBでは0を返すことがある）、かつ閾値を下回っているかを確認
-        if (voltage > 0 && voltage < BATTERY_LOW_THRESHOLD) {
-            isLowBattery = true;
-        } else {
-            isLowBattery = false;
-            digitalWrite(WARN_LED, LOW);  // 安全な場合はLEDがオフであることを保証する
+            if (voltage > 0 && voltage < Config::Power::BatteryLowThreshold) {
+                isLowBattery = true;
+            } else {
+                isLowBattery = false;
+                digitalWrite(Config::Pin::WarnLed, LOW);  // 安全な場合はLEDがオフであることを保証する
+            }
         }
-    }
 
-    // バッテリー残量が少ない場合、LEDを点滅させる
-    // 点滅パターン: 500ms 点灯 / 500ms 消灯
-    if (isLowBattery) {
-        // ブロッキングなしの単純な点滅ケイデンスのために時間の剰余を使用
-        // (currentMillis / 500) % 2 == 0 は、0-499ms: 点灯、500-999ms:
-        // 消灯を意味する
-        if ((currentMillis / LED_BLINK_INTERVAL_MS) % 2 == 0) {
-            digitalWrite(WARN_LED, HIGH);
-        } else {
-            digitalWrite(WARN_LED, LOW);
+        // バッテリー残量が少ない場合、LEDを点滅させる
+        // 点滅パターン: 500ms 点灯 / 500ms 消灯
+        if (isLowBattery) {
+            // ブロッキングなしの単純な点滅ケイデンスのために時間の剰余を使用
+            // (currentMillis / 500) % 2 == 0 は、0-499ms: 点灯、500-999ms:
+            // 消灯を意味する
+            if ((currentMillis / Config::Power::LedBlinkIntervalMs) % 2 == 0) {
+                digitalWrite(Config::Pin::WarnLed, HIGH);
+            } else {
+                digitalWrite(Config::Pin::WarnLed, LOW);
+            }
         }
-    }
 #endif
-*/
-
-//なんか処理
+    */
 }

@@ -2,7 +2,7 @@
 
 #include "../Config.h"
 
-InputManager::InputManager() : btnA(BTN_A_PIN), btnB(BTN_B_PIN) {}
+InputManager::InputManager() : btnA(Config::Pin::BtnA), btnB(Config::Pin::BtnB) {}
 
 void InputManager::begin() {
     btnA.begin();
@@ -10,50 +10,39 @@ void InputManager::begin() {
 }
 
 InputEvent InputManager::update() {
-        // Serial.println(INPUT_BTN_A);
-
-        //この瞬間に、押されたか
+        // ボタンの押下状態を取得
         bool aPressed = btnA.isPressed();
         bool bPressed = btnB.isPressed();
 
-
-        //同時押し、単押しの順番でやらないと、動きませんよー
-
-        #ifdef DEBUGDAO
-
-        // 同時押しの確認表示用
-        if (aPressed && btnB.isHeld()){
-             Serial.println("同時に押されたァ");
-             return INPUT_BTN_BOTH;
-        }
-
-        if (bPressed && btnA.isHeld()){
-             Serial.println("同時に押されたァ");
-             return INPUT_BTN_BOTH;
-        }
-        #endif
-
-        #ifdef IS_SPRESENSE
-        // 単押しの確認用
-        if (aPressed) {
-            Serial.println("Aだよ");
-            digitalWrite( WARN_LED, HIGH );         
-            return INPUT_BTN_A;
-        }
-        if (bPressed) {
-            Serial.println("Bだよ");
-            digitalWrite( WARN_LED, LOW );
-            return INPUT_BTN_B;
-        }
-        #endif
-
         // 同時押しの確認
-        if (aPressed && btnB.isHeld()) return INPUT_BTN_BOTH;
-        if (bPressed && btnA.isHeld()) return INPUT_BTN_BOTH;
+        if (aPressed && btnB.isHeld()) {
+#ifdef DEBUGDAO
+            Serial.println("[InputManager] 同時に押されたァ");
+#endif
+            return INPUT_BTN_BOTH;
+        }
+
+        if (bPressed && btnA.isHeld()) {
+#ifdef DEBUGDAO
+            Serial.println("[InputManager] 同時に押されたァ");
+#endif
+            return INPUT_BTN_BOTH;
+        }
 
         // 単押しの確認
-        if (aPressed) return INPUT_BTN_A;
-        if (bPressed) return INPUT_BTN_B;
+        if (aPressed) {
+#ifdef DEBUGDAO
+            Serial.println("[InputManager] Aボタンが押された");
+#endif
+            return INPUT_BTN_A;
+        }
+
+        if (bPressed) {
+#ifdef DEBUGDAO
+            Serial.println("[InputManager] Bボタンが押された");
+#endif
+            return INPUT_BTN_B;
+        }
 
         return INPUT_NONE;
 }

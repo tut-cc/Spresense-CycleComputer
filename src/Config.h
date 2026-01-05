@@ -1,7 +1,6 @@
 /*
  * ファイル: Config.h
- * 説明: システム全体の設定パラメータ。
- *       ピン、ディスプレイ設定、および機能フラグを定義します。
+ * 説明: システム全体の設定パラメータ
  */
 
 #pragma once
@@ -12,12 +11,10 @@
 #define ARDUINO_ARCH_SPRESENSE
 #endif
 
-#ifndef DEBUGDAO
-#define DEBUGDAO
-#endif
+// デバッグ用定数
+// #define DEBUGDAO
 
-// ディスプレイタイプ選択は条件付きコンパイルに使用されるため、#defineのままにする
-// ディスプレイ設定
+// ディスプレイタイプ定数
 #define DISPLAY_SEVENSEG 1
 #define DISPLAY_OLED 2
 
@@ -25,70 +22,77 @@
 // #define DISPLAY_TYPE DISPLAY_SEVENSEG   // 7セグメントディスプレイ
 #define DISPLAY_TYPE DISPLAY_OLED   // OLEDディスプレイ
 
-//ボタンのピン
-enum ButtonConfig { BTN_A_PIN = PIN_D00, BTN_B_PIN = PIN_D01 };
-
-// 7セグメント設定
-// シフトレジスタ
-#define SDI_PIN PIN_D09
-#define RCLK_PIN PIN_D08
-#define SRCLK_PIN PIN_D07
-
-// 桁の指定ピン
-#define D1_PIN PIN_D10
-#define D2_PIN PIN_D11
-#define D3_PIN PIN_D12
-#define D4_PIN PIN_D13
-
-//コロン付きの桁指定ピン
-#define D1_COLON PIN_D03
-#define D2_COLON PIN_D04
-#define D3_COLON PIN_D05
-#define D4_COLON PIN_D06
-#define DOT_COLON PIN_D07
-
-// アノードコモンにおける数字表示用16進数
-#define DIS_NUM_0 0xc0
-#define DIS_NUM_1 0xf9
-#define DIS_NUM_2 0xa4
-#define DIS_NUM_3 0xb0
-#define DIS_NUM_4 0x99
-#define DIS_NUM_5 0x92
-#define DIS_NUM_6 0x82
-#define DIS_NUM_7 0xf8
-#define DIS_NUM_8 0x80
-#define DIS_NUM_9 0x90
-#define DIS_NUM_HYPHEN 0xbf
-
-// ドット付表示をさせるための、アノードコモンにおける数字表示用16進数
-#define DOT_NUM_0 0x40
-#define DOT_NUM_1 0x79
-#define DOT_NUM_2 0x24
-#define DOT_NUM_3 0x30
-#define DOT_NUM_4 0x19
-#define DOT_NUM_5 0x12
-#define DOT_NUM_6 0x02
-#define DOT_NUM_7 0x78
-#define DOT_NUM_8 0x00
-#define DOT_NUM_9 0x10
-#define DOT_NUM_HYPHEN 0xbf
-
-// OLED設定
-#define OLED_WIDTH 128
-#define OLED_HEIGHT 64
-#define OLED_ADDRESS 0x3C
-#define OLED_SCL PIN_D15
-#define OLED_SDA PIN_D14
-
-// 省電力設定
+// 省電力設定の条件付きコンパイル用フラグ
 #ifdef ARDUINO_ARCH_SPRESENSE
-#define IS_SPRESENSE 1
 #define ENABLE_POWER_SAVING 1
-const int BATTERY_LOW_THRESHOLD = 3600;  // 3.6V (リミットは 3.5V-3.6V 付近)
-const int BATTERY_CHECK_INTERVAL_MS = 10000;
-const int LED_BLINK_INTERVAL_MS = 500;
-const int WARN_LED = PIN_D02;
-#else
-// Arduino またはその他のプラットフォーム
-#undef ENABLE_POWER_SAVING
 #endif
+
+namespace Config {
+    namespace Pin {
+        // ボタン
+        constexpr int BtnA = PIN_D00;
+        constexpr int BtnB = PIN_D01;
+
+        // 7セグメントシフトレジスタ
+        constexpr int SDI = PIN_D09;
+        constexpr int RCLK = PIN_D08;
+        constexpr int SRCLK = PIN_D07;
+
+        // 7セグメント桁指定 (Common Anode/Cathode selection pins)
+        constexpr int D1 = PIN_D10;
+        constexpr int D2 = PIN_D11;
+        constexpr int D3 = PIN_D12;
+        constexpr int D4 = PIN_D13;
+
+        // 7セグメントコロン/ドット制御
+        constexpr int D1_Colon = PIN_D03;
+        constexpr int D2_Colon = PIN_D04;
+        constexpr int D3_Colon = PIN_D05;
+        constexpr int D4_Colon = PIN_D06;
+        constexpr int Dot_Colon = PIN_D07;
+
+        // OLED (I2C)
+        constexpr int OLED_SCL = PIN_D15;
+        constexpr int OLED_SDA = PIN_D14;
+
+        // システム
+        constexpr int WarnLed = PIN_D02;
+    }
+
+    namespace SevenSeg {
+        // アノードコモンにおける数字表示用16進数
+        // 0, 1, 2, ... 9, ハイフン
+        constexpr unsigned char Numbers[] = {
+            0xc0, 0xf9, 0xa4, 0xb0, 0x99, 
+            0x92, 0x82, 0xf8, 0x80, 0x90, 
+            0xbf
+        };
+
+        // ドット付表示用
+        constexpr unsigned char NumbersWithDot[] = {
+            0x40, 0x79, 0x24, 0x30, 0x19, 
+            0x12, 0x02, 0x78, 0x00, 0x10, 
+            0xbf
+        };
+    }
+
+    namespace OLED {
+        constexpr int Width = 128;
+        constexpr int Height = 64;
+        constexpr int Address = 0x3C;
+    }
+
+    namespace Power {
+        #ifdef ARDUINO_ARCH_SPRESENSE
+            constexpr bool IsSpresense = true;
+            constexpr int BatteryLowThreshold = 3600;  // 3.6V
+            constexpr int BatteryCheckIntervalMs = 10000;
+            constexpr int LedBlinkIntervalMs = 500;
+        #else
+            constexpr bool IsSpresense = false;
+            constexpr int BatteryLowThreshold = 0;
+            constexpr int BatteryCheckIntervalMs = 10000;
+            constexpr int LedBlinkIntervalMs = 500;
+        #endif
+    }
+}

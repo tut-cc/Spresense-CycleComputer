@@ -32,6 +32,6 @@ class SevenSegDriver : public IDisplay {
     // 定数データ
     static const int placePin[4];
     static const int colonPin[5];
-    static const unsigned char number[11];
-    static const unsigned char numdot[11];
+    static const unsigned char* number;
+    static const unsigned char* numdot;
 };
