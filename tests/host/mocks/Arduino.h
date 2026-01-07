@@ -1,10 +1,14 @@
 #pragma once
 
+// Fix for libc++ availability macros error on Linux
+#define _LIBCPP_HAS_NO_VENDOR_AVAILABILITY_ANNOTATIONS
+
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <cmath>
 #include <iostream>
+#include <algorithm>
 
 // Mock basic types
 using std::max;

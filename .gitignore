@@ -7,3 +7,7 @@ output/
 compile_commands.json
 generate_compdb.sh
 .vscode/
+
+# Object files and dependencies
+*.o
+*.d
