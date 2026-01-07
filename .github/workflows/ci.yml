@@ -28,3 +28,18 @@ jobs:
 
       - name: Compile Sketch
         run: arduino-cli compile --fqbn SPRESENSE:spresense:spresense . --additional-urls https://github.com/sonydevworld/spresense-arduino-compatible/releases/download/generic/package_spresense_index.json --warnings all
+
+  test-host:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure CMake
+        run: cmake -S . -B build
+
+      - name: Build Tests
+        run: cmake --build build --target run_tests
+
+      - name: Run Tests
+        run: ./build/tests/host/run_tests
