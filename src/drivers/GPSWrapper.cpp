@@ -72,3 +72,22 @@ void GPSWrapper::getTimeJST(char *buffer, size_t size) {
     snprintf(buffer, size, "%02d:%02d", mockHour, mockMinute);
 #endif
 }
+
+#ifndef ARDUINO_ARCH_SPRESENSE
+// Define static members
+float GPSWrapper::mockSpeed = 0;
+unsigned long GPSWrapper::lastUpdate = 0;
+int GPSWrapper::mockHour = 0;
+int GPSWrapper::mockMinute = 0;
+int GPSWrapper::mockSecond = 0;
+
+void GPSWrapper::setMockSpeed(float speed) {
+    mockSpeed = speed;
+}
+
+void GPSWrapper::setMockTime(int hour, int minute, int second) {
+    mockHour = hour;
+    mockMinute = minute;
+    mockSecond = second;
+}
+#endif
