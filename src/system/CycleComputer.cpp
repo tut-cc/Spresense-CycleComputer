@@ -2,6 +2,7 @@
 
 #include "../Config.h"
 #include "Utils.h"
+#include "Logger.h"
 
 CycleComputer::CycleComputer(IDisplay* display) : display(display) {}
 
@@ -61,23 +62,27 @@ void CycleComputer::updateDisplay() {
     DisplayDataType type;
     getDisplayData(modeManager.getMode(), type, buf, sizeof(buf));
 
+    logDebugInfo(modeManager.getMode(), buf);
+
+    // ディスプレイ更新
+    display->show(type, buf);
+}
+
+void CycleComputer::logDebugInfo(Mode currentMode, const char* value) {
 #ifdef DEBUG_MODE
     // 前回のモードを記憶しておく変数 (staticなので値を保持し続けます)
     static int lastDebugMode = -1;
 
     // 現在のモードを取得して比較
-    int currentDebugMode = (int)modeManager.getMode();
-    if (lastDebugMode != currentDebugMode) {
-        Serial.print("[CycleComputer] Mode changed: ");
-        Serial.print(currentDebugMode);
-        Serial.print(" Value: ");
-        Serial.println(buf);
-        lastDebugMode = currentDebugMode;
+    int modeInt = (int)currentMode;
+    if (lastDebugMode != modeInt) {
+        Logger::log("[CycleComputer] Mode changed: ");
+        Logger::log(modeInt);
+        Logger::log(" Value: ");
+        Logger::logln(value);
+        lastDebugMode = modeInt;
     }
 #endif
-
-    // ディスプレイ更新
-    display->show(type, buf);
 }
 
 void CycleComputer::getDisplayData(Mode mode, DisplayDataType& type, char* buf, size_t size) {
