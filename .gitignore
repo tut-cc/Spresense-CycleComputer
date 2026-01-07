@@ -1,13 +1,32 @@
+# Build Artifacts
+build/
+output/
 *.elf
 *.hex
 *.bin
 *.lock
-build/
-output/
-compile_commands.json
-generate_compdb.sh
-.vscode/
-
-# Object files and dependencies
+*.map
+*.a
+*.so
 *.o
 *.d
+*.ii
+*.s
+
+# Coverage
+*.gcno
+*.gcda
+*.gcov
+
+# Metadata/Generated
+compile_commands.json
+generate_compdb.sh
+.cache/
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*~
+*.DS_Store
+Thumbs.db
