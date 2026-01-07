@@ -28,15 +28,25 @@ FetchContent_MakeAvailable(googletest)
 # Source files
 set(SOURCES
     ../../src/system/TripComputer.cpp
+    ../../src/system/InputManager.cpp
+    ../../src/system/CycleComputer.cpp
+    ../../src/system/ModeManager.cpp
+    ../../src/system/PowerManager.cpp
+    ../../src/drivers/Button.cpp
+    ../../src/drivers/GPSWrapper.cpp
+    mocks/MockGlobals.cpp
     mocks/MockGlobals.cpp
     TripComputerTest.cpp
+    InputManagerTest.cpp
+    CycleComputerTest.cpp
+    ModeManagerTest.cpp
 )
 
 # Define executable
 add_executable(run_tests ${SOURCES})
 
 # Link GoogleTest
-target_link_libraries(run_tests GTest::gtest_main)
+target_link_libraries(run_tests GTest::gmock_main)
 
 # Compiler warnings
 if(MSVC)

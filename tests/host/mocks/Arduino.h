@@ -15,10 +15,20 @@ using std::max;
 using std::min;
 using std::abs;
 
+// dtostrf mock
+inline char *dtostrf(double val, signed char width, unsigned char prec, char *s) {
+    char fmt[20];
+    sprintf(fmt, "%%%d.%df", width, prec);
+    sprintf(s, fmt, val);
+    return s;
+}
+
 // Time mocks
 extern unsigned long _mock_millis;
 inline unsigned long millis() { return _mock_millis; }
 inline void delay(unsigned long ms) { _mock_millis += ms; }
+
+// Pin mocks
 
 // Pin mocks
 #define PIN_D00 0
@@ -37,6 +47,43 @@ inline void delay(unsigned long ms) { _mock_millis += ms; }
 #define PIN_D13 13
 #define PIN_D14 14
 #define PIN_D15 15
+
+// Pin Modes
+#define INPUT 0
+#define OUTPUT 1
+#define INPUT_PULLUP 2
+
+// Pin States
+#define LOW 0
+#define HIGH 1
+
+#include <map>
+
+// GPIO State Map (Pin -> State)
+extern std::map<int, int> _mock_pin_states;
+
+inline void pinMode(int pin, int mode) {
+    (void)pin;
+    (void)mode;
+    // No-op for now
+}
+
+inline int digitalRead(int pin) {
+    if (_mock_pin_states.find(pin) != _mock_pin_states.end()) {
+        return _mock_pin_states[pin];
+    }
+    return HIGH; // Default to HIGH (pullup behavior)
+}
+
+inline void digitalWrite(int pin, int val) {
+    _mock_pin_states[pin] = val;
+}
+
+// Helper to set pin state for tests
+inline void setPinState(int pin, int state) {
+    _mock_pin_states[pin] = state;
+}
+
 
 // Serial Mock
 class SerialMock {

@@ -1,5 +1,8 @@
 #pragma once
 
+
+#include <Arduino.h>
+
 #ifdef ARDUINO_ARCH_SPRESENSE
 #include <GNSS.h>
 #endif
