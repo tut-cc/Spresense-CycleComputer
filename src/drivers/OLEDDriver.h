@@ -18,4 +18,5 @@ class OLEDDriver : public IDisplay {
     void begin() override;
     void clear() override;
     void show(DisplayDataType type, const char* value) override;
+    void update() override {};
 };

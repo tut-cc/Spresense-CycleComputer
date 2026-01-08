@@ -12,19 +12,15 @@ class SevenSegDriver : public IDisplay {
     void update() override;
 
    private:
-    // ヘルパー関数
-    void pickDigit(int digit);
     void hc595_shift(byte data);
-    void clearDisplay();
 
-    // 内部状態変数
-    int molding = 0;
-    int dig1 = 0;
-    int dig2 = 0;
-    int dig3 = 0;
-    int dig4 = 0;
+    // Internal state
+    byte digitBuffer[4] = {0, 0, 0, 0}; // Buffer for 4 digits (segment data)
+    int currentDigit = 0; // Currently active digit (0-3) for multiplexing
+    unsigned long lastMultiplexTime = 0;
+    const unsigned long MULTIPLEX_INTERVAL_US = 2000; // 2ms per digit
 
-    // 定数データ
+    // Constant data
     static const int placePin[4];
     static const int colonPin[5];
     static const unsigned char* number;
