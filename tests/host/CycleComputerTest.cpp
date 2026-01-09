@@ -118,7 +118,8 @@ TEST_F(CycleComputerTest, DisplayTime) {
     // Switch to TIME mode first
     pressButton(Config::Pin::BTN_A); 
     
-    GPSWrapper::setMockTime(12, 34, 56);
+    // Set UTC time to 3:34, which is 12:34 JST (UTC+9)
+    GPSWrapper::setMockTime(3, 34, 56);
     
     EXPECT_CALL(mockDisplay, show(DisplayDataType::TIME, StrEq("12:34")))
         .Times(testing::AtLeast(1));

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../drivers/GPSWrapper.h"
-#include "../drivers/IDisplay.h"
+#include "../interfaces/IDisplay.h"
 #include "InputManager.h"
 #include "ModeManager.h"
 #include "TripComputer.h"

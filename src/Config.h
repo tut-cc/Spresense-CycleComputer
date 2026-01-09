@@ -2,8 +2,7 @@
 
 #include <Arduino.h>
 
-// デバッグ用定数
-#define DEBUG_MODE
+#define DEBUG_MODE // デバッグ用定数
 
 namespace Config {
     namespace Pin {

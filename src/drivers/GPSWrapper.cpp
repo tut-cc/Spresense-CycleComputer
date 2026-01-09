@@ -52,3 +52,15 @@ void GPSWrapper::getTimeJST(char *buffer, size_t size) {
 
     snprintf(buffer, size, "%02d:%02d", hour, minute);
 }
+
+#ifdef UNIT_TEST
+void GPSWrapper::setMockTime(int h, int m, int s) {
+    SpGnss::mockTimeData.hour = h;
+    SpGnss::mockTimeData.minute = m;
+    SpGnss::mockTimeData.second = s;
+}
+
+void GPSWrapper::setMockSpeed(float speedKmh) {
+    SpGnss::mockVelocityData = speedKmh / 3.6f;
+}
+#endif

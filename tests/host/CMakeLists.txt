@@ -57,3 +57,5 @@ if(MSVC)
 else()
   target_compile_options(run_tests PRIVATE -Wall -Wextra -pedantic)
 endif()
+
+target_compile_definitions(run_tests PRIVATE UNIT_TEST)

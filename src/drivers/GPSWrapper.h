@@ -15,4 +15,10 @@ class GPSWrapper {
     SpNavData navData;
 
     bool isFixed;
+
+#ifdef UNIT_TEST
+    public:
+    static void setMockTime(int h, int m, int s);
+    static void setMockSpeed(float speedKmh);
+#endif
 };

@@ -1,6 +1,7 @@
 #include "Adafruit_SSD1306.h"
 #include "Adafruit_GFX.h"
 #include "Wire.h"
+#include "GNSS.h"
 #include <cstdio>
 #include <iostream>
 
@@ -91,4 +92,28 @@ void Adafruit_SSD1306::getTextBounds(const String &str, int16_t x, int16_t y, in
     *y1 = y;
     *w = str.length() * 6;
     *h = 8;
+}
+
+// --- GNSS ---
+SpNavTime SpGnss::mockTimeData = {2023, 10, 1, 12, 30, 0, 0};
+float SpGnss::mockVelocityData = 5.5f;
+
+int SpGnss::begin() { return 0; }
+int SpGnss::start(int mode) { 
+    (void)mode;
+    return 0; 
+}
+int SpGnss::stop() { return 0; }
+void SpGnss::select(int satelliteSystem) { (void)satelliteSystem; }
+bool SpGnss::waitUpdate(int timeout) { 
+    (void)timeout;
+    return true; 
+}
+void SpGnss::getNavData(SpNavData* navData) {
+    if (navData) {
+        navData->velocity = mockVelocityData;
+        navData->time = mockTimeData;
+        navData->posFixMode = Fix3D;
+        navData->numSatellites = 8;
+    }
 }
