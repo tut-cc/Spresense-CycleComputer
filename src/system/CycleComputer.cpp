@@ -4,10 +4,22 @@
 #include "Utils.h"
 #include "Logger.h"
 
-CycleComputer::CycleComputer(IDisplay* display) : display(display) {}
+CycleComputer::CycleComputer() : display(new OLEDDriver()), ownsDisplay(true) {
+}
+
+CycleComputer::CycleComputer(IDisplay* display) : display(display), ownsDisplay(false) {
+}
+
+CycleComputer::~CycleComputer() {
+    if (ownsDisplay && display != nullptr) {
+        delete display;
+        display = nullptr;
+    }
+}
 
 void CycleComputer::begin() {
     display->begin();
+
     inputManager.begin();
     gps.begin();
     tripComputer.begin();
@@ -16,16 +28,10 @@ void CycleComputer::begin() {
 
 void CycleComputer::update() {
     handleInput();
-
     gps.update();
     tripComputer.update(gps.getSpeedKmh(), millis());
-    
     powerManager.update();
-
     updateDisplay();
-    
-    // Refresh display hardware (e.g. multiplexing)
-    display->update();
 }
 
 void CycleComputer::handleInput() {
@@ -116,7 +122,7 @@ void CycleComputer::getDisplayData(Mode mode, DisplayDataType& type, char* buf, 
             formatFloat(tripComputer.getAvgSpeedKmh(), 4, 1, buf, size);
             break;
         default:
-            type = DisplayDataType::INVALID;  // Assuming DISPLAY_INVALID exists or use a default
+            type = DisplayDataType::INVALID;
             buf[0] = '\0';
             break;
     }

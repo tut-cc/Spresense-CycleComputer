@@ -14,7 +14,6 @@ public:
     MOCK_METHOD(void, begin, (), (override));
     MOCK_METHOD(void, clear, (), (override));
     MOCK_METHOD(void, show, (DisplayDataType type, const char* value), (override));
-    MOCK_METHOD(void, update, (), (override));
 };
 
 class CycleComputerTest : public ::testing::Test {
@@ -124,6 +123,7 @@ TEST_F(CycleComputerTest, DisplayTime) {
     EXPECT_CALL(mockDisplay, show(DisplayDataType::TIME, StrEq("12:34")))
         .Times(testing::AtLeast(1));
         
+    _mock_millis += 1000;
     computer->update();
 }
 
@@ -155,5 +155,6 @@ TEST_F(CycleComputerTest, ResetData) {
     // 3. Verify Max Speed is 0
     EXPECT_CALL(mockDisplay, show(DisplayDataType::MAX_SPEED, testing::HasSubstr("0.0")))
         .Times(testing::AtLeast(1));
+    _mock_millis += 1000;
     computer->update();
 }
