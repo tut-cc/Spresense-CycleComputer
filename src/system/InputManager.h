@@ -16,8 +16,6 @@ class InputManager {
 
    public:
     InputManager();
-
     void begin();
-
     InputEvent update();
 };

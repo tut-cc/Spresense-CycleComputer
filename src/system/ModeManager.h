@@ -17,6 +17,5 @@ class ModeManager {
 
    public:
     void nextMode();
-
     Mode getMode();
 };

@@ -4,7 +4,6 @@
 #include "../Config.h"
 
 bool GPSWrapper::begin() {
-#ifdef ARDUINO_ARCH_SPRESENSE
     int ret;
     ret = gnss.begin();
     if (ret != 0) {
@@ -21,15 +20,9 @@ bool GPSWrapper::begin() {
     }
 
     return true;
-#else
-    // モックの初期化は常に成功する
-    isFixed = true;
-    return true;
-#endif
 }
 
 void GPSWrapper::update() {
-#ifdef ARDUINO_ARCH_SPRESENSE
     // 可能であればノンブロッキングチェック、または短いタイムアウト
     // データがない場合に即座に戻るためにタイムアウトとして 0 を使用
     if (gnss.waitUpdate(0)) {
@@ -37,23 +30,17 @@ void GPSWrapper::update() {
         // 位置が特定されたかを確認
         isFixed = (navData.posFixMode >= Fix2D);
     }
-#endif
 }
 
 float GPSWrapper::getSpeedKmh() {
-#ifdef ARDUINO_ARCH_SPRESENSE
     if (!isFixed) {
         return 0.0f;
     }
     // 速度は m/s 単位、km/h に変換
     return navData.velocity * 3.6f;
-#else
-    return mockSpeed;
-#endif
 }
 
 void GPSWrapper::getTimeJST(char *buffer, size_t size) {
-#ifdef ARDUINO_ARCH_SPRESENSE
     if (navData.time.year == 0) {
         snprintf(buffer, size, "00:00");
         return;
@@ -68,26 +55,4 @@ void GPSWrapper::getTimeJST(char *buffer, size_t size) {
     int minute = navData.time.minute;
 
     snprintf(buffer, size, "%02d:%02d", hour, minute);
-#else
-    snprintf(buffer, size, "%02d:%02d", mockHour, mockMinute);
-#endif
 }
-
-#ifndef ARDUINO_ARCH_SPRESENSE
-// Define static members
-float GPSWrapper::mockSpeed = 0;
-unsigned long GPSWrapper::lastUpdate = 0;
-int GPSWrapper::mockHour = 0;
-int GPSWrapper::mockMinute = 0;
-int GPSWrapper::mockSecond = 0;
-
-void GPSWrapper::setMockSpeed(float speed) {
-    mockSpeed = speed;
-}
-
-void GPSWrapper::setMockTime(int hour, int minute, int second) {
-    mockHour = hour;
-    mockMinute = minute;
-    mockSecond = second;
-}
-#endif
