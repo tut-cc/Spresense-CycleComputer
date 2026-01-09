@@ -4,8 +4,6 @@
 #include "Utils.h"
 #include "Logger.h"
 
-CycleComputer::CycleComputer(IDisplay* display) : display(display) {}
-
 void CycleComputer::begin() {
     display->begin();
     inputManager.begin();
@@ -16,16 +14,10 @@ void CycleComputer::begin() {
 
 void CycleComputer::update() {
     handleInput();
-
     gps.update();
     tripComputer.update(gps.getSpeedKmh(), millis());
-    
     powerManager.update();
-
     updateDisplay();
-    
-    // Refresh display hardware (e.g. multiplexing)
-    display->update();
 }
 
 void CycleComputer::handleInput() {

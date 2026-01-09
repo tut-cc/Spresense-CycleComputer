@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../drivers/GPSWrapper.h"
-#include "../interfaces/IDisplay.h"
+#include "../drivers/OLEDDriver.h"
 #include "InputManager.h"
 #include "ModeManager.h"
 #include "TripComputer.h"
@@ -9,7 +9,7 @@
 
 class CycleComputer {
    private:
-    IDisplay* display;
+    OLEDDriver display;
     InputManager inputManager;
     ModeManager modeManager;
     GPSWrapper gps;
@@ -26,7 +26,7 @@ class CycleComputer {
     void logDebugInfo(Mode currentMode, const char* value);
 
    public:
-    CycleComputer(IDisplay* display);
+    CycleComputer() {}
     void begin();
     void update();
 };

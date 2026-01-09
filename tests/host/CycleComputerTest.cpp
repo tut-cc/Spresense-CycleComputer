@@ -14,7 +14,6 @@ public:
     MOCK_METHOD(void, begin, (), (override));
     MOCK_METHOD(void, clear, (), (override));
     MOCK_METHOD(void, show, (DisplayDataType type, const char* value), (override));
-    MOCK_METHOD(void, update, (), (override));
 };
 
 class CycleComputerTest : public ::testing::Test {
@@ -25,7 +24,7 @@ protected:
     void SetUp() override {
         _mock_millis = 1000;
         _mock_pin_states.clear();
-        computer = new CycleComputer(&mockDisplay);
+        computer = new CycleComputer();
         
         // Reset GPS Mocks
         GPSWrapper::setMockSpeed(0.0f);

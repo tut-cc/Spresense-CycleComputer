@@ -3,20 +3,20 @@
 #include "../Config.h"
 
 // Static member definitions
-const int SevenSegDriver::placePin[] = {Config::Pin::D1, Config::Pin::D2, Config::Pin::D3,
-                                        Config::Pin::D4};
-const int SevenSegDriver::colonPin[] = {Config::Pin::D1_COLON, Config::Pin::D2_COLON,
-                                        Config::Pin::D3_COLON, Config::Pin::D4_COLON,
-                                        Config::Pin::DOT_COLON};
+const int SevenSegDriver::placePin[] = {D1, D2, D3,
+                                        D4};
+const int SevenSegDriver::colonPin[] = {D1_COLON, D2_COLON,
+                                        D3_COLON, D4_COLON,
+                                        DOT_COLON};
 
 // 7-segment data from Config
-const unsigned char* SevenSegDriver::number = Config::SevenSeg::NUMBERS;
-const unsigned char* SevenSegDriver::numdot = Config::SevenSeg::NUMBERS_WITH_DOT;
+const unsigned char* SevenSegDriver::number = NUMBERS;
+const unsigned char* SevenSegDriver::numdot = NUMBERS_WITH_DOT;
 
 void SevenSegDriver::begin() {
-    pinMode(Config::Pin::SDI, OUTPUT);
-    pinMode(Config::Pin::RCLK, OUTPUT);
-    pinMode(Config::Pin::SRCLK, OUTPUT);
+    pinMode(SDI, OUTPUT);
+    pinMode(RCLK, OUTPUT);
+    pinMode(SRCLK, OUTPUT);
 
     // Initialize Digit Pins
     for (int i = 0; i < 4; i++) {
@@ -79,7 +79,7 @@ void SevenSegDriver::update() {
 }
 
 void SevenSegDriver::hc595_shift(byte data) {
-    digitalWrite(Config::Pin::RCLK, LOW);
-    shiftOut(Config::Pin::SDI, Config::Pin::SRCLK, MSBFIRST, data);
-    digitalWrite(Config::Pin::RCLK, HIGH);
+    digitalWrite(RCLK, LOW);
+    shiftOut(SDI, SRCLK, MSBFIRST, data);
+    digitalWrite(RCLK, HIGH);
 }
