@@ -2,14 +2,14 @@
 #include <gmock/gmock.h>
 #include "Arduino.h"
 #include "system/CycleComputer.h"
-#include "interfaces/IDisplay.h"
+#include "drivers/OLEDDriver.h"
 #include "Config.h"
 
 using ::testing::_;
 using ::testing::StrEq;
 
 // Mock Display
-class MockDisplay : public IDisplay {
+class MockDisplay : public OLEDDriver {
 public:
     MOCK_METHOD(void, begin, (), (override));
     MOCK_METHOD(void, clear, (), (override));

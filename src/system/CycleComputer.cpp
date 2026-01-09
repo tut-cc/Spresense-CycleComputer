@@ -8,7 +8,7 @@
 CycleComputer::CycleComputer() : display(new OLEDDriver()), ownsDisplay(true) {
 }
 
-CycleComputer::CycleComputer(IDisplay* display) : display(display), ownsDisplay(false) {
+CycleComputer::CycleComputer(OLEDDriver* display) : display(display), ownsDisplay(false) {
 }
 
 CycleComputer::~CycleComputer() {
@@ -20,7 +20,6 @@ CycleComputer::~CycleComputer() {
 
 void CycleComputer::begin() {
     display->begin();
-
     inputManager.begin();
     gps.begin();
     tripComputer.begin();

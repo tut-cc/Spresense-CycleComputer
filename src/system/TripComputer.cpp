@@ -31,8 +31,7 @@ void TripComputer::update(float currentSpeedKmh, unsigned long currentMs) {
     // 距離 (km) = 速度 (km/h) * (deltaMs / 1000.0 / 3600.0)
 
     if (currentSpeedKmh > Config::Trip::MOVE_THRESHOLD_KMH) {
-        // 移動時間を加算
-        movingTimeMs += deltaMs;
+        movingTimeMs += deltaMs; // 移動時間を加算
 
         // 距離を加算
         double hours = (double)deltaMs / 3600000.0;

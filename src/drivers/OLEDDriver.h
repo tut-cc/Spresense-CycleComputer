@@ -5,9 +5,18 @@
 #include <Arduino.h>
 #include <Wire.h>
 
-#include "../interfaces/IDisplay.h"
+enum class DisplayDataType {
+    SPEED,
+    TIME,
+    MAX_SPEED,
+    DISTANCE,
+    MOVING_TIME,
+    ELAPSED_TIME,
+    AVG_SPEED,
+    INVALID,
+};
 
-class OLEDDriver : public IDisplay {
+class OLEDDriver {
    private:
     Adafruit_SSD1306 display;
     DisplayDataType currentType;
@@ -15,7 +24,8 @@ class OLEDDriver : public IDisplay {
 
    public:
     OLEDDriver();
-    void begin() override;
-    void clear() override;
-    void show(DisplayDataType type, const char* value) override;
+    virtual ~OLEDDriver() {}
+    virtual void begin();
+    virtual void clear();
+    virtual void show(DisplayDataType type, const char* value);
 };

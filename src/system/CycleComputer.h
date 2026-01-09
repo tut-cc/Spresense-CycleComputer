@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../drivers/GPSWrapper.h"
-#include "../interfaces/IDisplay.h"
+#include "../drivers/OLEDDriver.h"
 #include "InputManager.h"
 #include "ModeManager.h"
 #include "TripComputer.h"
@@ -9,7 +9,7 @@
 
 class CycleComputer {
    private:
-    IDisplay* display;
+    OLEDDriver* display;
     bool ownsDisplay = false; // Flag to check if we need to delete display
     InputManager inputManager;
     ModeManager modeManager;
@@ -28,7 +28,7 @@ class CycleComputer {
 
    public:
     CycleComputer();
-    CycleComputer(IDisplay* display);
+    CycleComputer(OLEDDriver* display);
     ~CycleComputer();
     void begin();
     void update();
