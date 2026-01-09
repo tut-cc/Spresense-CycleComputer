@@ -24,7 +24,7 @@ protected:
     void SetUp() override {
         _mock_millis = 1000;
         _mock_pin_states.clear();
-        computer = new CycleComputer();
+        computer = new CycleComputer(&mockDisplay);
         
         // Reset GPS Mocks
         GPSWrapper::setMockSpeed(0.0f);
@@ -123,6 +123,7 @@ TEST_F(CycleComputerTest, DisplayTime) {
     EXPECT_CALL(mockDisplay, show(DisplayDataType::TIME, StrEq("12:34")))
         .Times(testing::AtLeast(1));
         
+    _mock_millis += 1000;
     computer->update();
 }
 
@@ -154,5 +155,6 @@ TEST_F(CycleComputerTest, ResetData) {
     // 3. Verify Max Speed is 0
     EXPECT_CALL(mockDisplay, show(DisplayDataType::MAX_SPEED, testing::HasSubstr("0.0")))
         .Times(testing::AtLeast(1));
+    _mock_millis += 1000;
     computer->update();
 }

@@ -11,9 +11,12 @@
 #include <algorithm>
 
 // Mock basic types
+// Mock basic types
 using std::max;
 using std::min;
 using std::abs;
+
+typedef uint8_t byte;
 
 // dtostrf mock
 inline char *dtostrf(double val, signed char width, unsigned char prec, char *s) {
@@ -26,6 +29,7 @@ inline char *dtostrf(double val, signed char width, unsigned char prec, char *s)
 // Time mocks
 extern unsigned long _mock_millis;
 inline unsigned long millis() { return _mock_millis; }
+inline unsigned long micros() { return _mock_millis * 1000; }
 inline void delay(unsigned long ms) { _mock_millis += ms; }
 
 // Pin mocks
@@ -57,7 +61,19 @@ inline void delay(unsigned long ms) { _mock_millis += ms; }
 #define LOW 0
 #define HIGH 1
 
+// Bit Order
+#define LSBFIRST 0
+#define MSBFIRST 1
+
+inline void shiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t val) {
+    (void)dataPin;
+    (void)clockPin;
+    (void)bitOrder;
+    (void)val;
+}
+
 #include <map>
+
 
 // GPIO State Map (Pin -> State)
 extern std::map<int, int> _mock_pin_states;
@@ -98,4 +114,30 @@ public:
     void println() { std::cout << std::endl; }
 };
 
+// String Mock
+#include <string>
+
+class String : public std::string {
+public:
+    String(const char* s) : std::string(s) {}
+    String(const std::string& s) : std::string(s) {}
+    String() : std::string() {}
+
+    bool equals(const String& other) const {
+        return *this == other;
+    }
+    
+    bool equals(const char* other) const {
+        return *this == other;
+    }
+    
+    unsigned int length() const {
+        return std::string::length();
+    }
+};
+
+// F() macro for flash strings
+#define F(s) s
+
 extern SerialMock Serial;
+

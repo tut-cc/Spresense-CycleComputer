@@ -35,8 +35,10 @@ set(SOURCES
     ../../src/system/PowerManager.cpp
     ../../src/drivers/Button.cpp
     ../../src/drivers/GPSWrapper.cpp
+    ../../src/drivers/OLEDDriver.cpp
     mocks/MockGlobals.cpp
     mocks/MockGlobals.cpp
+    mocks/MockLibs.cpp
     TripComputerTest.cpp
     InputManagerTest.cpp
     CycleComputerTest.cpp
