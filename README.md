@@ -34,7 +34,8 @@ src/
 以下のツールが必要。
 
 - [Arduino CLI](https://arduino.github.io/arduino-cli/latest/)
-- make
+- CMake (3.14以上)
+- Ninja または Make (ビルドツール)
 
 ### 必要なコアのインストール
 
@@ -50,7 +51,6 @@ arduino-cli core update-index
 
 # Spresense と Arduino AVR コアのインストール
 arduino-cli core install SPRESENSE:spresense
-arduino-cli core install arduino:avr
 ```
 
 ### 必要なライブラリのインストール
@@ -58,8 +58,8 @@ arduino-cli core install arduino:avr
 以下のコマンドで必要なライブラリをインストール。
 
 ```bash
-# I2C LCD用ライブラリ
-arduino-cli lib install "LiquidCrystal I2C"
+# OLEDディスプレイ用ライブラリ
+arduino-cli lib install "Adafruit SSD1306" "Adafruit GFX Library"
 ```
 
 ### ビルド手順
@@ -67,11 +67,11 @@ arduino-cli lib install "LiquidCrystal I2C"
 プロジェクトのルートで以下のコマンドを実行。
 
 ```bash
-# Spresense 向けビルド (デフォルト)
-make spresense
+# ビルド設定 (初回のみ)
+cmake -S . -B build
 
-# Arduino 向けビルド
-make arduino
+# Spresense 向けビルド
+cmake --build build
 ```
 
 ### 書き込み手順
@@ -79,23 +79,26 @@ make arduino
 PC とデバイスを接続し、ポートを指定して実行。
 
 ```bash
-# Spresense への書き込み例
-make upload_spresense PORT=/dev/ttyACM0
-
-# Arduino への書き込み例
-make upload_arduino PORT=/dev/ttyUSB0
+# Spresense への書き込み
+cmake --build build --target upload_spresense
 ```
 
-Arduino IDE を使って `cyclecomputer.ino` を開き、ビルド・書き込みを行うことも可能。
+※ ポートはデフォルトで `/dev/ttyACM0` ですが、変更する場合は以下のように設定します：
+```bash
+cmake -S . -B build -DPORT=/dev/ttyUSB0
+cmake --build build --target upload_spresense
+```
 
-## 設定
+Arduino IDE を使って `Spresense-CycleComputer.ino` を開き、ビルド・書き込みを行うことも可能。
 
-`src/Config.h` ファイルにて、使用するディスプレイタイプの設定が可能。
+### ユニットテスト
 
-```cpp
-// 例: LCDを使用する場合
-#define DISPLAY_TYPE DISPLAY_LCD
+本プロジェクトには GoogleTest を使用したホスト環境でのユニットテストが含まれている。
 
-// 例: 7セグを使用する場合
-// #define DISPLAY_TYPE DISPLAY_SEVENSEG
+```bash
+# テストのビルド
+cmake --build build --target run_tests
+
+# テストの実行
+./build/tests/host/run_tests
 ```
