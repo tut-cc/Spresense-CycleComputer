@@ -16,13 +16,9 @@ class TripComputer {
     TripComputer();
 
     void begin();
-
     void update(float currentSpeedKmh, unsigned long currentMs);
-
     void reset();
-
     float getMaxSpeedKmh();
-
     float getDistanceKm();
 
     // ms を文字列にフォーマットするヘルパー

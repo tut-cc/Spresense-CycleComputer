@@ -18,7 +18,4 @@ public:
         Serial.println(msg);
 #endif
     }
-    
-    // Support for multiple arguments isn't strictly needed for the current use case, 
-    // but basic print/println is sufficient.
 };
