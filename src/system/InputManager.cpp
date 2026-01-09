@@ -1,5 +1,5 @@
 #include "InputManager.h"
-
+#include "Logger.h"
 #include "../Config.h"
 
 InputManager::InputManager() : btnA(Config::Pin::BTN_A), btnB(Config::Pin::BTN_B) {}
@@ -16,24 +16,18 @@ InputEvent InputManager::update() {
 
     // 同時押しの確認
     if ((aPressed && btnB.isHeld()) || (bPressed && btnA.isHeld())) {
-#ifdef DEBUG_MODE
-        Serial.println("[InputManager] 同時に押されたァ");
-#endif
+        Logger::logln("[InputManager] 同時に押された");
         return InputEvent::BTN_BOTH;
     }
 
     // 単押しの確認
     if (aPressed) {
-#ifdef DEBUG_MODE
-        Serial.println("[InputManager] Aボタンが押された");
-#endif
+        Logger::logln("[InputManager] Aボタンが押された");
         return InputEvent::BTN_A;
     }
 
     if (bPressed) {
-#ifdef DEBUG_MODE
-        Serial.println("[InputManager] Bボタンが押された");
-#endif
+        Logger::logln("[InputManager] Bボタンが押された");
         return InputEvent::BTN_B;
     }
 

@@ -5,9 +5,6 @@
 // デバッグ用定数
 #define DEBUG_MODE
 
-// 省電力機能有効化フラグ
-#define ENABLE_POWER_SAVING
-
 namespace Config {
     namespace Pin {
         // ボタン

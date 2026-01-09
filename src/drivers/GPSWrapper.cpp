@@ -33,9 +33,7 @@ void GPSWrapper::update() {
 }
 
 float GPSWrapper::getSpeedKmh() {
-    if (!isFixed) {
-        return 0.0f;
-    }
+    if (!isFixed) return 0.0f;
     // 速度は m/s 単位、km/h に変換
     return navData.velocity * 3.6f;
 }
@@ -49,9 +47,7 @@ void GPSWrapper::getTimeJST(char *buffer, size_t size) {
     // 単純な UTC から JST への変換
     // 表示用の時間のみを処理 (日付の繰り越しは無視)
     int hour = navData.time.hour + Config::Time::TIMEZONE_OFFSET;
-    if (hour >= 24) {
-        hour -= 24;
-    }
+    if (hour >= 24) hour -= 24;
     int minute = navData.time.minute;
 
     snprintf(buffer, size, "%02d:%02d", hour, minute);

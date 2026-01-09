@@ -14,9 +14,7 @@ bool Button::isPressed() {
     bool pressed = false;
 
     // スイッチの値が変更された場合、デバウンスタイマーをリセット
-    if (reading != lastReading) {
-        lastDebounceTime = millis();
-    }
+    if (reading != lastReading) lastDebounceTime = millis();
 
     if ((millis() - lastDebounceTime) > debounceDelay) {
         // 読み取り値が何であれ、デバウンス遅延よりも長くその状態にあるため、
@@ -27,9 +25,7 @@ bool Button::isPressed() {
             state = reading;
 
             // 新しい状態が LOW (押下) の場合のみトグルする
-            if (state == LOW) {
-                pressed = true;
-            }
+            if (state == LOW) pressed = true;
         }
     }
 

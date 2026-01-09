@@ -1,24 +1,18 @@
 #include "PowerManager.h"
-
 #include "../Config.h"
 
-#ifdef ENABLE_POWER_SAVING
 #include <LowPower.h>
-#endif
 
 PowerManager::PowerManager() {}
 
 void PowerManager::begin() {
-#ifdef ENABLE_POWER_SAVING
     pinMode(Config::Pin::WARN_LED, OUTPUT);
     digitalWrite(Config::Pin::WARN_LED, LOW);
     LowPower.begin();
     LowPower.clockMode(CLOCK_MODE_8MHz);
-#endif
 }
 
 void PowerManager::update() {
-#ifdef ENABLE_POWER_SAVING
     unsigned long currentMillis = millis();
 
     // 10秒ごとに電圧をチェック
@@ -42,5 +36,4 @@ void PowerManager::update() {
         else
             digitalWrite(Config::Pin::WARN_LED, LOW);
     }
-#endif
 }

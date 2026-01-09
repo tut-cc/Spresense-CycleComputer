@@ -1,7 +1,5 @@
 #include "SevenSegDriver.h"
 
-#include "../Config.h"
-
 // Static member definitions
 const int SevenSegDriver::placePin[] = {D1, D2, D3,
                                         D4};

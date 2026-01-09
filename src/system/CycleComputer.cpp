@@ -1,4 +1,5 @@
 #include "CycleComputer.h"
+#include "../drivers/OLEDDriver.h"
 
 #include "../Config.h"
 #include "Utils.h"
