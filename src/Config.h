@@ -7,6 +7,7 @@
 namespace Config {
 namespace Debug {
 constexpr bool ENABLE_BUTTON_LOG = true;
+constexpr bool ENABLE_GPS_LOG = true;
 }  // namespace Debug
 
 namespace Pin {
