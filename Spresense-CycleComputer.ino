@@ -1,13 +1,14 @@
-#include "src/system/CycleComputer.h"
 #include "src/drivers/OLEDDriver.h"
+#include "src/system/CycleComputer.h"
 
-OLEDDriver display;
-CycleComputer computer(&display);
+drivers::OLEDDriver display(Wire);
+application::CycleComputer computer(&display);
 
 void setup() {
-    computer.begin();
+  Serial.begin(115200);
+  computer.begin();
 }
 
 void loop() {
-    computer.update();
+  computer.update();
 }

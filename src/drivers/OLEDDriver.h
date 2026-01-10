@@ -7,20 +7,26 @@
 
 #include "../system/DisplayData.h"
 
+namespace drivers {
+
 class OLEDDriver {
+public:
+  OLEDDriver(TwoWire &i2c);
+  virtual void begin();
+  virtual void show(application::DisplayDataType type, const char *value);
+
 private:
   Adafruit_SSD1306 display;
-  DisplayDataType currentType;
-  String currentValue;
+  TwoWire &wire;
 
-  void drawTitle(const String &title);
-  void drawUnit(const String &unit);
-  void drawValue(const String &value);
+  void drawHeader();
+  void drawFooter();
+  void drawMainArea(const char *title, const char *value, const char *unit);
+  void drawBatteryIcon(int x, int y, int percentage);
+  void drawSatelliteIcon(int x, int y, int count);
 
-public:
-  OLEDDriver();
-  virtual ~OLEDDriver() {}
-  virtual bool begin();
-  virtual void clear();
-  virtual void show(DisplayDataType type, const char *value);
+  int batteryLevel = 85;
+  int satelliteCount = 5;
 };
+
+} // namespace drivers

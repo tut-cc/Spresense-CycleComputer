@@ -1,94 +1,81 @@
+#include "system/InputManager.h"
+#include "../mocks/Arduino.h"
 #include <gtest/gtest.h>
 
-#include "Arduino.h"
-#include "Config.h"
-#include "system/InputManager.h"
-
+// Test fixture for InputManager
 class InputManagerTest : public ::testing::Test {
-   protected:
-    void SetUp() override {
-        _mock_millis = 1000;
-        _mock_pin_states.clear();
-        // Init default logic state (PULLUP -> HIGH)
-        setPinState(Config::Pin::BTN_A, HIGH);
-        setPinState(Config::Pin::BTN_B, HIGH);
-    }
+protected:
+  application::InputManager *inputManager;
+
+  void SetUp() override {
+    // Reset mocks
+    drivers::Button::resetMock();
+    inputManager = new application::InputManager();
+    inputManager->begin();
+
+    // Ensure initial state is released (HIGH)
+    drivers::Button::setMockState(Config::Pin::BTN_A, HIGH);
+    drivers::Button::setMockState(Config::Pin::BTN_B, HIGH);
+  }
+
+  void TearDown() override {
+    delete inputManager;
+  }
 };
 
-TEST_F(InputManagerTest, InitialStateReturnsNone) {
-    InputManager input;
-    input.begin();
+// Helper to simulate button press with debounce
+void pressButton(application::InputManager *im, int pin) {
+  drivers::Button::setMockState(pin, LOW);
+  im->update();       // Detect change (start debounce)
+  _mock_millis += 70; // Wait > 50ms (Config::DEBOUNCE_DELAY assumed 50)
+}
 
-    EXPECT_EQ(input.update(), InputEvent::NONE);
+void releaseButton(application::InputManager *im, int pin) {
+  drivers::Button::setMockState(pin, HIGH);
+  im->update(); // Detect change
+  _mock_millis += 70;
+}
+
+TEST_F(InputManagerTest, InitialStateReturnsNone) {
+  EXPECT_EQ(inputManager->update(), application::InputEvent::NONE);
 }
 
 TEST_F(InputManagerTest, ButtonAPress) {
-    InputManager input;
-    input.begin();
+  pressButton(inputManager, Config::Pin::BTN_A);
+  EXPECT_EQ(inputManager->update(), application::InputEvent::BTN_A);
 
-    // Not pressed yet
-    EXPECT_EQ(input.update(), InputEvent::NONE);
-
-    // Press A (LOW)
-    setPinState(Config::Pin::BTN_A, LOW);
-
-    // Simulate debounce logic
-    // Button.cpp requires state change then timeout
-    // 1. Detect change
-    input.update();
-
-    // 2. Wait debounce time (50ms)
-    delay(51);
-
-    // 3. Update again to confirm state
-    InputEvent evt = input.update();
-
-    EXPECT_EQ(evt, InputEvent::BTN_A);
+  releaseButton(inputManager, Config::Pin::BTN_A);
+  // Release usually returns NONE unless logic triggers on release.
+  // Current logic triggers on PRESS (falling edge stabilization).
+  // So release should return NONE.
+  EXPECT_EQ(inputManager->update(), application::InputEvent::NONE);
 }
 
 TEST_F(InputManagerTest, ButtonBPress) {
-    InputManager input;
-    input.begin();
+  pressButton(inputManager, Config::Pin::BTN_B);
+  EXPECT_EQ(inputManager->update(), application::InputEvent::BTN_B);
 
-    setPinState(Config::Pin::BTN_B, LOW);
-    input.update();
-    delay(51);
-
-    EXPECT_EQ(input.update(), InputEvent::BTN_B);
+  releaseButton(inputManager, Config::Pin::BTN_B);
+  EXPECT_EQ(inputManager->update(), application::InputEvent::NONE);
 }
 
 TEST_F(InputManagerTest, SimultaneousPress) {
-    InputManager input;
-    input.begin();
+  drivers::Button::setMockState(Config::Pin::BTN_A, LOW);
+  drivers::Button::setMockState(Config::Pin::BTN_B, LOW);
+  inputManager->update(); // Detect both change
 
-    // To simulate simultaneous press correctly with the current logic:
-    // (aPressed && btnB.isHeld()) || (bPressed && btnA.isHeld())
+  _mock_millis += 70;
+  EXPECT_EQ(inputManager->update(), application::InputEvent::BTN_BOTH);
 
-    // Let's press both
-    setPinState(Config::Pin::BTN_A, LOW);
-    setPinState(Config::Pin::BTN_B, LOW);
-
-    input.update();
-    delay(51);
-
-    // Both are held now
-    EXPECT_EQ(input.update(), InputEvent::BTN_BOTH);
+  releaseButton(inputManager, Config::Pin::BTN_A);
+  releaseButton(inputManager, Config::Pin::BTN_B);
+  EXPECT_EQ(inputManager->update(), application::InputEvent::NONE);
 }
 
 TEST_F(InputManagerTest, ButtonRelease) {
-    InputManager input;
-    input.begin();
+  pressButton(inputManager, Config::Pin::BTN_A);
+  EXPECT_EQ(inputManager->update(), application::InputEvent::BTN_A);
 
-    // Press A
-    setPinState(Config::Pin::BTN_A, LOW);
-    input.update();
-    delay(51);
-    input.update();  // Returns BTN_A
-
-    // Release A
-    setPinState(Config::Pin::BTN_A, HIGH);
-    input.update();
-    delay(51);
-
-    EXPECT_EQ(input.update(), InputEvent::NONE);
+  releaseButton(inputManager, Config::Pin::BTN_A);
+  EXPECT_EQ(inputManager->update(), application::InputEvent::NONE);
 }

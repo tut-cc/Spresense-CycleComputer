@@ -2,22 +2,30 @@
 
 #include <Arduino.h>
 
+namespace application {
+
 class TripComputer {
 private:
-  float maxSpeedKmh = 0.0f;
-  double totalDistanceKm = 0.0; // 長距離での精度のため double を使用
-  unsigned long movingTimeMs = 0;
-  unsigned long elapsedTimeMs = 0;
-  unsigned long lastUpdateMs = 0;
+  float distanceKm;
+  float maxSpeedKmh;
+  unsigned long lastUpdateTime;
 
 public:
+  TripComputer();
   void begin();
-  void update(float currentSpeedKmh, unsigned long currentMs);
+  void update(float currentSpeedKmh, unsigned long currentMillis);
   void reset();
-  float getMaxSpeedKmh();
-  float getDistanceKm();
-  void getMovingTimeStr(char *buffer, size_t size);
-  void getElapsedTimeStr(char *buffer, size_t size);
-  float getAvgSpeedKmh();
-  void msToTimeStr(unsigned long ms, char *buffer, size_t size);
+
+  float getDistanceKm() const;
+  float getMaxSpeedKmh() const;
+  float getAvgSpeedKmh() const;
+  void getMovingTimeStr(char *buffer, size_t size) const;
+  void getElapsedTimeStr(char *buffer, size_t size) const;
+  void msToTimeStr(unsigned long ms, char *buffer, size_t size) const;
+
+private:
+  unsigned long movingTimeMs;
+  unsigned long startTimeMs;
 };
+
+} // namespace application

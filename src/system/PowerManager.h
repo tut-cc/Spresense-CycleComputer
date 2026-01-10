@@ -2,6 +2,8 @@
 
 #include <Arduino.h>
 
+namespace application {
+
 class PowerManager {
 private:
   unsigned long lastBatteryCheck = 0;
@@ -13,3 +15,5 @@ public:
   void begin();
   void update();
 };
+
+} // namespace application

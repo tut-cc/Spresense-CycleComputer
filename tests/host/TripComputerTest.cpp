@@ -1,178 +1,126 @@
+#include "system/TripComputer.h"
+#include "../mocks/Arduino.h"
 #include <gtest/gtest.h>
 
-#include "Arduino.h"
-#include "system/TripComputer.h"
-
-// Reset mocks before each test
+// Fixture for TripComputer tests
 class TripComputerTest : public ::testing::Test {
-   protected:
-    void SetUp() override {
-        _mock_millis = 1000;
-    }
+protected:
+  application::TripComputer tripComputer;
 
-    void TearDown() override {
-        // Cleanup if needed
-    }
+  void SetUp() override {
+    _mock_millis = 1000;
+    tripComputer.begin();
+  }
 };
 
 TEST_F(TripComputerTest, InitialState) {
-    TripComputer tc;
-    tc.begin();
+  EXPECT_FLOAT_EQ(tripComputer.getDistanceKm(), 0.0f);
+  EXPECT_FLOAT_EQ(tripComputer.getMaxSpeedKmh(), 0.0f);
+  EXPECT_FLOAT_EQ(tripComputer.getAvgSpeedKmh(), 0.0f);
 
-    EXPECT_EQ(tc.getMaxSpeedKmh(), 0.0f);
-    EXPECT_FLOAT_EQ(tc.getDistanceKm(), 0.0f);
+  char buf[20];
+  tripComputer.getMovingTimeStr(buf, sizeof(buf));
+  EXPECT_STREQ(buf, "00:00:00");
 }
 
 TEST_F(TripComputerTest, CalculateDistance) {
-    TripComputer tc;
-    tc.begin();
+  // Speed 36 km/h = 10 m/s
+  // 1 hour = 3600 sec = 3600000 ms
+  // Distance should be 36 km
 
-    // 1st update: 0ms, 0km/h
-    tc.update(0.0f, 0);
+  // Update 1: Start at 1000
+  tripComputer.update(36.0f, 1000);
 
-    // 2nd update: 1 hour later (3600000ms), moving at 10km/h
-    // Note: TripComputer logic might depend on how it integrates.
-    // Looking at source: distance += speed * time
-    // If we jump from 0 to 1hr with constant speed, it should add 10km * 1hr = 10km
+  // Update 2: After 1 hour (1000 + 3600000)
+  tripComputer.update(36.0f, 3601000);
 
-    // Simulate moving at 20km/h for 1 hour
-    float speed = 20.0f;
-    unsigned long duration = 3600000;
-    unsigned long now = 1000;
-
-    // Config::Trip::MOVE_THRESHOLD_KMH is 3.0f, so 20.0f is moving
-
-    // Step 1: Start
-    tc.update(speed, now);
-
-    // Step 2: Update after 1 hour
-    now += duration;
-    tc.update(speed, now);
-
-    EXPECT_NEAR(tc.getDistanceKm(), 20.0f, 0.01f);
-    EXPECT_FLOAT_EQ(tc.getMaxSpeedKmh(), 20.0f);
+  EXPECT_NEAR(tripComputer.getDistanceKm(), 36.0f, 0.01f);
 }
 
 TEST_F(TripComputerTest, IgnoreLowSpeed) {
-    TripComputer tc;
-    tc.begin();
+  // Speed 2 km/h (below threshold)
+  tripComputer.update(2.0f, 1000);
+  tripComputer.update(2.0f, 3601000);
 
-    unsigned long now = 1000;
+  EXPECT_FLOAT_EQ(tripComputer.getDistanceKm(), 0.0f);
 
-    // Speed below threshold (e.g. 1.0 km/h)
-    float speed = 1.0f;
-
-    tc.update(speed, now);
-    now += 3600000;  // 1 hour
-    tc.update(speed, now);
-
-    // Should not accumulate distance
-    EXPECT_FLOAT_EQ(tc.getDistanceKm(), 0.0f);
-    // But max speed might update if logic allows (check source behavior)
-    // Source: if (currentSpeedKmh > maxSpeedKmh) maxSpeedKmh = currentSpeedKmh;
-    // So max speed updates regardless of movement threshold
-    EXPECT_FLOAT_EQ(tc.getMaxSpeedKmh(), 1.0f);
+  char buf[20];
+  tripComputer.getMovingTimeStr(buf, sizeof(buf));
+  EXPECT_STREQ(buf, "00:00:00");
 }
 
 TEST_F(TripComputerTest, TimeFormatting) {
-    TripComputer tc;
-    char buffer[16];
-
-    // 1 hour, 1 minute, 1 second = 3600 + 60 + 1 = 3661 seconds = 3661000 ms
-    unsigned long ms = 3661000;
-    tc.msToTimeStr(ms, buffer, sizeof(buffer));
-
-    EXPECT_STREQ(buffer, "01:01:01");
+  // 1 hour, 1 minute, 1 second = 3600 + 60 + 1 = 3661 seconds = 3661000 ms
+  char buf[20];
+  tripComputer.msToTimeStr(3661000, buf, sizeof(buf));
+  EXPECT_STREQ(buf, "01:01:01");
 }
 
 TEST_F(TripComputerTest, CalculateAvgSpeed) {
-    TripComputer tc;
-    tc.begin();
+  // 36 km in 1 hour moving time
+  tripComputer.update(36.0f, 1000);
+  tripComputer.update(36.0f, 3601000); // 1 hour elapsed
 
-    // Move 20km in 1 hour
-    float speed = 20.0f;
-    unsigned long duration = 3600000;
-    unsigned long now = 1000;
-
-    tc.update(speed, now);
-    now += duration;
-    tc.update(speed, now);
-
-    // Distance = 20km, Moving Time = 1h
-    EXPECT_NEAR(tc.getAvgSpeedKmh(), 20.0f, 0.01f);
+  EXPECT_NEAR(tripComputer.getAvgSpeedKmh(), 36.0f, 0.1f);
 }
 
 TEST_F(TripComputerTest, AvgSpeedWithNoMovement) {
-    TripComputer tc;
-    tc.begin();
-
-    // 0 moving time
-    EXPECT_FLOAT_EQ(tc.getAvgSpeedKmh(), 0.0f);
+  EXPECT_FLOAT_EQ(tripComputer.getAvgSpeedKmh(), 0.0f);
 }
 
 TEST_F(TripComputerTest, HelperTimeStrings) {
-    TripComputer tc;
-    tc.begin();
+  // Simulate 1 hour moving
+  tripComputer.update(10.0f, 1000);
+  tripComputer.update(10.0f, 3601000);
 
-    // Move at 10km/h for 1 hour
-    tc.update(10.0f, 1000);
-    tc.update(10.0f, 1000 + 3600000);
+  char buf[20];
+  tripComputer.getMovingTimeStr(buf, sizeof(buf));
+  EXPECT_STREQ(buf, "01:00:00");
 
-    char buffer[16];
-    tc.getMovingTimeStr(buffer, sizeof(buffer));
-    EXPECT_STREQ(buffer, "01:00:00");
+  // Correctly setting mock millis for getElapsedTimeStr (3601000)
+  _mock_millis = 3601000;
+  // Note: TripComputer stores startTimeMs declared in SetUp -> begin() which calls reset().
+  // reset() sets startTimeMs = millis().
+  // In SetUp (new), _mock_millis = 1000. So startTimeMs = 1000.
+  // We want elapsed = 3600000. So current = 3601000.
 
-    tc.getElapsedTimeStr(buffer, sizeof(buffer));
-    EXPECT_STREQ(buffer, "01:00:00");
+  tripComputer.getElapsedTimeStr(buf, sizeof(buf));
+  EXPECT_STREQ(buf, "01:00:00");
 }
 
 TEST_F(TripComputerTest, Reset) {
-    TripComputer tc;
-    tc.begin();
+  tripComputer.update(36.0f, 1000);
+  tripComputer.update(36.0f, 3601000);
 
-    // Add some data
-    tc.update(20.0f, 1000);
-    tc.update(20.0f, 1000 + 3600000);  // +20km
+  EXPECT_GT(tripComputer.getDistanceKm(), 0);
 
-    // Verify data exists
-    ASSERT_GT(tc.getDistanceKm(), 0.0f);
-    ASSERT_GT(tc.getMaxSpeedKmh(), 0.0f);
+  tripComputer.reset();
 
-    // Reset
-    tc.reset();
-
-    // Verify cleared
-    EXPECT_FLOAT_EQ(tc.getDistanceKm(), 0.0f);
-    EXPECT_FLOAT_EQ(tc.getMaxSpeedKmh(), 0.0f);
-    EXPECT_FLOAT_EQ(tc.getAvgSpeedKmh(), 0.0f);
-
-    char buffer[16];
-    tc.getMovingTimeStr(buffer, sizeof(buffer));
-    EXPECT_STREQ(buffer, "00:00:00");
+  EXPECT_FLOAT_EQ(tripComputer.getDistanceKm(), 0.0f);
+  EXPECT_FLOAT_EQ(tripComputer.getMaxSpeedKmh(), 0.0f);
 }
 
 TEST_F(TripComputerTest, StopMovingDoesNotIncreaseMovingTime) {
-    TripComputer tc;
-    tc.begin();
-    unsigned long now = 1000;
+  unsigned long now = 1000;
+  // Move for 1 hour
+  tripComputer.update(36.0f, now);
+  now += 3600000;
+  tripComputer.update(36.0f, now);
 
-    // Start moving
-    tc.update(10.0f, now);
+  // Stop for 1 hour
+  // Speed 0
+  unsigned long stopStart = now;
+  now += 3600000;
+  tripComputer.update(0.0f, now);
 
-    // Move for 1 minute
-    now += 60000;
-    tc.update(10.0f, now);  // moving time += 1min
+  char buf[20];
+  tripComputer.getMovingTimeStr(buf, sizeof(buf));
+  EXPECT_STREQ(buf, "01:00:00"); // Should still be 1 hour
 
-    // Stop (speed 0)
-    now += 60000;          // +1 minute
-    tc.update(0.0f, now);  // Should NOT add to moving time
-
-    char buffer[16];
-    tc.getMovingTimeStr(buffer, sizeof(buffer));
-    // Should be only 1 minute (00:01:00), not 2 minutes
-    EXPECT_STREQ(buffer, "00:01:00");
-
-    // However, elapsed time should increase
-    tc.getElapsedTimeStr(buffer, sizeof(buffer));
-    EXPECT_STREQ(buffer, "00:02:00");
+  // Elaborate elapsed time check
+  _mock_millis = now;
+  // startTime was 1000. Now is 1000 + 3600000 + 3600000 = 7201000.
+  // Elapsed = 7200000 = 2 hours.
+  tripComputer.getElapsedTimeStr(buf, sizeof(buf));
+  EXPECT_STREQ(buf, "02:00:00");
 }

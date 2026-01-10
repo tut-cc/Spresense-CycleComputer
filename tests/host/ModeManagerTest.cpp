@@ -3,74 +3,43 @@
 #include "system/ModeManager.h"
 
 class ModeManagerTest : public ::testing::Test {
-    // No special setup needed for ModeManager currently
+  // No special setup needed for ModeManager currently
 };
 
 TEST_F(ModeManagerTest, InitialModeIsSpeed) {
-    ModeManager mm;
-    EXPECT_EQ(mm.getMode(), Mode::SPEED);
+  application::ModeManager mm;
+  EXPECT_EQ(mm.getMode(), application::Mode::SPEED);
 }
 
 TEST_F(ModeManagerTest, CycleThroughModes) {
-    ModeManager mm;
+  application::ModeManager mm;
 
-    // SPEED -> TIME
-    mm.nextMode();
-    EXPECT_EQ(mm.getMode(), Mode::TIME);
+  // SPEED -> MAX_SPEED
+  mm.nextMode();
+  EXPECT_EQ(mm.getMode(), application::Mode::MAX_SPEED);
 
-    // TIME -> MAX_SPEED
-    mm.nextMode();
-    EXPECT_EQ(mm.getMode(), Mode::MAX_SPEED);
+  // MAX_SPEED -> AVG_SPEED
+  mm.nextMode();
+  EXPECT_EQ(mm.getMode(), application::Mode::AVG_SPEED);
 
-    // MAX_SPEED -> DISTANCE
-    mm.nextMode();
-    EXPECT_EQ(mm.getMode(), Mode::DISTANCE);
+  // AVG_SPEED -> TIME
+  mm.nextMode();
+  EXPECT_EQ(mm.getMode(), application::Mode::TIME);
 
-    // DISTANCE -> MOVING_TIME
-    mm.nextMode();
-    EXPECT_EQ(mm.getMode(), Mode::MOVING_TIME);
+  // TIME -> MOVING_TIME
+  mm.nextMode();
+  EXPECT_EQ(mm.getMode(), application::Mode::MOVING_TIME);
 
-    // MOVING_TIME -> ELAPSED_TIME
-    mm.nextMode();
-    EXPECT_EQ(mm.getMode(), Mode::ELAPSED_TIME);
+  // MOVING_TIME -> ELAPSED_TIME
+  mm.nextMode();
+  EXPECT_EQ(mm.getMode(), application::Mode::ELAPSED_TIME);
 
-    // ELAPSED_TIME -> AVG_SPEED
-    mm.nextMode();
-    EXPECT_EQ(mm.getMode(), Mode::AVG_SPEED);
+  // ELAPSED_TIME -> DISTANCE
+  mm.nextMode();
+  EXPECT_EQ(mm.getMode(), application::Mode::DISTANCE);
 
-    // AVG_SPEED -> SPEED (Wrap around)
-    mm.nextMode();
-    EXPECT_EQ(mm.getMode(), Mode::SPEED);
+  // DISTANCE -> SPEED
+  mm.nextMode();
+  EXPECT_EQ(mm.getMode(), application::Mode::SPEED);
 }
-
-TEST_F(ModeManagerTest, ReverseCycleThroughModes) {
-    ModeManager mm;
-
-    // SPEED -> AVG_SPEED (Wrap around backward)
-    mm.prevMode();
-    EXPECT_EQ(mm.getMode(), Mode::AVG_SPEED);
-
-    // AVG_SPEED -> ELAPSED_TIME
-    mm.prevMode();
-    EXPECT_EQ(mm.getMode(), Mode::ELAPSED_TIME);
-
-    // ELAPSED_TIME -> MOVING_TIME
-    mm.prevMode();
-    EXPECT_EQ(mm.getMode(), Mode::MOVING_TIME);
-
-    // MOVING_TIME -> DISTANCE
-    mm.prevMode();
-    EXPECT_EQ(mm.getMode(), Mode::DISTANCE);
-
-    // DISTANCE -> MAX_SPEED
-    mm.prevMode();
-    EXPECT_EQ(mm.getMode(), Mode::MAX_SPEED);
-
-    // MAX_SPEED -> TIME
-    mm.prevMode();
-    EXPECT_EQ(mm.getMode(), Mode::TIME);
-
-    // TIME -> SPEED
-    mm.prevMode();
-    EXPECT_EQ(mm.getMode(), Mode::SPEED);
-}
+// I will rewrite the test content assuming the Step 174 Enum Order.

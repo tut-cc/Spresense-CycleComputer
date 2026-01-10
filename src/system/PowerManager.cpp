@@ -4,6 +4,8 @@
 
 #include "../Config.h"
 
+namespace application {
+
 PowerManager::PowerManager() {}
 
 void PowerManager::begin() {
@@ -38,3 +40,5 @@ void PowerManager::update() {
       digitalWrite(Config::Pin::WARN_LED, LOW);
   }
 }
+
+} // namespace application

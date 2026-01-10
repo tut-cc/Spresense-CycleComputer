@@ -1,13 +1,26 @@
 #pragma once
 
-enum class Mode { SPEED, TIME, MAX_SPEED, DISTANCE, MOVING_TIME, ELAPSED_TIME, AVG_SPEED, TOTAL_MODES };
+namespace application {
+
+enum class Mode {
+  SPEED,
+  MAX_SPEED,
+  AVG_SPEED,
+  TIME,
+  MOVING_TIME,
+  ELAPSED_TIME,
+  DISTANCE,
+};
 
 class ModeManager {
 private:
-  Mode currentMode = Mode::SPEED;
+  Mode currentMode;
 
 public:
+  ModeManager();
   void nextMode();
   void prevMode();
-  Mode getMode();
+  Mode getMode() const;
 };
+
+} // namespace application

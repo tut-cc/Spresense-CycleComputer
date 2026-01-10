@@ -3,13 +3,15 @@
 #include "../Config.h"
 #include "../drivers/OLEDDriver.h"
 
+namespace application {
+
 inline void formatFloat(float val, int width, int prec, char *buf, size_t size) {
   char fmt[6];
   snprintf(fmt, sizeof(fmt), "%%%d.%df", width, prec);
   snprintf(buf, size, fmt, val);
 }
 
-CycleComputer::CycleComputer(OLEDDriver *display) : display(display) {}
+CycleComputer::CycleComputer(drivers::OLEDDriver *display) : display(display) {}
 
 void CycleComputer::begin() {
   display->begin();
@@ -100,3 +102,5 @@ void CycleComputer::getDisplayData(Mode mode, DisplayDataType &type, char *buf, 
     break;
   }
 }
+
+} // namespace application

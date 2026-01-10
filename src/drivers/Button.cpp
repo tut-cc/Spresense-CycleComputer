@@ -1,5 +1,7 @@
 #include "Button.h"
 
+namespace drivers {
+
 Button::Button(int pin) : pinNumber(pin) {}
 
 void Button::begin() {
@@ -27,3 +29,17 @@ bool Button::isPressed() {
   lastPinLevel = rawPinLevel;
   return pressed;
 }
+
+#ifdef UNIT_TEST
+void Button::resetMock() {
+  // No static state to reset currently in Button class itself
+  // Maybe reset Arduino mock pin states if we could access them?
+  // For now do nothing or just rely on test setup to reset pins
+}
+
+void Button::setMockState(int pin, int state) {
+  setPinState(pin, state);
+}
+#endif
+
+} // namespace drivers

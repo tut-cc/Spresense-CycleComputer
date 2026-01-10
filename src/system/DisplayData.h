@@ -2,6 +2,8 @@
 
 #include <Arduino.h>
 
+namespace application {
+
 enum class DisplayDataType {
   SPEED,
   MAX_SPEED,
@@ -19,3 +21,5 @@ struct DisplayMetadata {
 };
 
 DisplayMetadata getDisplayMetadata(DisplayDataType type);
+
+} // namespace application

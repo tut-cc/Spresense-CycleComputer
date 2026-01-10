@@ -3,6 +3,8 @@
 #include "../Config.h"
 #include "Arduino.h"
 
+namespace drivers {
+
 class Button {
 private:
   const int pinNumber;
@@ -26,4 +28,11 @@ public:
   inline bool isHeld() const {
     return stablePinLevel == LOW;
   }
+
+#ifdef UNIT_TEST
+  static void resetMock();
+  static void setMockState(int pin, int state);
+#endif
 };
+
+} // namespace drivers

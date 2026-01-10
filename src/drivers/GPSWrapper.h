@@ -3,6 +3,8 @@
 #include <Arduino.h>
 #include <GNSS.h>
 
+namespace drivers {
+
 class GPSWrapper {
 public:
   bool begin();
@@ -20,3 +22,5 @@ public:
   static void setMockSpeed(float speedKmh);
 #endif
 };
+
+} // namespace drivers
