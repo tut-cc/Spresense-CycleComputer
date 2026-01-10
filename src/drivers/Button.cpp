@@ -1,31 +1,33 @@
 #include "Button.h"
+#include "Config.h"
 
-Button::Button(int pin) : pin(pin) {}
+Button::Button(int pin) : pinNumber(pin) {}
 
 void Button::begin() {
-    pinMode(pin, INPUT_PULLUP);
-    state = digitalRead(pin);
-    lastReading = state;
+    pinMode(pinNumber, INPUT_PULLUP);
+    stablePinLevel = digitalRead(pinNumber);
+    lastPinLevel = stablePinLevel;
+    lastDebounceTime = millis();
 }
 
 bool Button::isPressed() {
-    bool reading = digitalRead(pin);
+    bool rawPinLevel = digitalRead(pinNumber);
     bool pressed = false;
 
-    if (reading != lastReading) lastDebounceTime = millis();
+    if (rawPinLevel != lastPinLevel) lastDebounceTime = millis();
 
-    if ((millis() - lastDebounceTime) > debounceDelay) {
-        if (reading != state) {
-            state = reading;
+    if ((millis() - lastDebounceTime) > Config::DEBOUNCE_DELAY) {
+        if (rawPinLevel != stablePinLevel) {
+            stablePinLevel = rawPinLevel;
 
-            if (state == LOW) pressed = true;
+            if (stablePinLevel == LOW) pressed = true;
         }
     }
 
-    lastReading = reading;
+    lastPinLevel = rawPinLevel;
     return pressed;
 }
 
 bool Button::isHeld() {
-    return (state == LOW);
+    return (stablePinLevel == LOW);
 }

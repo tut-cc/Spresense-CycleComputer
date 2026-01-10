@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 
-#define DEBUG_MODE  // デバッグ用定数
+#define DEBUG_MODE
 
 namespace Config {
 namespace Pin {
@@ -18,6 +18,7 @@ constexpr int OLED_SDA = PIN_D14;
 constexpr int WARN_LED = PIN_D02;
 }  // namespace Pin
 
+constexpr unsigned long DEBOUNCE_DELAY = 50;
 constexpr unsigned long DISPLAY_UPDATE_INTERVAL_MS = 100;
 
 namespace OLED {

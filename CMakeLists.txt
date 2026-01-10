@@ -87,9 +87,7 @@ add_custom_target(arduino_help
     COMMENT "Displaying help..."
 )
 
-# ==============================================================================
 # Clang-Format
-# ==============================================================================
 find_program(CLANG_FORMAT "clang-format")
 if(CLANG_FORMAT)
     file(GLOB_RECURSE ALL_SOURCES
