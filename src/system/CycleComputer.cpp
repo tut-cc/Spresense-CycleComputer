@@ -1,9 +1,13 @@
+#include "Logger.h"
+#include "../Config.h"
 #include "CycleComputer.h"
 #include "../drivers/OLEDDriver.h"
 
-#include "../Config.h"
-#include "Utils.h"
-#include "Logger.h"
+inline void formatFloat(float val, int width, int prec, char* buf, size_t size) {
+    char fmt[6];
+    snprintf(fmt, sizeof(fmt), "%%%d.%df", width, prec);
+    snprintf(buf, size, fmt, val);
+}
 
 CycleComputer::CycleComputer(OLEDDriver* display) : display(display) {
 }
@@ -63,10 +67,8 @@ void CycleComputer::updateDisplay() {
 
 void CycleComputer::logDebugInfo(Mode currentMode, const char* value) {
 #ifdef DEBUG_MODE
-    // 前回のモードを記憶しておく変数 (staticなので値を保持し続けます)
     static int lastDebugMode = -1;
 
-    // 現在のモードを取得して比較
     int modeInt = (int)currentMode;
     if (lastDebugMode != modeInt) {
         Logger::log("[CycleComputer] Mode changed: ");

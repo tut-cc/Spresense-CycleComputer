@@ -9,7 +9,7 @@ OLEDDriver::OLEDDriver() : display(Config::OLED::WIDTH, Config::OLED::HEIGHT, &W
 void OLEDDriver::begin() {
     if (!display.begin(SSD1306_SWITCHCAPVCC, Config::OLED::ADDRESS)) {
         Serial.println(F("SSD1306 allocation failed"));
-        for (;;);  // Don't proceed, loop forever
+        for (;;);  // デバッグのための無限ループ
     }
 
     display.clearDisplay();
@@ -17,7 +17,7 @@ void OLEDDriver::begin() {
     display.setTextColor(SSD1306_WHITE);
     display.setTextSize(1);
 
-    currentValue = "";  // Initial content
+    currentValue = "";  // 最初の表示内容
 }
 
 void OLEDDriver::clear() {

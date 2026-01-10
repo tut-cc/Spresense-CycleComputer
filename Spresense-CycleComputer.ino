@@ -1,5 +1,4 @@
 #include "src/system/CycleComputer.h"
-
 #include "src/drivers/OLEDDriver.h"
 
 OLEDDriver display;

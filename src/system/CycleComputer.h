@@ -16,7 +16,6 @@ class CycleComputer {
     TripComputer tripComputer;
     PowerManager powerManager;
 
-    // ディスプレイ更新制御
     unsigned long lastDisplayUpdate = 0;
     bool forceUpdate = false;
 
