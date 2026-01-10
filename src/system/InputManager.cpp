@@ -15,17 +15,17 @@ InputEvent InputManager::update() {
     bool bPressed = btnB.isPressed();
 
     if ((aPressed && btnB.isHeld()) || (bPressed && btnA.isHeld())) {
-        Logger::logln("[InputManager] 同時に押された");
+        LOG_DEBUG("[InputManager] 同時に押された");
         return InputEvent::BTN_BOTH;
     }
 
     if (aPressed) {
-        Logger::logln("[InputManager] Aボタンが押された");
+        LOG_DEBUG("[InputManager] Aボタンが押された");
         return InputEvent::BTN_A;
     }
 
     if (bPressed) {
-        Logger::logln("[InputManager] Bボタンが押された");
+        LOG_DEBUG("[InputManager] Bボタンが押された");
         return InputEvent::BTN_B;
     }
 

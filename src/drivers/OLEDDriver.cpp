@@ -11,7 +11,7 @@ OLEDDriver::OLEDDriver() : display(Config::OLED::WIDTH, Config::OLED::HEIGHT, &W
 
 bool OLEDDriver::begin() {
     if (!display.begin(SSD1306_SWITCHCAPVCC, Config::OLED::ADDRESS)) {
-        Logger::logln("SSD1306 allocation failed");
+        LOG_ERROR("SSD1306 allocation failed");
         return false;
     }
 

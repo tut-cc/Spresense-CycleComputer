@@ -71,10 +71,7 @@ void CycleComputer::logDebugInfo(Mode currentMode, const char* value) {
 
     int modeInt = (int)currentMode;
     if (lastDebugMode != modeInt) {
-        Logger::log("[CycleComputer] Mode changed: ");
-        Logger::log(modeInt);
-        Logger::log(" Value: ");
-        Logger::logln(value);
+        LOG_DEBUG("[CycleComputer] Mode changed: %d Value: %s", modeInt, value);
         lastDebugMode = modeInt;
     }
 #endif
