@@ -1,15 +1,29 @@
 #pragma once
 
+#include "Arduino.h"
+#include "../Config.h"
+
 class Button {
    private:
-    int pinNumber;
+    const int pinNumber;
     bool stablePinLevel;
     bool lastPinLevel;
     unsigned long lastDebounceTime;
+
+    inline void resetDebounceTimer() {
+        lastDebounceTime = millis();
+    }
+
+    inline bool hasDebounceTimePassed() const {
+        return (millis() - lastDebounceTime) > Config::DEBOUNCE_DELAY;
+    }
 
    public:
     Button(int pin);
     void begin();
     bool isPressed();
-    bool isHeld();
+
+    inline bool isHeld() const {
+        return stablePinLevel == LOW;
+    }
 };
