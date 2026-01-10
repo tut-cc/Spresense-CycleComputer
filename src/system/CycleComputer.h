@@ -22,7 +22,6 @@ class CycleComputer {
     void handleInput();
     void updateDisplay();
     void getDisplayData(Mode mode, DisplayDataType& type, char* buf, size_t size);
-    void logDebugInfo(Mode currentMode, const char* value);
 
    public:
     CycleComputer(OLEDDriver* display);

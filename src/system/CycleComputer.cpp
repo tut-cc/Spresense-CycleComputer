@@ -2,7 +2,6 @@
 
 #include "../Config.h"
 #include "../drivers/OLEDDriver.h"
-#include "Logger.h"
 
 inline void formatFloat(float val, int width, int prec, char* buf, size_t size) {
     char fmt[6];
@@ -59,21 +58,7 @@ void CycleComputer::updateDisplay() {
     DisplayDataType type;
     getDisplayData(modeManager.getMode(), type, buf, sizeof(buf));
 
-    logDebugInfo(modeManager.getMode(), buf);
-
     display->show(type, buf);
-}
-
-void CycleComputer::logDebugInfo(Mode currentMode, const char* value) {
-#ifdef DEBUG_MODE
-    static int lastDebugMode = -1;
-
-    int modeInt = (int)currentMode;
-    if (lastDebugMode != modeInt) {
-        LOG_DEBUG("[CycleComputer] Mode changed: %d Value: %s", modeInt, value);
-        lastDebugMode = modeInt;
-    }
-#endif
 }
 
 void CycleComputer::getDisplayData(Mode mode, DisplayDataType& type, char* buf, size_t size) {

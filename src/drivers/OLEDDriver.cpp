@@ -3,17 +3,13 @@
 #include <Arduino.h>
 
 #include "../Config.h"
-#include "../system/Logger.h"
 
 OLEDDriver::OLEDDriver() : display(Config::OLED::WIDTH, Config::OLED::HEIGHT, &Wire, -1) {
     currentType = DisplayDataType::INVALID;
 }
 
 bool OLEDDriver::begin() {
-    if (!display.begin(SSD1306_SWITCHCAPVCC, Config::OLED::ADDRESS)) {
-        LOG_ERROR("SSD1306 allocation failed");
-        return false;
-    }
+    if (!display.begin(SSD1306_SWITCHCAPVCC, Config::OLED::ADDRESS)) return false;
 
     display.clearDisplay();
     display.display();
