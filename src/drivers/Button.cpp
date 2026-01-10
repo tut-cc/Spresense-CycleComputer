@@ -1,5 +1,5 @@
 #include "Button.h"
-#include "Config.h"
+#include "../Config.h"
 
 Button::Button(int pin) : pinNumber(pin) {}
 
