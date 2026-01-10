@@ -132,7 +132,7 @@ TEST_F(CycleComputerTest, DisplayGPSSpeed) {
   EXPECT_CALL(mockDisplay, show(_, _)).Times(AnyNumber());
 
   float testSpeed = 15.5;
-  drivers::GPSWrapper::setMockSpeed(testSpeed);
+  application::GPSWrapper::setMockSpeed(testSpeed);
 
   // Expect display to show formatted speed string
   EXPECT_CALL(mockDisplay, show(application::DisplayDataType::SPEED, testing::HasSubstr("15.5"))).Times(testing::AtLeast(1));
@@ -152,7 +152,7 @@ TEST_F(CycleComputerTest, DisplayTime) {
   pressButton(Config::Pin::BTN_A); // TIME
 
   // Set UTC time to 3:34, which is 12:34 JST (UTC+9)
-  drivers::GPSWrapper::setMockTime(3, 34, 56);
+  application::GPSWrapper::setMockTime(3, 34, 56);
 
   EXPECT_CALL(mockDisplay, show(application::DisplayDataType::TIME, StrEq("12:34"))).Times(testing::AtLeast(1));
 
@@ -167,7 +167,7 @@ TEST_F(CycleComputerTest, ResetData) {
   EXPECT_CALL(mockDisplay, show(_, _)).Times(AnyNumber());
 
   // 1. Accumulate some distance
-  drivers::GPSWrapper::setMockSpeed(30.0f);
+  application::GPSWrapper::setMockSpeed(30.0f);
   // Simulate 1 hour passing (needs many updates or large time jump?)
   // CycleComputer calls tripComputer.update(speed, millis())
   // We can jump time.

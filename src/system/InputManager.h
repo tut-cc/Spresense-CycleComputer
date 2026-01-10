@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../drivers/Button.h"
+#include "../drivers/ButtonDriver.h"
 
 namespace application {
 
@@ -13,8 +13,8 @@ enum class InputEvent {
 
 class InputManager {
 private:
-  drivers::Button btnA;
-  drivers::Button btnB;
+  drivers::ButtonDriver btnA;
+  drivers::ButtonDriver btnB;
   unsigned long lastInputTime = 0;
 
 public:

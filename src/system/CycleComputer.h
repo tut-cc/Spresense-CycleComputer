@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../drivers/GPSWrapper.h"
 #include "../drivers/OLEDDriver.h"
+#include "GPSWrapper.h"
 #include "InputManager.h"
 #include "ModeManager.h"
 #include "PowerManager.h"
@@ -14,7 +14,7 @@ private:
   drivers::OLEDDriver *display;
   InputManager inputManager;
   ModeManager modeManager;
-  drivers::GPSWrapper gps;
+  GPSWrapper gps;
   TripComputer tripComputer;
   PowerManager powerManager;
 

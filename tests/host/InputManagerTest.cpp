@@ -9,13 +9,13 @@ protected:
 
   void SetUp() override {
     // Reset mocks
-    // drivers::Button::resetMock(); // Removed
+    // drivers::ButtonDriver::resetMock(); // Removed
     inputManager = new application::InputManager();
     inputManager->begin();
 
     // Ensure initial state is released (HIGH)
-    drivers::Button::setMockState(Config::Pin::BTN_A, HIGH);
-    drivers::Button::setMockState(Config::Pin::BTN_B, HIGH);
+    drivers::ButtonDriver::setMockState(Config::Pin::BTN_A, HIGH);
+    drivers::ButtonDriver::setMockState(Config::Pin::BTN_B, HIGH);
   }
 
   void TearDown() override {
@@ -23,15 +23,15 @@ protected:
   }
 };
 
-// Helper to simulate button press with debounce
+// Helper to simulate ButtonDriver press with debounce
 void pressButton(application::InputManager *im, int pin) {
-  drivers::Button::setMockState(pin, LOW);
+  drivers::ButtonDriver::setMockState(pin, LOW);
   im->update();       // Detect change (start debounce)
   _mock_millis += 70; // Wait > 50ms (Config::DEBOUNCE_DELAY assumed 50)
 }
 
 void releaseButton(application::InputManager *im, int pin) {
-  drivers::Button::setMockState(pin, HIGH);
+  drivers::ButtonDriver::setMockState(pin, HIGH);
   im->update(); // Detect change
   _mock_millis += 70;
 }
@@ -40,7 +40,7 @@ TEST_F(InputManagerTest, InitialStateReturnsNone) {
   EXPECT_EQ(inputManager->update(), application::InputEvent::NONE);
 }
 
-TEST_F(InputManagerTest, ButtonAPress) {
+TEST_F(InputManagerTest, ButtonDriverAPress) {
   pressButton(inputManager, Config::Pin::BTN_A);
   EXPECT_EQ(inputManager->update(), application::InputEvent::BTN_A);
 
@@ -51,7 +51,7 @@ TEST_F(InputManagerTest, ButtonAPress) {
   EXPECT_EQ(inputManager->update(), application::InputEvent::NONE);
 }
 
-TEST_F(InputManagerTest, ButtonBPress) {
+TEST_F(InputManagerTest, ButtonDriverBPress) {
   pressButton(inputManager, Config::Pin::BTN_B);
   EXPECT_EQ(inputManager->update(), application::InputEvent::BTN_B);
 
@@ -60,8 +60,8 @@ TEST_F(InputManagerTest, ButtonBPress) {
 }
 
 TEST_F(InputManagerTest, SimultaneousPress) {
-  drivers::Button::setMockState(Config::Pin::BTN_A, LOW);
-  drivers::Button::setMockState(Config::Pin::BTN_B, LOW);
+  drivers::ButtonDriver::setMockState(Config::Pin::BTN_A, LOW);
+  drivers::ButtonDriver::setMockState(Config::Pin::BTN_B, LOW);
   inputManager->update(); // Detect both change
 
   _mock_millis += 70;
@@ -72,7 +72,7 @@ TEST_F(InputManagerTest, SimultaneousPress) {
   EXPECT_EQ(inputManager->update(), application::InputEvent::NONE);
 }
 
-TEST_F(InputManagerTest, ButtonRelease) {
+TEST_F(InputManagerTest, ButtonDriverRelease) {
   pressButton(inputManager, Config::Pin::BTN_A);
   EXPECT_EQ(inputManager->update(), application::InputEvent::BTN_A);
 

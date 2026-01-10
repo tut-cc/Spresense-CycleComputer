@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include <GNSS.h>
 
-namespace drivers {
+namespace application {
 
 class GPSWrapper {
 public:
@@ -23,4 +23,4 @@ public:
 #endif
 };
 
-} // namespace drivers
+} // namespace application

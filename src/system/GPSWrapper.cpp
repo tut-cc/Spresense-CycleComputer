@@ -4,7 +4,7 @@
 
 #include "../Config.h"
 
-namespace drivers {
+namespace application {
 
 bool GPSWrapper::begin() {
   if (gnss.begin() != 0)
@@ -55,4 +55,4 @@ void GPSWrapper::setMockSpeed(float speedKmh) {
 }
 #endif
 
-} // namespace drivers
+} // namespace application

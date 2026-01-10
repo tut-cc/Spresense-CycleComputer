@@ -5,7 +5,7 @@
 
 namespace drivers {
 
-class Button {
+class ButtonDriver {
 private:
   const int pinNumber;
   bool stablePinLevel;
@@ -21,7 +21,7 @@ private:
   }
 
 public:
-  Button(int pin);
+  ButtonDriver(int pin);
   void begin();
   bool isPressed();
 
