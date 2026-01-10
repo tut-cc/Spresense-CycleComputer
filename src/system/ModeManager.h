@@ -8,5 +8,6 @@ class ModeManager {
 
    public:
     void nextMode();
+    void prevMode();
     Mode getMode();
 };

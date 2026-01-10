@@ -35,11 +35,13 @@ void CycleComputer::handleInput() {
             modeManager.nextMode();
             forceUpdate = true;
             break;
+        case InputEvent::BTN_B:
+            modeManager.prevMode();
+            forceUpdate = true;
+            break;
         case InputEvent::BTN_BOTH:
             tripComputer.reset();
             forceUpdate = true;
-            break;
-        case InputEvent::BTN_B:
             break;
         default:
             break;

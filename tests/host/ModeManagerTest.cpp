@@ -42,3 +42,35 @@ TEST_F(ModeManagerTest, CycleThroughModes) {
     mm.nextMode();
     EXPECT_EQ(mm.getMode(), Mode::SPEED);
 }
+
+TEST_F(ModeManagerTest, ReverseCycleThroughModes) {
+    ModeManager mm;
+
+    // SPEED -> AVG_SPEED (Wrap around backward)
+    mm.prevMode();
+    EXPECT_EQ(mm.getMode(), Mode::AVG_SPEED);
+
+    // AVG_SPEED -> ELAPSED_TIME
+    mm.prevMode();
+    EXPECT_EQ(mm.getMode(), Mode::ELAPSED_TIME);
+
+    // ELAPSED_TIME -> MOVING_TIME
+    mm.prevMode();
+    EXPECT_EQ(mm.getMode(), Mode::MOVING_TIME);
+
+    // MOVING_TIME -> DISTANCE
+    mm.prevMode();
+    EXPECT_EQ(mm.getMode(), Mode::DISTANCE);
+
+    // DISTANCE -> MAX_SPEED
+    mm.prevMode();
+    EXPECT_EQ(mm.getMode(), Mode::MAX_SPEED);
+
+    // MAX_SPEED -> TIME
+    mm.prevMode();
+    EXPECT_EQ(mm.getMode(), Mode::TIME);
+
+    // TIME -> SPEED
+    mm.prevMode();
+    EXPECT_EQ(mm.getMode(), Mode::SPEED);
+}
