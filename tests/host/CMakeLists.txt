@@ -1,20 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 project(SpresenseCycleComputerTests)
 
-# Set C++ Standard
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-# Generate compile_commands.json for clangd
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-# Include directories
-include_directories(
-    ../../src
-    mocks
-    .
-)
-
 # Fetch GoogleTest
 include(FetchContent)
 FetchContent_Declare(
@@ -26,19 +12,10 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-# Source files
-set(SOURCES
-    ../../src/system/TripComputer.cpp
-    ../../src/system/InputManager.cpp
-    ../../src/system/CycleComputer.cpp
-    ../../src/system/ModeManager.cpp
-    ../../src/system/PowerManager.cpp
-    ../../src/drivers/Button.cpp
-    ../../src/drivers/GPSWrapper.cpp
-    ../../src/drivers/OLEDDriver.cpp
+# Test specific sources and mocks
+set(TEST_SOURCES
     mocks/MockGlobals.cpp
     mocks/MockLibs.cpp
-    ../../src/system/DisplayData.cpp
     TripComputerTest.cpp
     InputManagerTest.cpp
     CycleComputerTest.cpp
@@ -46,7 +23,18 @@ set(SOURCES
 )
 
 # Define executable
-add_executable(run_tests ${SOURCES})
+# Compile sources directly to ensure UNIT_TEST definition is applied
+add_executable(run_tests
+    ${TEST_SOURCES}
+    ${SOURCES}
+)
+
+# Include directories (mocks local to tests, plus src from root)
+target_include_directories(run_tests PRIVATE
+    mocks
+    ../../src
+    .
+)
 
 # Link GoogleTest
 target_link_libraries(run_tests GTest::gmock_main)
@@ -59,3 +47,6 @@ else()
 endif()
 
 target_compile_definitions(run_tests PRIVATE UNIT_TEST)
+
+include(GoogleTest)
+gtest_discover_tests(run_tests)
