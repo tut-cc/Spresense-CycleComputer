@@ -21,9 +21,7 @@ void TripComputer::update(float currentSpeedKmh, unsigned long currentMs) {
     elapsedTimeMs += deltaMs;
 
     // 最大速度を更新
-    if (currentSpeedKmh > maxSpeedKmh) {
-        maxSpeedKmh = currentSpeedKmh;
-    }
+    if (currentSpeedKmh > maxSpeedKmh) maxSpeedKmh = currentSpeedKmh;
 
     // 距離と時間の計算
     // 単純な積分: 距離 = 速度 * 時間

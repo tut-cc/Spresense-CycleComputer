@@ -10,7 +10,6 @@
 class CycleComputer {
    private:
     OLEDDriver* display;
-    bool ownsDisplay = false; // Flag to check if we need to delete display
     InputManager inputManager;
     ModeManager modeManager;
     GPSWrapper gps;
@@ -27,9 +26,7 @@ class CycleComputer {
     void logDebugInfo(Mode currentMode, const char* value);
 
    public:
-    CycleComputer();
     CycleComputer(OLEDDriver* display);
-    ~CycleComputer();
     void begin();
     void update();
 };

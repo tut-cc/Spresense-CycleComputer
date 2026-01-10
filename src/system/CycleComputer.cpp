@@ -5,17 +5,7 @@
 #include "Utils.h"
 #include "Logger.h"
 
-CycleComputer::CycleComputer() : display(new OLEDDriver()), ownsDisplay(true) {
-}
-
-CycleComputer::CycleComputer(OLEDDriver* display) : display(display), ownsDisplay(false) {
-}
-
-CycleComputer::~CycleComputer() {
-    if (ownsDisplay && display != nullptr) {
-        delete display;
-        display = nullptr;
-    }
+CycleComputer::CycleComputer(OLEDDriver* display) : display(display) {
 }
 
 void CycleComputer::begin() {
@@ -56,21 +46,18 @@ void CycleComputer::handleInput() {
 void CycleComputer::updateDisplay() {
     unsigned long currentMillis = millis();
 
-    // 強制更新フラグがなく、かつ更新間隔未満であればスキップ
     if (!forceUpdate && (currentMillis - lastDisplayUpdate < Config::DISPLAY_UPDATE_INTERVAL_MS))
         return;
 
     lastDisplayUpdate = currentMillis;
     forceUpdate = false;
 
-    // 表示データの取得
     char buf[20];
     DisplayDataType type;
     getDisplayData(modeManager.getMode(), type, buf, sizeof(buf));
 
     logDebugInfo(modeManager.getMode(), buf);
 
-    // ディスプレイ更新
     display->show(type, buf);
 }
 

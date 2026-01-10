@@ -1,6 +1,9 @@
 #include "src/system/CycleComputer.h"
 
-CycleComputer computer;
+#include "src/drivers/OLEDDriver.h"
+
+OLEDDriver display;
+CycleComputer computer(&display);
 
 void setup() {
     computer.begin();

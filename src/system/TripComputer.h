@@ -8,7 +8,6 @@ class TripComputer {
     double totalDistanceKm = 0.0;  // 長距離での精度のため double を使用
     unsigned long movingTimeMs = 0;
     unsigned long elapsedTimeMs = 0;
-
     unsigned long lastUpdateMs = 0;
 
    public:
