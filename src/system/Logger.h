@@ -4,13 +4,7 @@
 
 #include "../Config.h"
 
-enum class LogLevel {
-    DEBUG,
-    INFO,
-    WARN,
-    ERROR,
-    NONE
-};
+enum class LogLevel { DEBUG, INFO, WARN, ERROR, NONE };
 
 extern LogLevel currentLogLevel;
 
@@ -24,13 +18,20 @@ class Logger {
 };
 
 #ifdef DEBUG_MODE
-    #define LOG_DEBUG(fmt, ...) Logger::log(LogLevel::DEBUG, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
-    #define LOG_INFO(fmt, ...)  Logger::log(LogLevel::INFO,  __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
-    #define LOG_WARN(fmt, ...)  Logger::log(LogLevel::WARN,  __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
-    #define LOG_ERROR(fmt, ...) Logger::log(LogLevel::ERROR, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
+#define LOG_DEBUG(fmt, ...) Logger::log(LogLevel::DEBUG, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
+#define LOG_INFO(fmt, ...) Logger::log(LogLevel::INFO, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
+#define LOG_WARN(fmt, ...) Logger::log(LogLevel::WARN, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
+#define LOG_ERROR(fmt, ...) Logger::log(LogLevel::ERROR, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
+
+// Conditional Logging
+#define LOG_DEBUG_IF(cond, fmt, ...)             \
+    do {                                         \
+        if (cond) LOG_DEBUG(fmt, ##__VA_ARGS__); \
+    } while (0)
 #else
-    #define LOG_DEBUG(fmt, ...) ((void)0)
-    #define LOG_INFO(fmt, ...)  ((void)0)
-    #define LOG_WARN(fmt, ...)  ((void)0)
-    #define LOG_ERROR(fmt, ...) ((void)0)
+#define LOG_DEBUG(fmt, ...) ((void)0)
+#define LOG_INFO(fmt, ...) ((void)0)
+#define LOG_WARN(fmt, ...) ((void)0)
+#define LOG_ERROR(fmt, ...) ((void)0)
+#define LOG_DEBUG_IF(cond, fmt, ...) ((void)0)
 #endif

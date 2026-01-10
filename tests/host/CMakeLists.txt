@@ -36,7 +36,7 @@ set(SOURCES
     ../../src/drivers/Button.cpp
     ../../src/drivers/GPSWrapper.cpp
     ../../src/drivers/OLEDDriver.cpp
-    mocks/MockGlobals.cpp
+    ../../src/system/Logger.cpp
     mocks/MockGlobals.cpp
     mocks/MockLibs.cpp
     ../../src/system/DisplayData.cpp

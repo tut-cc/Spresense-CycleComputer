@@ -107,8 +107,7 @@ TEST_F(CycleComputerTest, DisplayGPSSpeed) {
     // Expect display to show formatted speed string
     // formatFloat(15.5, 4, 1) -> "15.5" ? or " 15.5" depending on implementation.
     // Let's verify it contains "15.5"
-    EXPECT_CALL(mockDisplay, show(DisplayDataType::SPEED, testing::HasSubstr("15.5")))
-        .Times(testing::AtLeast(1));
+    EXPECT_CALL(mockDisplay, show(DisplayDataType::SPEED, testing::HasSubstr("15.5"))).Times(testing::AtLeast(1));
 
     computer->update();
 }
@@ -122,8 +121,7 @@ TEST_F(CycleComputerTest, DisplayTime) {
     // Set UTC time to 3:34, which is 12:34 JST (UTC+9)
     GPSWrapper::setMockTime(3, 34, 56);
 
-    EXPECT_CALL(mockDisplay, show(DisplayDataType::TIME, StrEq("12:34")))
-        .Times(testing::AtLeast(1));
+    EXPECT_CALL(mockDisplay, show(DisplayDataType::TIME, StrEq("12:34"))).Times(testing::AtLeast(1));
 
     _mock_millis += 1000;
     computer->update();
@@ -147,16 +145,14 @@ TEST_F(CycleComputerTest, ResetData) {
     pressButton(Config::Pin::BTN_A);  // SPEED -> TIME
     pressButton(Config::Pin::BTN_A);  // TIME -> MAX_SPEED
 
-    EXPECT_CALL(mockDisplay, show(DisplayDataType::MAX_SPEED, testing::HasSubstr("30.0")))
-        .Times(testing::AtLeast(1));
+    EXPECT_CALL(mockDisplay, show(DisplayDataType::MAX_SPEED, testing::HasSubstr("30.0"))).Times(testing::AtLeast(1));
     computer->update();
 
     // 2. Perform Reset
     pressBothButtons();
 
     // 3. Verify Max Speed is 0
-    EXPECT_CALL(mockDisplay, show(DisplayDataType::MAX_SPEED, testing::HasSubstr("0.0")))
-        .Times(testing::AtLeast(1));
+    EXPECT_CALL(mockDisplay, show(DisplayDataType::MAX_SPEED, testing::HasSubstr("0.0"))).Times(testing::AtLeast(1));
     _mock_millis += 1000;
     computer->update();
 }

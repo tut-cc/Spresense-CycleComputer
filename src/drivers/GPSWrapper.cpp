@@ -19,7 +19,7 @@ void GPSWrapper::update() {
 
 float GPSWrapper::getSpeedKmh() const {
     if (!(navData.posFixMode == Fix2D || navData.posFixMode == Fix3D)) return 0.0f;
-    if (navData.velocity < 0.1f) return 0.0f; // 測位誤差対策
+    if (navData.velocity < 0.1f) return 0.0f;  // 測位誤差対策
     return navData.velocity * 3.6f;
 }
 

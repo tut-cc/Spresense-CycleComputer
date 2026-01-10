@@ -21,8 +21,7 @@ Adafruit_GFX::Adafruit_GFX(int16_t w, int16_t h) {
 }
 
 // --- Adafruit_SSD1306 ---
-Adafruit_SSD1306::Adafruit_SSD1306(int16_t w, int16_t h, TwoWire *twi, int8_t rst_pin)
-    : Adafruit_GFX(w, h) {
+Adafruit_SSD1306::Adafruit_SSD1306(int16_t w, int16_t h, TwoWire *twi, int8_t rst_pin) : Adafruit_GFX(w, h) {
     (void)twi;
     (void)rst_pin;
 }
@@ -86,8 +85,7 @@ void Adafruit_SSD1306::println(const char *s) {
     // std::cout << "OLED println: " << s << std::endl;
 }
 
-void Adafruit_SSD1306::getTextBounds(const String &str, int16_t x, int16_t y, int16_t *x1,
-                                     int16_t *y1, uint16_t *w, uint16_t *h) {
+void Adafruit_SSD1306::getTextBounds(const String &str, int16_t x, int16_t y, int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h) {
     // Mock logic to return some reasonable bounds
     // Assume 6x8 chars for size 1
     *x1 = x;

@@ -19,7 +19,7 @@ bool OLEDDriver::begin() {
     display.display();
     display.setTextColor(SSD1306_WHITE);
     display.setTextSize(1);
-    
+
     currentValue = "";
     return true;
 }
@@ -39,7 +39,7 @@ void OLEDDriver::drawTitle(const String& title) {
 
 void OLEDDriver::drawUnit(const String& unit) {
     if (unit.length() <= 0) return;
-    
+
     int16_t x1, y1;
     uint16_t w, h;
     display.setTextSize(1);
@@ -50,8 +50,10 @@ void OLEDDriver::drawUnit(const String& unit) {
 
 void OLEDDriver::drawValue(const String& value) {
     int len = value.length();
-    if (len < 5)    display.setTextSize(3);
-    else            display.setTextSize(2);
+    if (len < 5)
+        display.setTextSize(3);
+    else
+        display.setTextSize(2);
 
     int16_t x1, y1;
     uint16_t w, h;

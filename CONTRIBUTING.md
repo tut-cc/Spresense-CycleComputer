@@ -22,7 +22,7 @@
 - **スペース**: `if`, `while`, `for` のキーワードの直後にスペースを入れる
   - OK: `if (condition)`
   - NG: `if(condition)`
-- **行の長さ**: 最大 100 文字
+- **行の長さ**: 最大 200 文字
 
 ## 3. ハードウェア定義 (Hardware Definitions)
 
@@ -43,15 +43,4 @@
 ## 5. フォーマッタ (Formatter)
 
 本プロジェクトでは `clang-format` を使用します。設定ファイル (`.clang-format`) がリポジトリに含まれています。
-
-### 設定内容
-
-```yaml
-BasedOnStyle: Google
-IndentWidth: 4
-ColumnLimit: 100
-AllowShortFunctionsOnASingleLine: Empty
-BreakBeforeBraces: Attach
-```
-
 コミット前にフォーマットを適用することを推奨します。

@@ -50,8 +50,7 @@ void CycleComputer::handleInput() {
 void CycleComputer::updateDisplay() {
     unsigned long currentMillis = millis();
 
-    if (!forceUpdate && (currentMillis - lastDisplayUpdate < Config::DISPLAY_UPDATE_INTERVAL_MS))
-        return;
+    if (!forceUpdate && (currentMillis - lastDisplayUpdate < Config::DISPLAY_UPDATE_INTERVAL_MS)) return;
 
     lastDisplayUpdate = currentMillis;
     forceUpdate = false;

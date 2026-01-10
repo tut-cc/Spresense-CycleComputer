@@ -5,6 +5,10 @@
 #define DEBUG_MODE
 
 namespace Config {
+namespace Debug {
+constexpr bool ENABLE_BUTTON_LOG = true;
+}  // namespace Debug
+
 namespace Pin {
 // ボタン
 constexpr int BTN_A = PIN_D00;
