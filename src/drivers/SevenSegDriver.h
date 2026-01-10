@@ -1,8 +1,6 @@
 #pragma once
-
+/*
 #include <Arduino.h>
-
-#include "../drivers/OLEDDriver.h"
 
 // 7セグメントシフトレジスタ
 constexpr int SDI = PIN_D09;
@@ -53,3 +51,4 @@ class SevenSegDriver {
     static const unsigned char* number;
     static const unsigned char* numdot;
 };
+*/

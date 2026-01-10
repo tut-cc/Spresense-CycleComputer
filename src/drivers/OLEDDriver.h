@@ -5,16 +5,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 
-enum class DisplayDataType {
-    SPEED,
-    TIME,
-    MAX_SPEED,
-    DISTANCE,
-    MOVING_TIME,
-    ELAPSED_TIME,
-    AVG_SPEED,
-    INVALID,
-};
+#include "../system/DisplayData.h"
 
 class OLEDDriver {
    private:
@@ -22,10 +13,14 @@ class OLEDDriver {
     DisplayDataType currentType;
     String currentValue;
 
+    void drawTitle(const String& title);
+    void drawUnit(const String& unit);
+    void drawValue(const String& value);
+
    public:
     OLEDDriver();
     virtual ~OLEDDriver() {}
-    virtual void begin();
+    virtual bool begin();
     virtual void clear();
     virtual void show(DisplayDataType type, const char* value);
 };

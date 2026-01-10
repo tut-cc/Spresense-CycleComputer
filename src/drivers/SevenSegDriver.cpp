@@ -1,3 +1,4 @@
+/*
 #include "SevenSegDriver.h"
 
 // Static member definitions
@@ -78,3 +79,5 @@ void SevenSegDriver::hc595_shift(byte data) {
     shiftOut(SDI, SRCLK, MSBFIRST, data);
     digitalWrite(RCLK, HIGH);
 }
+
+*/

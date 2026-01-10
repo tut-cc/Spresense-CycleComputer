@@ -39,6 +39,7 @@ set(SOURCES
     mocks/MockGlobals.cpp
     mocks/MockGlobals.cpp
     mocks/MockLibs.cpp
+    ../../src/system/DisplayData.cpp
     TripComputerTest.cpp
     InputManagerTest.cpp
     CycleComputerTest.cpp

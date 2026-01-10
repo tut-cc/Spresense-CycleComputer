@@ -12,7 +12,7 @@ using ::testing::StrEq;
 // Mock Display
 class MockDisplay : public OLEDDriver {
    public:
-    MOCK_METHOD(void, begin, (), (override));
+    MOCK_METHOD(bool, begin, (), (override));
     MOCK_METHOD(void, clear, (), (override));
     MOCK_METHOD(void, show, (DisplayDataType type, const char* value), (override));
 };
