@@ -8,19 +8,19 @@
 #include "../system/DisplayData.h"
 
 class OLEDDriver {
-   private:
-    Adafruit_SSD1306 display;
-    DisplayDataType currentType;
-    String currentValue;
+private:
+  Adafruit_SSD1306 display;
+  DisplayDataType currentType;
+  String currentValue;
 
-    void drawTitle(const String& title);
-    void drawUnit(const String& unit);
-    void drawValue(const String& value);
+  void drawTitle(const String &title);
+  void drawUnit(const String &unit);
+  void drawValue(const String &value);
 
-   public:
-    OLEDDriver();
-    virtual ~OLEDDriver() {}
-    virtual bool begin();
-    virtual void clear();
-    virtual void show(DisplayDataType type, const char* value);
+public:
+  OLEDDriver();
+  virtual ~OLEDDriver() {}
+  virtual bool begin();
+  virtual void clear();
+  virtual void show(DisplayDataType type, const char *value);
 };

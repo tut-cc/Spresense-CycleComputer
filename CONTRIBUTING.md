@@ -15,7 +15,7 @@
 
 ## 2. 基本スタイル (Basic Style)
 
-- **インデント**: スペース 4 つ
+- **インデント**: スペース 2 つ
 - **中括弧の位置**: 同じ行に置く (Attach)
   - OK: `void loop() {`
   - NG: `void loop()\n{`
@@ -26,10 +26,10 @@
 
 ## 3. ハードウェア定義 (Hardware Definitions)
 
-- **ピン定義**: `#define` マクロの使用は避け、`const uint8_t` または `enum` を使用してください。
+- **ピン定義**: `#define` マクロの使用は避け、`constexpr` または `enum` を使用してください。
   ```cpp
   // OK
-  const uint8_t LED_PIN = 13;
+  constexpr uint8_t LED_PIN = 13;
   // または
   enum Pin : uint8_t { LED_RED = 13 };
   ```
