@@ -1,10 +1,11 @@
 #pragma once
 
 #include <Arduino.h>
+
 #include "../Config.h"
 
 class Logger {
-public:
+   public:
     template <typename T>
     static void log(const T& msg) {
 #ifdef DEBUG_MODE

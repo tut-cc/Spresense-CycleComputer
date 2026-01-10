@@ -1,6 +1,7 @@
 #include "GPSWrapper.h"
 
 #include <Arduino.h>
+
 #include "../Config.h"
 
 bool GPSWrapper::begin() {
@@ -33,7 +34,7 @@ void GPSWrapper::update() {
 
 float GPSWrapper::getSpeedKmh() {
     if (!isFixed) return 0.0f;
-    return navData.velocity * 3.6f; // 速度は m/s 単位、km/h に変換
+    return navData.velocity * 3.6f;  // 速度は m/s 単位、km/h に変換
 }
 
 void GPSWrapper::getTimeJST(char *buffer, size_t size) {

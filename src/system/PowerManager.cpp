@@ -1,7 +1,8 @@
 #include "PowerManager.h"
-#include "../Config.h"
 
 #include <LowPower.h>
+
+#include "../Config.h"
 
 PowerManager::PowerManager() {}
 

@@ -1,9 +1,10 @@
-#include "Adafruit_SSD1306.h"
-#include "Adafruit_GFX.h"
-#include "Wire.h"
-#include "GNSS.h"
 #include <cstdio>
 #include <iostream>
+
+#include "Adafruit_GFX.h"
+#include "Adafruit_SSD1306.h"
+#include "GNSS.h"
+#include "Wire.h"
 
 // --- Wire ---
 TwoWire Wire;
@@ -20,7 +21,7 @@ Adafruit_GFX::Adafruit_GFX(int16_t w, int16_t h) {
 }
 
 // --- Adafruit_SSD1306 ---
-Adafruit_SSD1306::Adafruit_SSD1306(int16_t w, int16_t h, TwoWire *twi, int8_t rst_pin) 
+Adafruit_SSD1306::Adafruit_SSD1306(int16_t w, int16_t h, TwoWire *twi, int8_t rst_pin)
     : Adafruit_GFX(w, h) {
     (void)twi;
     (void)rst_pin;
@@ -31,7 +32,7 @@ bool Adafruit_SSD1306::begin(uint8_t switchvcc, uint8_t i2caddr, bool reset, boo
     (void)i2caddr;
     (void)reset;
     (void)periphBegin;
-    return true; // Success
+    return true;  // Success
 }
 
 void Adafruit_SSD1306::display() {
@@ -73,7 +74,7 @@ void Adafruit_SSD1306::print(const String &s) {
     // std::cout << "OLED print: " << s.c_str() << std::endl;
 }
 
-void Adafruit_SSD1306::print(const char* s) {
+void Adafruit_SSD1306::print(const char *s) {
     // std::cout << "OLED print: " << s << std::endl;
 }
 
@@ -81,11 +82,12 @@ void Adafruit_SSD1306::println(const String &s) {
     // std::cout << "OLED println: " << s.c_str() << std::endl;
 }
 
-void Adafruit_SSD1306::println(const char* s) {
+void Adafruit_SSD1306::println(const char *s) {
     // std::cout << "OLED println: " << s << std::endl;
 }
 
-void Adafruit_SSD1306::getTextBounds(const String &str, int16_t x, int16_t y, int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h) {
+void Adafruit_SSD1306::getTextBounds(const String &str, int16_t x, int16_t y, int16_t *x1,
+                                     int16_t *y1, uint16_t *w, uint16_t *h) {
     // Mock logic to return some reasonable bounds
     // Assume 6x8 chars for size 1
     *x1 = x;
@@ -98,18 +100,24 @@ void Adafruit_SSD1306::getTextBounds(const String &str, int16_t x, int16_t y, in
 SpNavTime SpGnss::mockTimeData = {2023, 10, 1, 12, 30, 0, 0};
 float SpGnss::mockVelocityData = 5.5f;
 
-int SpGnss::begin() { return 0; }
-int SpGnss::start(int mode) { 
+int SpGnss::begin() {
+    return 0;
+}
+int SpGnss::start(int mode) {
     (void)mode;
-    return 0; 
+    return 0;
 }
-int SpGnss::stop() { return 0; }
-void SpGnss::select(int satelliteSystem) { (void)satelliteSystem; }
-bool SpGnss::waitUpdate(int timeout) { 
+int SpGnss::stop() {
+    return 0;
+}
+void SpGnss::select(int satelliteSystem) {
+    (void)satelliteSystem;
+}
+bool SpGnss::waitUpdate(int timeout) {
     (void)timeout;
-    return true; 
+    return true;
 }
-void SpGnss::getNavData(SpNavData* navData) {
+void SpGnss::getNavData(SpNavData *navData) {
     if (navData) {
         navData->velocity = mockVelocityData;
         navData->time = mockTimeData;

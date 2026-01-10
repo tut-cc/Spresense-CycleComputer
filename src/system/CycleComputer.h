@@ -4,8 +4,8 @@
 #include "../drivers/OLEDDriver.h"
 #include "InputManager.h"
 #include "ModeManager.h"
-#include "TripComputer.h"
 #include "PowerManager.h"
+#include "TripComputer.h"
 
 class CycleComputer {
    private:

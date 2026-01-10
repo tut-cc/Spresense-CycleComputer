@@ -1,7 +1,8 @@
-#include "Logger.h"
-#include "../Config.h"
 #include "CycleComputer.h"
+
+#include "../Config.h"
 #include "../drivers/OLEDDriver.h"
+#include "Logger.h"
 
 inline void formatFloat(float val, int width, int prec, char* buf, size_t size) {
     char fmt[6];
@@ -9,8 +10,7 @@ inline void formatFloat(float val, int width, int prec, char* buf, size_t size) 
     snprintf(buf, size, fmt, val);
 }
 
-CycleComputer::CycleComputer(OLEDDriver* display) : display(display) {
-}
+CycleComputer::CycleComputer(OLEDDriver* display) : display(display) {}
 
 void CycleComputer::begin() {
     display->begin();

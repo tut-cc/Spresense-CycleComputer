@@ -24,16 +24,16 @@ struct SpNavTime {
 
 struct SpNavData {
     SpNavTime time;
-    float velocity; // m/s
+    float velocity;  // m/s
     int posFixMode;
     double latitude;
     double longitude;
-    float altitude; // not used but good to have
+    float altitude;  // not used but good to have
     int numSatellites;
 };
 
 class SpGnss {
-public:
+   public:
     int begin();
     int start(int mode);
     int stop();

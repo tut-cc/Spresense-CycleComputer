@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include "system/ModeManager.h"
 
 class ModeManagerTest : public ::testing::Test {

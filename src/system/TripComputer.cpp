@@ -1,4 +1,5 @@
 #include "TripComputer.h"
+
 #include "../Config.h"
 
 void TripComputer::begin() {
@@ -15,12 +16,12 @@ void TripComputer::update(float currentSpeedKmh, unsigned long currentMs) {
     unsigned long deltaMs = currentMs - lastUpdateMs;
     lastUpdateMs = currentMs;
 
-    elapsedTimeMs += deltaMs; // 常に合計経過時間を更新
+    elapsedTimeMs += deltaMs;  // 常に合計経過時間を更新
 
     if (currentSpeedKmh > maxSpeedKmh) maxSpeedKmh = currentSpeedKmh;
 
     if (currentSpeedKmh > Config::Trip::MOVE_THRESHOLD_KMH) {
-        movingTimeMs += deltaMs; // 移動時間を加算
+        movingTimeMs += deltaMs;  // 移動時間を加算
         double hours = (double)deltaMs / 3600000.0;
         totalDistanceKm += (double)currentSpeedKmh * hours;
     }

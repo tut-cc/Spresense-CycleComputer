@@ -1,6 +1,7 @@
 #include "InputManager.h"
-#include "Logger.h"
+
 #include "../Config.h"
+#include "Logger.h"
 
 InputManager::InputManager() : btnA(Config::Pin::BTN_A), btnB(Config::Pin::BTN_B) {}
 

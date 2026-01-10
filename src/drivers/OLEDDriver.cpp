@@ -1,5 +1,7 @@
-#include <Arduino.h>
 #include "OLEDDriver.h"
+
+#include <Arduino.h>
+
 #include "../Config.h"
 
 OLEDDriver::OLEDDriver() : display(Config::OLED::WIDTH, Config::OLED::HEIGHT, &Wire, -1) {
