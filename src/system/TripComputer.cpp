@@ -1,5 +1,4 @@
 #include "TripComputer.h"
-#include "../Config.h"
 
 namespace application {
 

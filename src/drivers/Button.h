@@ -30,7 +30,6 @@ public:
   }
 
 #ifdef UNIT_TEST
-  static void resetMock();
   static void setMockState(int pin, int state);
 #endif
 };

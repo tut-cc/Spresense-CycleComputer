@@ -9,7 +9,7 @@ protected:
 
   void SetUp() override {
     // Reset mocks
-    drivers::Button::resetMock();
+    // drivers::Button::resetMock(); // Removed
     inputManager = new application::InputManager();
     inputManager->begin();
 
