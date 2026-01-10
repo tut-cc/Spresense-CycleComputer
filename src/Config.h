@@ -28,7 +28,7 @@ constexpr int ADDRESS = 0x3C;
 }  // namespace OLED
 
 namespace Time {
-constexpr int TIMEZONE_OFFSET = 9;  // JST (+9)
+constexpr int JST_OFFSET = 9;
 }
 
 namespace Trip {

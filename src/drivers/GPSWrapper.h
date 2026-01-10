@@ -7,14 +7,12 @@ class GPSWrapper {
    public:
     bool begin();
     void update();
-    float getSpeedKmh();
-    void getTimeJST(char *buffer, size_t size);
+    float getSpeedKmh() const;
+    void getTimeJST(char* buffer, size_t size) const;
 
    private:
     SpGnss gnss;
     SpNavData navData;
-
-    bool isFixed;
 
 #ifdef UNIT_TEST
    public:
