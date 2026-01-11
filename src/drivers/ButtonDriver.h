@@ -1,15 +1,15 @@
 #pragma once
 
 #include "../Config.h"
-#include "Arduino.h"
+#include <Arduino.h>
 
 namespace drivers {
 
 class ButtonDriver {
 private:
-  const int pinNumber;
-  bool stablePinLevel;
-  bool lastPinLevel;
+  const int     pinNumber;
+  bool          stablePinLevel;
+  bool          lastPinLevel;
   unsigned long lastDebounceTime;
 
   inline void resetDebounceTimer() {
@@ -28,10 +28,6 @@ public:
   inline bool isHeld() const {
     return stablePinLevel == LOW;
   }
-
-#ifdef UNIT_TEST
-  static void setMockState(int pin, int state);
-#endif
 };
 
 } // namespace drivers

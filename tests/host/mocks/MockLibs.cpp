@@ -90,8 +90,8 @@ void Adafruit_SSD1306::getTextBounds(const String &str, int16_t x, int16_t y, in
   // Assume 6x8 chars for size 1
   *x1 = x;
   *y1 = y;
-  *w = str.length() * 6;
-  *h = 8;
+  *w  = str.length() * 6;
+  *h  = 8;
 }
 
 // Adafruit_GFX implementations
@@ -128,8 +128,8 @@ void Adafruit_GFX::drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color)
 }
 
 // --- GNSS ---
-SpNavTime SpGnss::mockTimeData = {2023, 10, 1, 12, 30, 0, 0};
-float SpGnss::mockVelocityData = 5.5f;
+SpNavTime SpGnss::mockTimeData     = {2023, 10, 1, 12, 30, 0, 0};
+float     SpGnss::mockVelocityData = 5.5f;
 
 int SpGnss::begin() {
   return 0;
@@ -150,9 +150,9 @@ bool SpGnss::waitUpdate(int timeout) {
 }
 void SpGnss::getNavData(SpNavData *navData) {
   if (navData) {
-    navData->velocity = mockVelocityData;
-    navData->time = mockTimeData;
-    navData->posFixMode = Fix3D;
+    navData->velocity      = mockVelocityData;
+    navData->time          = mockTimeData;
+    navData->posFixMode    = Fix3D;
     navData->numSatellites = 8;
   }
 }

@@ -87,23 +87,5 @@ add_custom_target(arduino_help
     COMMAND ${CMAKE_COMMAND} -E echo "  upload           - Upload using current settings"
     COMMAND ${CMAKE_COMMAND} -E echo "  upload_spresense - Compile and upload for Spresense"
     COMMAND ${CMAKE_COMMAND} -E echo "  clean_arduino_cache - Clean arduino-cli cache"
-    COMMAND ${CMAKE_COMMAND} -E echo "  format           - Format all source files using clang-format"
     COMMENT "Displaying help..."
 )
-
-# Clang-Format
-find_program(CLANG_FORMAT "clang-format")
-if(CLANG_FORMAT)
-    file(GLOB_RECURSE ALL_SOURCES
-        "src/*.cpp" "src/*.h"
-        "tests/*.cpp" "tests/*.h"
-    )
-    add_custom_target(
-        format
-        COMMAND ${CLANG_FORMAT} -i -style=file ${ALL_SOURCES}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMENT "Formatting source code..."
-    )
-else()
-    message(STATUS "clang-format not found. 'format' target will not be available.")
-endif()

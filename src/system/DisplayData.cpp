@@ -7,17 +7,17 @@ DisplayMetadata getDisplayMetadata(DisplayDataType type) {
   case DisplayDataType::SPEED:
     return {"SPEED", "km/h"};
   case DisplayDataType::MAX_SPEED:
-    return {"MAX", "km/h"};
+    return {"MAX SPEED", "km/h"};
   case DisplayDataType::AVG_SPEED:
-    return {"AVG", "km/h"};
+    return {"AVG SPEED", "km/h"};
   case DisplayDataType::TIME:
     return {"TIME", ""};
   case DisplayDataType::MOVING_TIME:
-    return {"TRIP T", ""};
+    return {"TRIP TIME", ""};
   case DisplayDataType::ELAPSED_TIME:
-    return {"TIME", ""};
+    return {"ELAPSED TIME", ""};
   case DisplayDataType::DISTANCE:
-    return {"DIST", "km"};
+    return {"DISTANCE", "km"};
   default:
     return {"", ""};
   }

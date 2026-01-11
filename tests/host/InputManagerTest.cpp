@@ -14,8 +14,9 @@ protected:
     inputManager->begin();
 
     // Ensure initial state is released (HIGH)
-    drivers::ButtonDriver::setMockState(Config::Pin::BTN_A, HIGH);
-    drivers::ButtonDriver::setMockState(Config::Pin::BTN_B, HIGH);
+    // Ensure initial state is released (HIGH)
+    setPinState(Config::Pin::BTN_A, HIGH);
+    setPinState(Config::Pin::BTN_B, HIGH);
   }
 
   void TearDown() override {
@@ -25,13 +26,13 @@ protected:
 
 // Helper to simulate ButtonDriver press with debounce
 void pressButton(application::InputManager *im, int pin) {
-  drivers::ButtonDriver::setMockState(pin, LOW);
+  setPinState(pin, LOW);
   im->update();       // Detect change (start debounce)
   _mock_millis += 70; // Wait > 50ms (Config::DEBOUNCE_DELAY assumed 50)
 }
 
 void releaseButton(application::InputManager *im, int pin) {
-  drivers::ButtonDriver::setMockState(pin, HIGH);
+  setPinState(pin, HIGH);
   im->update(); // Detect change
   _mock_millis += 70;
 }
@@ -60,8 +61,8 @@ TEST_F(InputManagerTest, ButtonDriverBPress) {
 }
 
 TEST_F(InputManagerTest, SimultaneousPress) {
-  drivers::ButtonDriver::setMockState(Config::Pin::BTN_A, LOW);
-  drivers::ButtonDriver::setMockState(Config::Pin::BTN_B, LOW);
+  setPinState(Config::Pin::BTN_A, LOW);
+  setPinState(Config::Pin::BTN_B, LOW);
   inputManager->update(); // Detect both change
 
   _mock_millis += 70;

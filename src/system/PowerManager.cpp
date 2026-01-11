@@ -21,7 +21,7 @@ void PowerManager::update() {
   // 10秒ごとに電圧をチェック
   if (currentMillis - lastBatteryCheck >= Config::Power::BATTERY_CHECK_INTERVAL_MS) {
     lastBatteryCheck = currentMillis;
-    int voltage = LowPower.getVoltage();
+    int voltage      = LowPower.getVoltage();
     // 電圧が有効であり（USBでは0を返すことがある）、かつ閾値を下回っているかを確認
     if (voltage > 0 && voltage < Config::Power::BATTERY_LOW_THRESHOLD) {
       isLowBattery = true;
@@ -34,8 +34,7 @@ void PowerManager::update() {
   // バッテリー残量が少ない場合、LEDを点滅させる
   if (isLowBattery) {
     // ブロッキングなしの単純な点滅のために時間の剰余を使用
-    if ((currentMillis / Config::Power::LED_BLINK_INTERVAL_MS) % 2 == 0)
-      digitalWrite(Config::Pin::WARN_LED, HIGH);
+    if ((currentMillis / Config::Power::LED_BLINK_INTERVAL_MS) % 2 == 0) digitalWrite(Config::Pin::WARN_LED, HIGH);
     else
       digitalWrite(Config::Pin::WARN_LED, LOW);
   }

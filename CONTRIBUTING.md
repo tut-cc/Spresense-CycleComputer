@@ -33,3 +33,14 @@
 
 - **非ブロッキング処理**: `delay()` の使用は最小限に留め、可能な限り `millis()` を使用した非ブロッキング処理を実装してください。
 - **ライブラリ** : 使用するライブラリのバージョン依存がある場合は、コメント等でバージョンを明記してください。
+
+## 5. 開発環境 (Development Environment)
+
+### LSP設定 (clangd)
+
+CMakeの設定により、ビルド時に `compile_commands.json` が `build` ディレクトリに生成されます。
+`clangd` などのLSPを使用する場合は、プロジェクトルートにシンボリックリンクを作成してください。
+
+```bash
+ln -s build/compile_commands.json .
+```

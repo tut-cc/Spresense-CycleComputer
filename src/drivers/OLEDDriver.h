@@ -5,19 +5,20 @@
 #include <Arduino.h>
 #include <Wire.h>
 
+#include "../hal/interfaces/IDisplay.h"
 #include "../system/DisplayData.h"
 
 namespace drivers {
 
-class OLEDDriver {
+class OLEDDriver : public hal::IDisplay {
 public:
   OLEDDriver(TwoWire &i2c);
-  virtual void begin();
-  virtual void show(application::DisplayDataType type, const char *value);
+  void begin() override;
+  void show(application::DisplayDataType type, const char *value) override;
 
 private:
   Adafruit_SSD1306 display;
-  TwoWire &wire;
+  TwoWire         &wire;
 
   void drawHeader();
   void drawFooter();
@@ -25,7 +26,7 @@ private:
   void drawBatteryIcon(int x, int y, int percentage);
   void drawSatelliteIcon(int x, int y, int count);
 
-  int batteryLevel = 85;
+  int batteryLevel   = 85;
   int satelliteCount = 5;
 };
 

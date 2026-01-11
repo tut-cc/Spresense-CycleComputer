@@ -5,7 +5,7 @@ namespace application {
 class PowerManager {
 private:
   unsigned long lastBatteryCheck = 0;
-  bool isLowBattery = false;
+  bool          isLowBattery     = false;
 
 public:
   PowerManager();

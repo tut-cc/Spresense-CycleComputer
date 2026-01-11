@@ -24,9 +24,18 @@ set(TEST_SOURCES
 
 # Define executable
 # Compile sources directly to ensure UNIT_TEST definition is applied
+
 add_executable(run_tests
     ${TEST_SOURCES}
-    ${SOURCES}
+    ../../src/system/CycleComputer.cpp
+    ../../src/system/DisplayData.cpp
+    ../../src/system/GPSManager.cpp
+    ../../src/system/InputManager.cpp
+    ../../src/system/ModeManager.cpp
+    ../../src/system/PowerManager.cpp
+    ../../src/system/TripManager.cpp
+    ../../src/drivers/ButtonDriver.cpp
+    ../../src/drivers/OLEDDriver.cpp
 )
 
 # Include directories (mocks local to tests, plus src from root)

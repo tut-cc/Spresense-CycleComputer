@@ -3,8 +3,8 @@
 #include <cstdint>
 
 class TwoWire {
-   public:
-    void begin();
+public:
+  void begin();
 };
 
 extern TwoWire Wire;

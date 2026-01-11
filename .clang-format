@@ -3,3 +3,8 @@ IndentWidth: 2
 ColumnLimit: 200
 AllowShortFunctionsOnASingleLine: Empty
 BreakBeforeBraces: Attach
+AllowShortBlocksOnASingleLine: Always
+AllowShortIfStatementsOnASingleLine: Always
+AllowShortLoopsOnASingleLine: true
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true

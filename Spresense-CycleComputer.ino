@@ -1,11 +1,14 @@
 #include "src/drivers/OLEDDriver.h"
 #include "src/system/CycleComputer.h"
+#include "src/system/GPSManager.h"
+#include "src/system/InputManager.h"
 
-drivers::OLEDDriver display(Wire);
-application::CycleComputer computer(&display);
+drivers::OLEDDriver        display(Wire);
+application::GPSManager    gps;
+application::InputManager  inputManager;
+application::CycleComputer computer(&display, gps, inputManager);
 
 void setup() {
-  Serial.begin(115200);
   computer.begin();
 }
 

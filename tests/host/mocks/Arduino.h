@@ -17,8 +17,7 @@ using std::max;
 using std::min;
 
 inline long map(long x, long in_min, long in_max, long out_min, long out_max) {
-  if (in_max == in_min)
-    return out_min;
+  if (in_max == in_min) return out_min;
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
@@ -96,9 +95,7 @@ inline void pinMode(int pin, int mode) {
 }
 
 inline int digitalRead(int pin) {
-  if (_mock_pin_states.find(pin) != _mock_pin_states.end()) {
-    return _mock_pin_states[pin];
-  }
+  if (_mock_pin_states.find(pin) != _mock_pin_states.end()) { return _mock_pin_states[pin]; }
   return HIGH; // Default to HIGH (pullup behavior)
 }
 

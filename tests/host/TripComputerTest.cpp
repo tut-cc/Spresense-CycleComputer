@@ -1,11 +1,11 @@
-#include "system/TripComputer.h"
 #include "../mocks/Arduino.h"
+#include "system/TripManager.h"
 #include <gtest/gtest.h>
 
 // Fixture for TripComputer tests
 class TripComputerTest : public ::testing::Test {
 protected:
-  application::TripComputer tripComputer;
+  application::TripManager tripComputer;
 
   void SetUp() override {
     _mock_millis = 1000;

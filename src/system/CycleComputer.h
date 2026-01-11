@@ -1,32 +1,32 @@
 #pragma once
 
-#include "../drivers/OLEDDriver.h"
-#include "GPSWrapper.h"
-#include "InputManager.h"
+#include "../hal/interfaces/IDisplay.h"
+#include "../hal/interfaces/IGnssProvider.h"
+#include "../hal/interfaces/IInputProvider.h"
 #include "ModeManager.h"
 #include "PowerManager.h"
-#include "TripComputer.h"
+#include "TripManager.h"
 
 namespace application {
 
 class CycleComputer {
 private:
-  drivers::OLEDDriver *display;
-  InputManager inputManager;
-  ModeManager modeManager;
-  GPSWrapper gps;
-  TripComputer tripComputer;
-  PowerManager powerManager;
+  hal::IDisplay       *display;
+  hal::IInputProvider &inputProvider;
+  hal::IGnssProvider  &gnssProvider;
+  ModeManager          modeManager;
+  TripManager          tripManager;
+  PowerManager         powerManager;
 
   unsigned long lastDisplayUpdate = 0;
-  bool forceUpdate = false;
+  bool          forceUpdate       = false;
 
   void handleInput();
   void updateDisplay();
   void getDisplayData(Mode mode, DisplayDataType &type, char *buf, size_t size);
 
 public:
-  CycleComputer(drivers::OLEDDriver *display);
+  CycleComputer(hal::IDisplay *display, hal::IGnssProvider &gnss, hal::IInputProvider &input);
   void begin();
   void update();
 };
