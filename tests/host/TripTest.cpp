@@ -1,10 +1,10 @@
-#include "system/Trip.h"
+#include "domain/Trip.h"
 #include "../mocks/Arduino.h"
 #include <gtest/gtest.h>
 
 class TripTest : public ::testing::Test {
 protected:
-  application::Trip trip;
+  domain::Trip trip;
 
   void SetUp() override {
     trip.begin();

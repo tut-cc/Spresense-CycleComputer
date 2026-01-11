@@ -5,7 +5,7 @@
 #include <Arduino.h>
 
 #include "../Config.h"
-#include "../system/DisplayData.h"
+#include "../ui/DisplayData.h"
 
 namespace drivers {
 
@@ -26,11 +26,11 @@ public:
     display.display();
   }
 
-  void show(application::DisplayDataType type, const char *value) {
+  void show(ui::DisplayDataType type, const char *value) {
     display.clearDisplay();
 
     drawHeader();
-    application::DisplayMetadata meta = application::getDisplayMetadata(type);
+    ui::DisplayMetadata meta = ui::getDisplayMetadata(type);
     drawMainArea(meta.title.c_str(), value, meta.unit.c_str());
     drawFooter();
 

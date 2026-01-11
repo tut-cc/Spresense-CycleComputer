@@ -4,7 +4,7 @@
 #include <GNSS.h>
 #include <cstdio>
 
-namespace application {
+namespace domain {
 
 class Stopwatch {
 private:
@@ -55,4 +55,4 @@ private:
   }
 };
 
-} // namespace application
+} // namespace domain

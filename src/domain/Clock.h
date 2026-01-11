@@ -4,7 +4,7 @@
 #include <GNSS.h>
 #include <cstdio>
 
-namespace application {
+namespace domain {
 
 class Clock {
 private:
@@ -29,4 +29,4 @@ public:
   }
 };
 
-} // namespace application
+} // namespace domain

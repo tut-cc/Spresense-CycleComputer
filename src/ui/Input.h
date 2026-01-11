@@ -4,7 +4,7 @@
 
 #include "InputEvent.h"
 
-namespace application {
+namespace ui {
 
 class Input {
 private:
@@ -31,4 +31,4 @@ public:
   }
 };
 
-} // namespace application
+} // namespace ui

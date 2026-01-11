@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 
-namespace application {
+namespace ui {
 
 enum class DisplayDataType {
   SPEED,
@@ -41,4 +41,4 @@ inline DisplayMetadata getDisplayMetadata(DisplayDataType type) {
   }
 }
 
-} // namespace application
+} // namespace ui

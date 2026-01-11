@@ -1,36 +1,36 @@
-#include "system/Mode.h"
+#include "ui/Mode.h"
 #include <gtest/gtest.h>
 
 class ModeTest : public ::testing::Test {
 protected:
-  application::Mode mode; // Renamed from modeManager
+  ui::Mode mode; // Renamed from modeManager
 };
 
 TEST_F(ModeTest, InitialModeIsSpeed) {
-  EXPECT_EQ(mode.get(), application::Mode::ID::SPEED);
+  EXPECT_EQ(mode.get(), ui::Mode::ID::SPEED);
 }
 
 TEST_F(ModeTest, CycleThroughModes) {
   // Sequence: SPEED -> MAX_SPEED -> AVG_SPEED -> TIME -> MOVING_TIME -> ELAPSED_TIME -> DISTANCE -> SPEED
 
   mode.next();
-  EXPECT_EQ(mode.get(), application::Mode::ID::MAX_SPEED);
+  EXPECT_EQ(mode.get(), ui::Mode::ID::MAX_SPEED);
 
   mode.next();
-  EXPECT_EQ(mode.get(), application::Mode::ID::AVG_SPEED);
+  EXPECT_EQ(mode.get(), ui::Mode::ID::AVG_SPEED);
 
   mode.next();
-  EXPECT_EQ(mode.get(), application::Mode::ID::TIME);
+  EXPECT_EQ(mode.get(), ui::Mode::ID::TIME);
 
   mode.next();
-  EXPECT_EQ(mode.get(), application::Mode::ID::MOVING_TIME);
+  EXPECT_EQ(mode.get(), ui::Mode::ID::MOVING_TIME);
 
   mode.next();
-  EXPECT_EQ(mode.get(), application::Mode::ID::ELAPSED_TIME);
+  EXPECT_EQ(mode.get(), ui::Mode::ID::ELAPSED_TIME);
 
   mode.next();
-  EXPECT_EQ(mode.get(), application::Mode::ID::DISTANCE);
+  EXPECT_EQ(mode.get(), ui::Mode::ID::DISTANCE);
 
   mode.next();
-  EXPECT_EQ(mode.get(), application::Mode::ID::SPEED);
+  EXPECT_EQ(mode.get(), ui::Mode::ID::SPEED);
 }

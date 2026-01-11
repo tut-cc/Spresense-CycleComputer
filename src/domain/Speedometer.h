@@ -2,7 +2,7 @@
 
 #include <GNSS.h>
 
-namespace application {
+namespace domain {
 
 class Speedometer {
 private:
@@ -32,4 +32,4 @@ public:
   }
 };
 
-} // namespace application
+} // namespace domain

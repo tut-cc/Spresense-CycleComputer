@@ -6,7 +6,7 @@
 
 #include <GNSS.h>
 
-namespace application {
+namespace domain {
 
 class Trip {
 private:
@@ -95,4 +95,4 @@ private:
   }
 };
 
-} // namespace application
+} // namespace domain

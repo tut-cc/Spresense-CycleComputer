@@ -1,7 +1,7 @@
 #include "CycleComputer.h"
 #include "Config.h"
 
-#include "system/InputEvent.h"
+#include "ui/InputEvent.h"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -17,7 +17,7 @@ using ::testing::StrEq;
 class MockOLED {
 public:
   MOCK_METHOD(void, begin, ());
-  MOCK_METHOD(void, show, (application::DisplayDataType, const char *));
+  MOCK_METHOD(void, show, (ui::DisplayDataType, const char *));
 };
 
 // Mock GnssProvider
@@ -45,7 +45,7 @@ public:
 class MockInputProvider {
 public:
   MOCK_METHOD(void, begin, ());
-  MOCK_METHOD(application::InputEvent, update, ());
+  MOCK_METHOD(ui::InputEvent, update, ());
 };
 
 class CycleComputerTest : public ::testing::Test {
@@ -59,7 +59,7 @@ protected:
     // Default behaviors
     ON_CALL(mockGnss, getSpeedKmh()).WillByDefault(Return(0.0f));
     ON_CALL(mockGnss, getNavData()).WillByDefault(ReturnRef(mockGnss.data));
-    ON_CALL(mockInput, update()).WillByDefault(Return(application::InputEvent::NONE));
+    ON_CALL(mockInput, update()).WillByDefault(Return(ui::InputEvent::NONE));
 
     computer = new application::CycleComputer<NiceMock<MockOLED>, NiceMock<MockGnssProvider>, NiceMock<MockInputProvider>>(mockDisplay, mockGnss, mockInput);
   }
@@ -75,15 +75,15 @@ TEST_F(CycleComputerTest, InitialModeIsSpeed) {
   EXPECT_CALL(mockInput, begin()).Times(1);
 
   // Default mode is SPEED.
-  EXPECT_CALL(mockDisplay, show(application::DisplayDataType::SPEED, _)).Times(AtLeast(1));
+  EXPECT_CALL(mockDisplay, show(ui::DisplayDataType::SPEED, _)).Times(AtLeast(1));
 
   computer->begin();
   computer->update();
 }
 
 TEST_F(CycleComputerTest, ModeChangeInput) {
-  EXPECT_CALL(mockDisplay, show(application::DisplayDataType::SPEED, _)).Times(AtLeast(1));
-  EXPECT_CALL(mockDisplay, show(application::DisplayDataType::MAX_SPEED, _)).Times(AtLeast(1));
+  EXPECT_CALL(mockDisplay, show(ui::DisplayDataType::SPEED, _)).Times(AtLeast(1));
+  EXPECT_CALL(mockDisplay, show(ui::DisplayDataType::MAX_SPEED, _)).Times(AtLeast(1));
 
   computer->begin();
 
@@ -91,7 +91,7 @@ TEST_F(CycleComputerTest, ModeChangeInput) {
   computer->update();
 
   // Simulate Button A press
-  EXPECT_CALL(mockInput, update()).WillOnce(Return(application::InputEvent::BTN_A)).WillRepeatedly(Return(application::InputEvent::NONE));
+  EXPECT_CALL(mockInput, update()).WillOnce(Return(ui::InputEvent::BTN_A)).WillRepeatedly(Return(ui::InputEvent::NONE));
 
   // Second update: Button A -> Switch to MAX_SPEED
   computer->update();
@@ -108,7 +108,7 @@ TEST_F(CycleComputerTest, DisplayGPSSpeed) {
   mockGnss.setSpeed(testSpeed); // This sets navData
 
   // Expect display to show formatted speed string
-  EXPECT_CALL(mockDisplay, show(application::DisplayDataType::SPEED, testing::HasSubstr("15.5"))).Times(AtLeast(1));
+  EXPECT_CALL(mockDisplay, show(ui::DisplayDataType::SPEED, testing::HasSubstr("15.5"))).Times(AtLeast(1));
 
   computer->update();
 }
@@ -122,10 +122,10 @@ TEST_F(CycleComputerTest, DisplayTime) {
   // Switch to TIME mode: SPEED -> MAX -> AVG -> TIME
   // We need 3 BTN_A events.
   EXPECT_CALL(mockInput, update())
-      .WillOnce(Return(application::InputEvent::BTN_A)) // -> MAX
-      .WillOnce(Return(application::InputEvent::BTN_A)) // -> AVG
-      .WillOnce(Return(application::InputEvent::BTN_A)) // -> TIME
-      .WillRepeatedly(Return(application::InputEvent::NONE));
+      .WillOnce(Return(ui::InputEvent::BTN_A)) // -> MAX
+      .WillOnce(Return(ui::InputEvent::BTN_A)) // -> AVG
+      .WillOnce(Return(ui::InputEvent::BTN_A)) // -> TIME
+      .WillRepeatedly(Return(ui::InputEvent::NONE));
 
   // Mock Time JST using SpNavData since Clock class reads it from there
   // 12:34 UTC -> +9 = 21:34 JST.
@@ -139,7 +139,7 @@ TEST_F(CycleComputerTest, DisplayTime) {
   mockGnss.data.time.minute = 34;
 
   // Expect eventually TIME mode with "12:34"
-  EXPECT_CALL(mockDisplay, show(application::DisplayDataType::TIME, StrEq("12:34"))).Times(AtLeast(1));
+  EXPECT_CALL(mockDisplay, show(ui::DisplayDataType::TIME, StrEq("12:34"))).Times(AtLeast(1));
 
   // Run updates to process inputs and display
   computer->update(); // MAX
@@ -168,9 +168,9 @@ TEST_F(CycleComputerTest, ResetData) {
 
   // Switch to MAX_SPEED mode (1 press)
   EXPECT_CALL(mockInput, update())
-      .WillOnce(Return(application::InputEvent::BTN_A))    // Go to MAX_SPEED
-      .WillOnce(Return(application::InputEvent::BTN_BOTH)) // Reset
-      .WillRepeatedly(Return(application::InputEvent::NONE));
+      .WillOnce(Return(ui::InputEvent::BTN_A))    // Go to MAX_SPEED
+      .WillOnce(Return(ui::InputEvent::BTN_BOTH)) // Reset
+      .WillRepeatedly(Return(ui::InputEvent::NONE));
 
   // Verify Reset clears data (Max Speed becomes 0.0)
   // Note: We need to set speed to 0 so new max speed isn't immediately 30.0 again after update?
@@ -189,7 +189,7 @@ TEST_F(CycleComputerTest, ResetData) {
   mockGnss.setSpeed(0.0f);
 
   // Expect 0.0 after reset
-  EXPECT_CALL(mockDisplay, show(application::DisplayDataType::MAX_SPEED, testing::HasSubstr("0.0"))).Times(AtLeast(1));
+  EXPECT_CALL(mockDisplay, show(ui::DisplayDataType::MAX_SPEED, testing::HasSubstr("0.0"))).Times(AtLeast(1));
 
   computer->update(); // Reset happens here
   computer->update(); // Show updated 0.0
