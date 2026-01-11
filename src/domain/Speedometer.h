@@ -2,7 +2,14 @@
 
 #include <GNSS.h>
 
-
+/**
+ * @brief Logic for tracking current and maximum speed.
+ *
+ * Design Decision:
+ * - Pure Logic: This class accepts simple `float` values (speed in km/h) instead of
+ *   the raw `SpNavData` structure. This makes the class testable without hardware
+ *   dependencies and reusable in other contexts.
+ */
 class Speedometer {
 private:
   float speedKmh;
@@ -11,10 +18,9 @@ private:
 public:
   Speedometer() : speedKmh(0.0f), maxSpeedKmh(0.0f) {}
 
-  void update(const SpNavData &navData) {
-    speedKmh = navData.velocity * 3.6f;
-    if (navData.posFixMode == FixInvalid) speedKmh = 0.0f;
-    if (speedKmh > maxSpeedKmh) maxSpeedKmh = speedKmh;
+  void update(float speedKmh) {
+    this->speedKmh = speedKmh;
+    if (this->speedKmh > maxSpeedKmh) maxSpeedKmh = this->speedKmh;
   }
 
   void reset() {
@@ -30,4 +36,3 @@ public:
     return maxSpeedKmh;
   }
 };
-

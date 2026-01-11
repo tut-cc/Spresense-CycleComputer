@@ -1,6 +1,5 @@
 #pragma once
 
-
 class Mode {
 public:
   enum class ID {
@@ -31,4 +30,3 @@ public:
     return currentID;
   }
 };
-

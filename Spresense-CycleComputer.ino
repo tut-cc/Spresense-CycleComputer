@@ -6,8 +6,6 @@
 #include "src/hardware/OLED.h"
 #include "src/ui/Input.h"
 
-// using namespace hardware;
-
 OLED   oled;
 Gnss   gnss;
 Button btnA(Config::Pin::BTN_A);

@@ -42,16 +42,16 @@ private:
   void getDisplayValue(const Trip &trip, const Clock &clock, Mode::ID modeId, char *buf, size_t size) {
     switch (modeId) {
     case Mode::ID::SPEED:
-      Formatter::formatSpeed(trip.getSpeedKmh(), buf, size);
+      Formatter::formatSpeed(trip.speedometer.get(), buf, size);
       break;
     case Mode::ID::MAX_SPEED:
-      Formatter::formatSpeed(trip.getMaxSpeedKmh(), buf, size);
+      Formatter::formatSpeed(trip.speedometer.getMax(), buf, size);
       break;
     case Mode::ID::AVG_SPEED:
       Formatter::formatSpeed(trip.getAvgSpeedKmh(), buf, size);
       break;
     case Mode::ID::DISTANCE:
-      Formatter::formatDistance(trip.getDistanceKm(), buf, size);
+      Formatter::formatDistance(trip.odometer.getDistance(), buf, size);
       break;
     case Mode::ID::TIME: {
       Clock::Time t = clock.getTime();
@@ -59,10 +59,10 @@ private:
       break;
     }
     case Mode::ID::MOVING_TIME:
-      Formatter::formatDuration(trip.getMovingTimeMs(), buf, size);
+      Formatter::formatDuration(trip.stopwatch.getMovingTimeMs(), buf, size);
       break;
     case Mode::ID::ELAPSED_TIME:
-      Formatter::formatDuration(trip.getElapsedTimeMs(), buf, size);
+      Formatter::formatDuration(trip.stopwatch.getElapsedTimeMs(), buf, size);
       break;
     default:
       buf[0] = '\0';

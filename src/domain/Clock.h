@@ -2,7 +2,6 @@
 
 #include <GNSS.h>
 
-
 class Clock {
 public:
   struct Time {
@@ -31,4 +30,3 @@ private:
   int timeOffset;
   int validYearStart;
 };
-

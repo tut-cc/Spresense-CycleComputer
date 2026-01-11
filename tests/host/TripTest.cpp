@@ -20,8 +20,8 @@ protected:
 };
 
 TEST_F(TripTest, InitialState) {
-  EXPECT_FLOAT_EQ(trip.getDistanceKm(), 0.0f);
-  EXPECT_FLOAT_EQ(trip.getMaxSpeedKmh(), 0.0f);
+  EXPECT_FLOAT_EQ(trip.odometer.getDistance(), 0.0f);
+  EXPECT_FLOAT_EQ(trip.speedometer.getMax(), 0.0f);
   EXPECT_FLOAT_EQ(trip.getAvgSpeedKmh(), 0.0f);
 }
 
@@ -37,7 +37,7 @@ TEST_F(TripTest, CalculateDistance) {
   float speed = 36.0f;
   trip.update(createNavData(speed), now);
 
-  EXPECT_NEAR(trip.getDistanceKm(), 36.0f, 0.01f);
+  EXPECT_NEAR(trip.odometer.getDistance(), 36.0f, 0.01f);
 }
 
 TEST_F(TripTest, IgnoreLowSpeed) {
@@ -48,12 +48,12 @@ TEST_F(TripTest, IgnoreLowSpeed) {
   float speed = 2.0f; // Below 3.0 km/h threshold
   trip.update(createNavData(speed), now);
 
-  EXPECT_FLOAT_EQ(trip.getDistanceKm(), 0.0f);
+  EXPECT_FLOAT_EQ(trip.odometer.getDistance(), 0.0f);
 }
 
 TEST_F(TripTest, MovingTimeCalculation) {
   // Test 0
-  EXPECT_EQ(trip.getMovingTimeMs(), 0);
+  EXPECT_EQ(trip.stopwatch.getMovingTimeMs(), 0);
 
   // Test 1h 1m 1s = 3600 + 60 + 1 = 3661 sec = 3661000 ms
   // Manually injecting moving time via update logic is hard without specific speed profile.
@@ -66,7 +66,7 @@ TEST_F(TripTest, MovingTimeCalculation) {
   now += 3661000;
   trip.update(createNavData(10.0f), now); // Moving, so adds to moving time
 
-  EXPECT_EQ(trip.getMovingTimeMs(), 3661000);
+  EXPECT_EQ(trip.stopwatch.getMovingTimeMs(), 3661000);
 }
 
 TEST_F(TripTest, CalculateAvgSpeed) {
@@ -90,13 +90,13 @@ TEST_F(TripTest, Reset) {
   now += 1000;
   trip.update(createNavData(10.0f), now);
 
-  EXPECT_GT(trip.getDistanceKm(), 0.0f);
-  EXPECT_GT(trip.getMaxSpeedKmh(), 0.0f);
+  EXPECT_GT(trip.odometer.getDistance(), 0.0f);
+  EXPECT_GT(trip.speedometer.getMax(), 0.0f);
 
   trip.reset();
 
-  EXPECT_FLOAT_EQ(trip.getDistanceKm(), 0.0f);
-  EXPECT_FLOAT_EQ(trip.getMaxSpeedKmh(), 0.0f);
+  EXPECT_FLOAT_EQ(trip.odometer.getDistance(), 0.0f);
+  EXPECT_FLOAT_EQ(trip.speedometer.getMax(), 0.0f);
 }
 
 TEST_F(TripTest, StopMovingDoesNotIncreaseMovingTime) {
@@ -108,11 +108,11 @@ TEST_F(TripTest, StopMovingDoesNotIncreaseMovingTime) {
   // movingTime = 1h
 
   // 1h -> 3600000ms
-  EXPECT_EQ(trip.getMovingTimeMs(), 3600000);
+  EXPECT_EQ(trip.stopwatch.getMovingTimeMs(), 3600000);
 
   now += 3600000;                        // Another hour passes...
   trip.update(createNavData(0.0f), now); // ...but not moving
   // movingTime should stay 1h
 
-  EXPECT_EQ(trip.getMovingTimeMs(), 3600000);
+  EXPECT_EQ(trip.stopwatch.getMovingTimeMs(), 3600000);
 }

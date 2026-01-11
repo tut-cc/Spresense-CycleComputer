@@ -2,7 +2,6 @@
 
 #include <GNSS.h>
 
-
 class Gnss {
 private:
   SpGnss    gnss;
@@ -32,4 +31,3 @@ public:
     return navData;
   }
 };
-

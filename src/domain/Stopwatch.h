@@ -3,23 +3,18 @@
 #include <Arduino.h>
 #include <GNSS.h>
 
-
 class Stopwatch {
 private:
   unsigned long movingTimeMs;
   unsigned long startTimeMs;
+  unsigned long elapsedTimeMs; // Added to track elapsed time directly
 
 public:
-  Stopwatch() : movingTimeMs(0), startTimeMs(0) {}
+  Stopwatch() : movingTimeMs(0), startTimeMs(0), elapsedTimeMs(0) {} // Initialize new member
 
-  void update(const SpNavData &navData, unsigned long dtMs, unsigned long currentMillis) {
-    if (startTimeMs == 0) startTimeMs = currentMillis;
-
-    float speedKmh = navData.velocity * 3.6f;
-    if (navData.posFixMode == FixInvalid) speedKmh = 0.0f;
-    bool isMoving = (speedKmh > 3.0f);
-
-    if (isMoving) movingTimeMs += dtMs;
+  void update(bool isMoving, unsigned long dt) {
+    if (isMoving) { movingTimeMs += dt; }
+    elapsedTimeMs += dt; // Update elapsed time
   }
 
   void reset() {
@@ -36,4 +31,3 @@ public:
     return millis() - startTimeMs;
   }
 };
-

@@ -1,12 +1,10 @@
 #pragma once
-#include "Config.h"
 
 #include "domain/Clock.h"
 #include "domain/Trip.h"
 #include "hardware/Gnss.h"
 #include "hardware/OLED.h"
 #include "ui/Input.h"
-#include "ui/InputEvent.h"
 #include "ui/Mode.h"
 #include "ui/Renderer.h"
 #include <cstdio>

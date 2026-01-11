@@ -137,15 +137,17 @@ TEST_F(AppTest, ModeChangeInput) {
 TEST_F(AppTest, DisplayGPSSpeed) {
   app->begin();
 
-  float testSpeed = 15.5;
+  float testSpeed = 36.0;
   mockGnss.setSpeed(testSpeed);
 
   EXPECT_CALL(mockDisplay, print(_)).Times(AnyNumber());
 
-  EXPECT_CALL(mockDisplay, print(testing::HasSubstr("15.5"))).Times(AtLeast(1));
+  EXPECT_CALL(mockDisplay, print(testing::HasSubstr("36.0"))).Times(AtLeast(1));
   EXPECT_CALL(mockDisplay, display()).Times(AtLeast(1));
 
-  app->update();
+  app->update(); // First update initializes
+  delay(100);    // Ensure time progresses
+  app->update(); // Second update processes speed
 }
 
 TEST_F(AppTest, DisplayTime) {

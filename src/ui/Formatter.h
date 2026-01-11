@@ -3,7 +3,6 @@
 #include <cstdio>
 #include <cstring>
 
-
 class Formatter {
 public:
   static void formatSpeed(float speedKmh, char *buffer, size_t size) {
@@ -31,4 +30,3 @@ public:
     }
   }
 };
-
