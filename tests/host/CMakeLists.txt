@@ -18,7 +18,7 @@ set(TEST_SOURCES
     mocks/MockLibs.cpp
     TripTest.cpp
     InputTest.cpp
-    CycleComputerTest.cpp
+    AppTest.cpp
     ModeTest.cpp
 )
 

@@ -2,7 +2,7 @@
 
 #include <GNSS.h>
 
-namespace drivers {
+namespace hardware {
 
 class Gnss {
 private:
@@ -37,4 +37,4 @@ public:
   }
 };
 
-} // namespace drivers
+} // namespace hardware

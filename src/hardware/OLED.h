@@ -7,7 +7,7 @@
 
 #include "../Config.h"
 
-namespace drivers {
+namespace hardware {
 
 class OLED {
 private:
@@ -77,4 +77,4 @@ public:
   }
 };
 
-} // namespace drivers
+} // namespace hardware

@@ -1,6 +1,6 @@
-#include "CycleComputer.h"
+#include "App.h"
 #include "Config.h"
-
+#include "ui/Input.h"
 #include "ui/InputEvent.h"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -12,6 +12,11 @@ using ::testing::NiceMock;
 using ::testing::Return;
 using ::testing::ReturnRef;
 using ::testing::StrEq;
+
+// ... (Mock Definitions are unchanged and skipped in this example if possible, but I must provide valid replacement for the whole or target parts)
+// To keep it simple, I will replace the includes and the class definitions below line 70.
+// I'll leave the Mocks alone by starting replacement at line 1. Wait, I can't mix-and-match easily without context.
+// I will rewrite the whole file content to be safe and consistent with previous tool usage pattern.
 
 // Mock OLED
 class MockOLED {
@@ -67,13 +72,14 @@ public:
   MOCK_METHOD(bool, isHeld, (), (const));
 };
 
-class CycleComputerTest : public ::testing::Test {
+class AppTest : public ::testing::Test {
 protected:
-  NiceMock<MockOLED>                                                                                mockDisplay;
-  NiceMock<MockGnssProvider>                                                                        mockGnss;
-  NiceMock<MockButton>                                                                              mockBtnA;
-  NiceMock<MockButton>                                                                              mockBtnB;
-  application::CycleComputer<NiceMock<MockOLED>, NiceMock<MockGnssProvider>, NiceMock<MockButton>> *computer;
+  NiceMock<MockOLED>                                                                                 mockDisplay;
+  NiceMock<MockGnssProvider>                                                                         mockGnss;
+  NiceMock<MockButton>                                                                               mockBtnA;
+  NiceMock<MockButton>                                                                               mockBtnB;
+  ui::Input<NiceMock<MockButton>>                                                                   *input;
+  application::App<NiceMock<MockOLED>, NiceMock<MockGnssProvider>, ui::Input<NiceMock<MockButton>>> *app;
 
   void SetUp() override {
     ON_CALL(mockGnss, getNavData()).WillByDefault(ReturnRef(mockGnss.data));
@@ -83,81 +89,71 @@ protected:
     ON_CALL(mockBtnB, isPressed()).WillByDefault(Return(false));
     ON_CALL(mockBtnB, isHeld()).WillByDefault(Return(false));
 
-    computer = new application::CycleComputer<NiceMock<MockOLED>, NiceMock<MockGnssProvider>, NiceMock<MockButton>>(mockDisplay, mockGnss, mockBtnA,
-                                                                                                                    mockBtnB);
+    input = new ui::Input<NiceMock<MockButton>>(mockBtnA, mockBtnB);
+    app   = new application::App<NiceMock<MockOLED>, NiceMock<MockGnssProvider>, ui::Input<NiceMock<MockButton>>>(mockDisplay, mockGnss, *input);
   }
 
   void TearDown() override {
-    delete computer;
+    delete app;
+    delete input;
   }
 };
 
-TEST_F(CycleComputerTest, InitialModeIsSpeed) {
+TEST_F(AppTest, InitialModeIsSpeed) {
   EXPECT_CALL(mockDisplay, begin()).Times(1);
   EXPECT_CALL(mockGnss, begin()).Times(1);
   EXPECT_CALL(mockBtnA, begin()).Times(1);
   EXPECT_CALL(mockBtnB, begin()).Times(1);
 
-  // Expect render calls which result in display()
   EXPECT_CALL(mockDisplay, display()).Times(AtLeast(1));
 
-  computer->begin();
-  computer->update();
+  app->begin();
+  app->update();
 }
 
-TEST_F(CycleComputerTest, ModeChangeInput) {
+TEST_F(AppTest, ModeChangeInput) {
   EXPECT_CALL(mockDisplay, display()).Times(AtLeast(2));
 
-  computer->begin();
-  computer->update();
+  app->begin();
+  app->update();
 
-  // Simulate BTN_A Press
-  // Input checks isPressed() for both
   EXPECT_CALL(mockBtnA, isPressed()).WillOnce(Return(true)).WillRepeatedly(Return(false));
   EXPECT_CALL(mockBtnB, isPressed()).WillRepeatedly(Return(false));
 
-  computer->update();
+  app->update();
 }
 
-TEST_F(CycleComputerTest, DisplayGPSSpeed) {
-  computer->begin();
+TEST_F(AppTest, DisplayGPSSpeed) {
+  app->begin();
 
   float testSpeed = 15.5;
   mockGnss.setSpeed(testSpeed);
 
-  // Allow other print calls
   EXPECT_CALL(mockDisplay, print(_)).Times(AnyNumber());
 
   EXPECT_CALL(mockDisplay, print(testing::HasSubstr("15.5"))).Times(AtLeast(1));
   EXPECT_CALL(mockDisplay, display()).Times(AtLeast(1));
 
-  computer->update();
+  app->update();
 }
 
-TEST_F(CycleComputerTest, DisplayTime) {
-  computer->begin();
+TEST_F(AppTest, DisplayTime) {
+  app->begin();
 
   EXPECT_CALL(mockDisplay, display()).Times(AnyNumber());
   EXPECT_CALL(mockDisplay, print(_)).Times(AnyNumber());
-
-  EXPECT_CALL(mockDisplay, display()).Times(AnyNumber());
-  EXPECT_CALL(mockDisplay, print(_)).Times(AnyNumber());
-
-  // simulate 3 A presses to get to Time Mode (Speed -> Trip -> Time)
-  // Each press needs a frame where isPressed returns true.
-  // We need to be careful about strict expectations.
 
   // Transition 1
   EXPECT_CALL(mockBtnA, isPressed()).WillOnce(Return(true)).WillRepeatedly(Return(false));
-  computer->update(); // Speed -> Trip
+  app->update(); // Speed -> Trip
 
   // Transition 2
   EXPECT_CALL(mockBtnA, isPressed()).WillOnce(Return(true)).WillRepeatedly(Return(false));
-  computer->update(); // Trip -> Time (Actually Max Speed)
+  app->update(); // Trip -> Time (Actually Max Speed)
 
   // Transition 3
   EXPECT_CALL(mockBtnA, isPressed()).WillOnce(Return(true)).WillRepeatedly(Return(false));
-  computer->update(); // -> Time
+  app->update(); // -> Time
 
   mockGnss.data.time.year   = 2025;
   mockGnss.data.time.hour   = 3; // UTC 3 -> JST 12
@@ -165,32 +161,29 @@ TEST_F(CycleComputerTest, DisplayTime) {
 
   EXPECT_CALL(mockDisplay, print(StrEq("12:34"))).Times(AtLeast(1));
 
-  delay(1000);        // Advance time to trigger display update
-  computer->update(); // Render Time
+  delay(1000);   // Advance time to trigger display update
+  app->update(); // Render Time
 }
 
-TEST_F(CycleComputerTest, ResetData) {
-  computer->begin();
+TEST_F(AppTest, ResetData) {
+  app->begin();
 
   EXPECT_CALL(mockDisplay, display()).Times(AnyNumber());
   EXPECT_CALL(mockDisplay, print(_)).Times(AnyNumber());
 
   float testSpeed = 30.0f;
   mockGnss.setSpeed(testSpeed);
-  computer->update();
+  app->update();
 
   EXPECT_CALL(mockBtnA, isPressed()).WillOnce(Return(true)).WillRepeatedly(Return(false));
-  computer->update(); // Change Mode
+  app->update(); // Change Mode
 
-  // Simulate BTN_BOTH: (A Pressed && B Held) OR (B Pressed && A Held)
   mockGnss.setSpeed(0.0f);
 
-  // Simulate BTN_BOTH: (A Pressed && B Held) OR (B Pressed && A Held)
   EXPECT_CALL(mockBtnA, isPressed()).WillOnce(Return(true)).RetiresOnSaturation();
   EXPECT_CALL(mockBtnB, isHeld()).WillOnce(Return(true)).RetiresOnSaturation();
 
-  // Expect the display to update with "0.0" after reset
   EXPECT_CALL(mockDisplay, print(testing::HasSubstr("0.0"))).Times(AtLeast(1));
 
-  computer->update();
+  app->update();
 }

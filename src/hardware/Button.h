@@ -4,7 +4,7 @@
 
 #include "../Config.h"
 
-namespace drivers {
+namespace hardware {
 
 class Button {
 private:
@@ -54,4 +54,4 @@ private:
   }
 };
 
-} // namespace drivers
+} // namespace hardware

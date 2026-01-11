@@ -56,9 +56,8 @@ private:
       Formatter::formatDistance(trip.getDistanceKm(), buf, size);
       break;
     case Mode::ID::TIME: {
-      int h, m, s;
-      clock.getTime(h, m, s);
-      Formatter::formatTime(h, m, buf, size);
+      domain::Clock::Time t = clock.getTime();
+      Formatter::formatTime(t.hour, t.minute, buf, size);
       break;
     }
     case Mode::ID::MOVING_TIME:
@@ -94,6 +93,10 @@ private:
     }
   }
 
+  // Layout Constants
+  static constexpr int16_t HEADER_HEIGHT = 12;
+  static constexpr int16_t FOOTER_HEIGHT = 12;
+
   // Taken from OLED.h
   void drawHeader(ContextT &ctx) {
     ctx.setTextSize(1);
@@ -101,36 +104,51 @@ private:
     ctx.setCursor(0, 0);
     ctx.print("GNSS ON");
 
-    ctx.drawLine(0, 10, ctx.getWidth(), 10, 1); // WHITE
+    int16_t lineY = HEADER_HEIGHT - 2;
+    ctx.drawLine(0, lineY, ctx.getWidth(), lineY, 1); // WHITE
   }
 
   void drawFooter(ContextT &ctx) {
-    ctx.drawLine(0, ctx.getHeight() - 10, ctx.getWidth(), ctx.getHeight() - 10, 1); // WHITE
+    int16_t lineY = ctx.getHeight() - FOOTER_HEIGHT;
+    ctx.drawLine(0, lineY, ctx.getWidth(), lineY, 1); // WHITE
 
     ctx.setTextSize(1);
-    ctx.setCursor(0, ctx.getHeight() - 8);
+    // Align text vertically in footer
+    int16_t textH = 8; // Approx height for size 1
+    int16_t textY = lineY + (FOOTER_HEIGHT - textH) / 2 + 1;
+    ctx.setCursor(0, textY);
     ctx.print("Ready"); // Placeholder for status
   }
 
   void drawMainArea(ContextT &ctx, const char *title, const char *value, const char *unit) {
-    // Title
+    int16_t contentTop = HEADER_HEIGHT;
+    int16_t contentY   = ctx.getHeight() - FOOTER_HEIGHT;
+
+    // Title (Top Left of Content Area)
     ctx.setTextSize(1);
-    ctx.setCursor(0, 14);
+    ctx.setCursor(0, contentTop + 2);
     ctx.print(title);
 
-    // Value (Large)
+    // Value (Large, Centered in remaining space)
     ctx.setTextSize(2); // Make value bigger
     int16_t  x1, y1;
     uint16_t w, h;
     ctx.getTextBounds(value, 0, 0, &x1, &y1, &w, &h);
-    ctx.setCursor((ctx.getWidth() - w) / 2, 28);
+
+    // Vertically center value in the content area
+    // (contentY + contentTop) / 2 yields the visual center y
+    // Subtract h/2 to place the top-left corner of the text
+    int16_t valueY = (contentY + contentTop - h) / 2;
+
+    ctx.setCursor((ctx.getWidth() - w) / 2, valueY);
     ctx.print(value);
 
     if (strlen(unit) == 0) return;
 
-    // Unit
+    // Unit (Bottom Right of Content Area)
     ctx.setTextSize(1);
-    ctx.setCursor(ctx.getWidth() - 24, 45); // Bottom right of main area
+    ctx.getTextBounds(unit, 0, 0, &x1, &y1, &w, &h);
+    ctx.setCursor(ctx.getWidth() - w, contentY - h - 2);
     ctx.print(unit);
   }
 };

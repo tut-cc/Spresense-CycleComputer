@@ -1,23 +1,25 @@
 #include <LowPower.h>
 
-#include "src/CycleComputer.h"
-#include "src/drivers/Button.h"
-#include "src/drivers/Gnss.h"
-#include "src/drivers/OLED.h"
+#include "src/App.h"
+#include "src/hardware/Button.h"
+#include "src/hardware/Gnss.h"
+#include "src/hardware/OLED.h"
+#include "src/ui/Input.h"
 
-using namespace drivers;
+using namespace hardware;
 
-OLED                                           oled;
-Button                                         btnA(Config::Pin::BTN_A);
-Button                                         btnB(Config::Pin::BTN_B);
-application::CycleComputer<OLED, Gnss, Button> computer(oled, Gnss::getInstance(), btnA, btnB);
+OLED                                            oled;
+Button                                          btnA(Config::Pin::BTN_A);
+Button                                          btnB(Config::Pin::BTN_B);
+ui::Input<Button>                               input(btnA, btnB);
+application::App<OLED, Gnss, ui::Input<Button>> app(oled, Gnss::getInstance(), input);
 
 void setup() {
   LowPower.begin();
   LowPower.clockMode(CLOCK_MODE_32MHz);
-  computer.begin();
+  app.begin();
 }
 
 void loop() {
-  computer.update();
+  app.update();
 }

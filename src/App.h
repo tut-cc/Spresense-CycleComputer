@@ -1,8 +1,8 @@
 #pragma once
+#include "Config.h"
 
 #include "domain/Clock.h"
 #include "domain/Trip.h"
-#include "ui/Input.h"
 #include "ui/InputEvent.h"
 #include "ui/Mode.h"
 #include "ui/Renderer.h"
@@ -10,10 +10,10 @@
 
 namespace application {
 
-template <typename DisplayT, typename GnssT, typename ButtonT> class CycleComputer {
+template <typename DisplayT, typename GnssT, typename InputT> class App {
 private:
   DisplayT              &display;
-  ui::Input<ButtonT>     input;
+  InputT                &input;
   GnssT                 &gnss;
   ui::Mode               mode;
   domain::Trip           trip;
@@ -21,7 +21,8 @@ private:
   ui::Renderer<DisplayT> renderer;
 
 public:
-  CycleComputer(DisplayT &displayData, GnssT &gnss, ButtonT &btnA, ButtonT &btnB) : display(displayData), input(btnA, btnB), gnss(gnss) {}
+  App(DisplayT &displayData, GnssT &gnss, InputT &inputModule)
+      : display(displayData), input(inputModule), gnss(gnss), clock(Config::Time::JST_OFFSET, 2025) {}
 
   void begin() {
     display.begin();
