@@ -12,9 +12,6 @@ namespace ui {
 
 template <typename ContextT> class Renderer {
 private:
-  int batteryLevel   = 85;
-  int satelliteCount = 5;
-
   struct Metadata {
     const char *title;
     const char *unit;
