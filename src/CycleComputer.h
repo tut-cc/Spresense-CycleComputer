@@ -1,10 +1,11 @@
 #pragma once
 
-#include "../Config.h"
-#include "DisplayData.h"
-#include "InputEvent.h"
-#include "Mode.h"
-#include "Trip.h"
+#include "Config.h"
+#include "system/Clock.h"
+#include "system/DisplayData.h"
+#include "system/InputEvent.h"
+#include "system/Mode.h"
+#include "system/Trip.h"
 #include <cstdio>
 
 namespace application {
@@ -16,6 +17,7 @@ private:
   GnssT        &gnss;
   Mode          mode;
   Trip          trip;
+  Clock         clock;
   unsigned long lastDisplayUpdate = 0;
   bool          forceUpdate       = false;
 
@@ -32,17 +34,13 @@ public:
   void update() {
     handleInput();
     gnss.update();
-    trip.update(gnss.getSpeedKmh(), millis());
+    const auto &navData = gnss.getNavData();
+    trip.update(navData, millis());
+    clock.update(navData);
     updateDisplay();
   }
 
 private:
-  void formatFloat(float val, int width, int prec, char *buf, size_t size) {
-    char fmt[6];
-    snprintf(fmt, sizeof(fmt), "%%%d.%df", width, prec);
-    snprintf(buf, size, fmt, val);
-  }
-
   void handleInput() {
     InputEvent event = input.update();
 
@@ -72,7 +70,7 @@ private:
     lastDisplayUpdate = currentMillis;
     forceUpdate       = false;
 
-    char            buf[20];
+    char            buf[32];
     DisplayDataType type;
     getDisplayData(mode.get(), type, buf, sizeof(buf));
 
@@ -83,19 +81,23 @@ private:
     switch (modeId) {
     case Mode::ID::SPEED:
       type = DisplayDataType::SPEED;
-      formatFloat(gnss.getSpeedKmh(), 4, 1, buf, size);
-      break;
-    case Mode::ID::TIME:
-      type = DisplayDataType::TIME;
-      gnss.getTimeJST(buf, size);
+      trip.getSpeedStr(buf, size);
       break;
     case Mode::ID::MAX_SPEED:
       type = DisplayDataType::MAX_SPEED;
-      formatFloat(trip.getMaxSpeedKmh(), 4, 1, buf, size);
+      trip.getMaxSpeedStr(buf, size);
+      break;
+    case Mode::ID::AVG_SPEED:
+      type = DisplayDataType::AVG_SPEED;
+      trip.getAvgSpeedStr(buf, size);
       break;
     case Mode::ID::DISTANCE:
       type = DisplayDataType::DISTANCE;
-      formatFloat(trip.getDistanceKm(), 5, 2, buf, size);
+      trip.getDistanceStr(buf, size);
+      break;
+    case Mode::ID::TIME:
+      type = DisplayDataType::TIME;
+      clock.getTimeStr(buf, size);
       break;
     case Mode::ID::MOVING_TIME:
       type = DisplayDataType::MOVING_TIME;
@@ -104,10 +106,6 @@ private:
     case Mode::ID::ELAPSED_TIME:
       type = DisplayDataType::ELAPSED_TIME;
       trip.getElapsedTimeStr(buf, size);
-      break;
-    case Mode::ID::AVG_SPEED:
-      type = DisplayDataType::AVG_SPEED;
-      formatFloat(trip.getAvgSpeedKmh(), 4, 1, buf, size);
       break;
     default:
       type   = DisplayDataType::INVALID;

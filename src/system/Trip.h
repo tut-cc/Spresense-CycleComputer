@@ -4,6 +4,8 @@
 #include "Speedometer.h"
 #include "Stopwatch.h"
 
+#include <GNSS.h>
+
 namespace application {
 
 class Trip {
@@ -20,21 +22,20 @@ public:
     reset();
   }
 
-  void update(float currentSpeedKmh, unsigned long currentMillis) {
+  void update(const SpNavData &navData, unsigned long currentMillis) {
+    speedometer.update(navData);
+
     if (lastUpdateTime == 0) {
       lastUpdateTime = currentMillis;
-      stopwatch.update(false, 0, currentMillis); // Initialize start time logic if needed
+      stopwatch.update(navData, 0, currentMillis); // Initialize start time logic if needed
       return;
     }
 
     unsigned long dt = currentMillis - lastUpdateTime;
     lastUpdateTime   = currentMillis;
 
-    speedometer.update(currentSpeedKmh);
-
-    bool isMoving = (currentSpeedKmh > 3.0f);
-    odometer.update(currentSpeedKmh, dt);
-    stopwatch.update(isMoving, dt, currentMillis);
+    odometer.update(navData, dt);
+    stopwatch.update(navData, dt, currentMillis);
   }
 
   void reset() {
@@ -44,13 +45,12 @@ public:
     lastUpdateTime = 0;
   }
 
-  // Getters delegating to components
-  float getMaxSpeedKmh() const {
-    return speedometer.getMax();
+  float getSpeedKmh() const {
+    return speedometer.get();
   }
 
-  float getDistanceKm() const {
-    return odometer.getDistance();
+  float getMaxSpeedKmh() const {
+    return speedometer.getMax();
   }
 
   float getAvgSpeedKmh() const {
@@ -59,12 +59,39 @@ public:
     return (odometer.getDistance() / (movingTimeMs / 3600000.0f));
   }
 
+  float getDistanceKm() const {
+    return odometer.getDistance();
+  }
+
   void getMovingTimeStr(char *buffer, size_t size) const {
     stopwatch.getMovingTimeStr(buffer, size);
   }
 
   void getElapsedTimeStr(char *buffer, size_t size) const {
     stopwatch.getElapsedTimeStr(buffer, size);
+  }
+
+  void getSpeedStr(char *buffer, size_t size) const {
+    formatFloat(getSpeedKmh(), 4, 1, buffer, size);
+  }
+
+  void getMaxSpeedStr(char *buffer, size_t size) const {
+    formatFloat(getMaxSpeedKmh(), 4, 1, buffer, size);
+  }
+
+  void getDistanceStr(char *buffer, size_t size) const {
+    formatFloat(getDistanceKm(), 5, 2, buffer, size);
+  }
+
+  void getAvgSpeedStr(char *buffer, size_t size) const {
+    formatFloat(getAvgSpeedKmh(), 4, 1, buffer, size);
+  }
+
+private:
+  void formatFloat(float val, int width, int prec, char *buf, size_t size) const {
+    char fmt[8];
+    snprintf(fmt, sizeof(fmt), "%%%d.%df", width, prec); // e.g. "%4.1f"
+    snprintf(buf, size, fmt, val);
   }
 };
 

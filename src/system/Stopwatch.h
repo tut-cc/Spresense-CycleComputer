@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <GNSS.h>
 #include <cstdio>
 
 namespace application {
@@ -13,10 +14,14 @@ private:
 public:
   Stopwatch() : movingTimeMs(0), startTimeMs(0) {}
 
-  void update(bool isMoving, unsigned long dtMs, unsigned long currentMillis) {
+  void update(const SpNavData &navData, unsigned long dtMs, unsigned long currentMillis) {
     if (startTimeMs == 0) startTimeMs = currentMillis;
 
-    if (isMoving) { movingTimeMs += dtMs; }
+    float speedKmh = navData.velocity * 3.6f;
+    if (navData.posFixMode == FixInvalid) speedKmh = 0.0f;
+    bool isMoving = (speedKmh > 3.0f);
+
+    if (isMoving) movingTimeMs += dtMs;
   }
 
   void reset() {

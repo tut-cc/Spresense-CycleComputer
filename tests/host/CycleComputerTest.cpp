@@ -1,4 +1,4 @@
-#include "system/CycleComputer.h"
+#include "CycleComputer.h"
 #include "Config.h"
 
 #include "system/InputEvent.h"
@@ -10,6 +10,7 @@ using ::testing::AnyNumber;
 using ::testing::AtLeast;
 using ::testing::NiceMock;
 using ::testing::Return;
+using ::testing::ReturnRef;
 using ::testing::StrEq;
 
 // Mock OLED
@@ -22,10 +23,22 @@ public:
 // Mock GnssProvider
 class MockGnssProvider {
 public:
+  mutable SpNavData data; // mutable to allow modification even if getNavData is const if we wanted, but here it's just member.
+                          // Helper to set data
+  void setSpeed(float speedKmh) {
+    data.velocity   = speedKmh / 3.6f;
+    data.posFixMode = Fix3D;
+  }
+
+  MockGnssProvider() {
+    memset(&data, 0, sizeof(data));
+  }
+
   MOCK_METHOD(bool, begin, ());
   MOCK_METHOD(void, update, ());
   MOCK_METHOD(float, getSpeedKmh, (), (const));
   MOCK_METHOD(void, getTimeJST, (char *buffer, size_t size), (const));
+  MOCK_METHOD(const SpNavData &, getNavData, (), (const));
 };
 
 // Mock InputProvider
@@ -45,6 +58,7 @@ protected:
   void SetUp() override {
     // Default behaviors
     ON_CALL(mockGnss, getSpeedKmh()).WillByDefault(Return(0.0f));
+    ON_CALL(mockGnss, getNavData()).WillByDefault(ReturnRef(mockGnss.data));
     ON_CALL(mockInput, update()).WillByDefault(Return(application::InputEvent::NONE));
 
     computer = new application::CycleComputer<NiceMock<MockOLED>, NiceMock<MockGnssProvider>, NiceMock<MockInputProvider>>(mockDisplay, mockGnss, mockInput);
@@ -87,7 +101,11 @@ TEST_F(CycleComputerTest, DisplayGPSSpeed) {
   computer->begin();
 
   float testSpeed = 15.5;
-  EXPECT_CALL(mockGnss, getSpeedKmh()).WillRepeatedly(Return(testSpeed));
+  ON_CALL(mockGnss, getSpeedKmh()).WillByDefault(Return(testSpeed)); // Legacy call might be gone? No, we removed it from CycleComputer but MockGnssProvider still has it defined?
+  // User deleted getSpeedKmh from Gnss.h. MockGnssProvider currently declares it.
+  // CycleComputer.h now uses trip.getSpeedKmh() which calls speedometer.get() which gets from navData.
+  // So we must set navData.
+  mockGnss.setSpeed(testSpeed); // This sets navData
 
   // Expect display to show formatted speed string
   EXPECT_CALL(mockDisplay, show(application::DisplayDataType::SPEED, testing::HasSubstr("15.5"))).Times(AtLeast(1));
@@ -109,8 +127,16 @@ TEST_F(CycleComputerTest, DisplayTime) {
       .WillOnce(Return(application::InputEvent::BTN_A)) // -> TIME
       .WillRepeatedly(Return(application::InputEvent::NONE));
 
-  // Mock Time JST
-  EXPECT_CALL(mockGnss, getTimeJST(_, _)).WillRepeatedly(testing::Invoke([](char *buffer, size_t size) { strncpy(buffer, "12:34", size); }));
+  // Mock Time JST using SpNavData since Clock class reads it from there
+  // 12:34 UTC -> +9 = 21:34 JST.
+  // Wait, the test expects "12:34". The Clock logic adds JST_OFFSET (9).
+  // If we want "12:34" displayed as JST, the UTC time should be (12 - 9) = 3:34.
+  // Or 12:34 is target JST.
+  // Let's set navData.time to produce 12:34 JST.
+  // (3 + 9) = 12. So UTC hour 3.
+  mockGnss.data.time.year   = 2025;
+  mockGnss.data.time.hour   = 3;
+  mockGnss.data.time.minute = 34;
 
   // Expect eventually TIME mode with "12:34"
   EXPECT_CALL(mockDisplay, show(application::DisplayDataType::TIME, StrEq("12:34"))).Times(AtLeast(1));
@@ -132,6 +158,7 @@ TEST_F(CycleComputerTest, ResetData) {
   // TripComputer.update uses speed and millis.
   float testSpeed = 30.0f;
   ON_CALL(mockGnss, getSpeedKmh()).WillByDefault(Return(testSpeed));
+  mockGnss.setSpeed(testSpeed); // Update struct for Trip
 
   computer->update(); // Start moving
 
@@ -159,6 +186,7 @@ TEST_F(CycleComputerTest, ResetData) {
 
   // Change speed to 0 for next updates
   ON_CALL(mockGnss, getSpeedKmh()).WillByDefault(Return(0.0f));
+  mockGnss.setSpeed(0.0f);
 
   // Expect 0.0 after reset
   EXPECT_CALL(mockDisplay, show(application::DisplayDataType::MAX_SPEED, testing::HasSubstr("0.0"))).Times(AtLeast(1));
