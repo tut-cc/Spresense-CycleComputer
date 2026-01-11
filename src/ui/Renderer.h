@@ -5,6 +5,7 @@
 
 #include "../domain/Clock.h"
 #include "../domain/Trip.h"
+#include "Formatter.h"
 #include "Mode.h"
 
 namespace ui {
@@ -46,25 +47,28 @@ private:
   void getDisplayValue(const domain::Trip &trip, const domain::Clock &clock, Mode::ID modeId, char *buf, size_t size) {
     switch (modeId) {
     case Mode::ID::SPEED:
-      trip.getSpeedStr(buf, size);
+      Formatter::formatSpeed(trip.getSpeedKmh(), buf, size);
       break;
     case Mode::ID::MAX_SPEED:
-      trip.getMaxSpeedStr(buf, size);
+      Formatter::formatSpeed(trip.getMaxSpeedKmh(), buf, size);
       break;
     case Mode::ID::AVG_SPEED:
-      trip.getAvgSpeedStr(buf, size);
+      Formatter::formatSpeed(trip.getAvgSpeedKmh(), buf, size);
       break;
     case Mode::ID::DISTANCE:
-      trip.getDistanceStr(buf, size);
+      Formatter::formatDistance(trip.getDistanceKm(), buf, size);
       break;
-    case Mode::ID::TIME:
-      clock.getTimeStr(buf, size);
+    case Mode::ID::TIME: {
+      int h, m, s;
+      clock.getTime(h, m, s);
+      Formatter::formatTime(h, m, buf, size);
       break;
+    }
     case Mode::ID::MOVING_TIME:
-      trip.getMovingTimeStr(buf, size);
+      Formatter::formatDuration(trip.getMovingTimeMs(), buf, size);
       break;
     case Mode::ID::ELAPSED_TIME:
-      trip.getElapsedTimeStr(buf, size);
+      Formatter::formatDuration(trip.getElapsedTimeMs(), buf, size);
       break;
     default:
       buf[0] = '\0';

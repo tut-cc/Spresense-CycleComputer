@@ -2,7 +2,6 @@
 
 #include "../Config.h"
 #include <GNSS.h>
-#include <cstdio>
 
 namespace domain {
 
@@ -19,13 +18,16 @@ public:
     minute = navData.time.minute;
   }
 
-  void getTimeStr(char *buffer, size_t size) const {
+  void getTime(int &h, int &m, int &s) const {
     if (year < 2025) {
-      snprintf(buffer, size, "??:??");
+      h = 0;
+      m = 0;
+      s = 0;
       return;
     }
-
-    snprintf(buffer, size, "%02d:%02d", hour, minute);
+    h = hour;
+    m = minute;
+    s = 0; // Currently we don't track seconds
   }
 };
 

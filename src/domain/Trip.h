@@ -54,7 +54,7 @@ public:
   }
 
   float getAvgSpeedKmh() const {
-    unsigned long movingTimeMs = stopwatch.getMovingTime();
+    unsigned long movingTimeMs = stopwatch.getMovingTimeMs();
     if (movingTimeMs == 0) return 0.0f;
     return (odometer.getDistance() / (movingTimeMs / 3600000.0f));
   }
@@ -63,35 +63,12 @@ public:
     return odometer.getDistance();
   }
 
-  void getMovingTimeStr(char *buffer, size_t size) const {
-    stopwatch.getMovingTimeStr(buffer, size);
+  unsigned long getMovingTimeMs() const {
+    return stopwatch.getMovingTimeMs();
   }
 
-  void getElapsedTimeStr(char *buffer, size_t size) const {
-    stopwatch.getElapsedTimeStr(buffer, size);
-  }
-
-  void getSpeedStr(char *buffer, size_t size) const {
-    formatFloat(getSpeedKmh(), 4, 1, buffer, size);
-  }
-
-  void getMaxSpeedStr(char *buffer, size_t size) const {
-    formatFloat(getMaxSpeedKmh(), 4, 1, buffer, size);
-  }
-
-  void getDistanceStr(char *buffer, size_t size) const {
-    formatFloat(getDistanceKm(), 5, 2, buffer, size);
-  }
-
-  void getAvgSpeedStr(char *buffer, size_t size) const {
-    formatFloat(getAvgSpeedKmh(), 4, 1, buffer, size);
-  }
-
-private:
-  void formatFloat(float val, int width, int prec, char *buf, size_t size) const {
-    char fmt[8];
-    snprintf(fmt, sizeof(fmt), "%%%d.%df", width, prec); // e.g. "%4.1f"
-    snprintf(buf, size, fmt, val);
+  unsigned long getElapsedTimeMs() const {
+    return stopwatch.getElapsedTimeMs();
   }
 };
 
