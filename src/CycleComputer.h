@@ -13,15 +13,15 @@ namespace application {
 
 template <typename DisplayT, typename GnssT, typename ButtonT> class CycleComputer {
 private:
-  DisplayT          &display;
-  ui::Input<ButtonT> input;
-  GnssT             &gnss;
-  ui::Mode           mode;
-  domain::Trip       trip;
-  domain::Clock      clock;
-  ui::Renderer       renderer;
-  unsigned long      lastDisplayUpdate = 0;
-  bool               forceUpdate       = false;
+  DisplayT              &display;
+  ui::Input<ButtonT>     input;
+  GnssT                 &gnss;
+  ui::Mode               mode;
+  domain::Trip           trip;
+  domain::Clock          clock;
+  ui::Renderer<DisplayT> renderer;
+  unsigned long          lastDisplayUpdate = 0;
+  bool                   forceUpdate       = false;
 
 public:
   CycleComputer(DisplayT &displayData, GnssT &gnss, ButtonT &btnA, ButtonT &btnB) : display(displayData), input(btnA, btnB), gnss(gnss) {}

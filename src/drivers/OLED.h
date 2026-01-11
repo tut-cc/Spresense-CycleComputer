@@ -6,11 +6,10 @@
 #include <Wire.h>
 
 #include "../Config.h"
-#include "../ui/GraphicsContext.h"
 
 namespace drivers {
 
-class OLED : public ui::GraphicsContext {
+class OLED {
 private:
   Adafruit_SSD1306 ssd1306;
 
@@ -25,55 +24,55 @@ public:
   }
 
   // GraphicsContext implementation
-  void clear() override {
+  void clear() {
     ssd1306.clearDisplay();
   }
 
-  void display() override {
+  void display() {
     ssd1306.display();
   }
 
-  void setTextSize(int size) override {
+  void setTextSize(int size) {
     ssd1306.setTextSize(size);
   }
 
-  void setTextColor(int color) override {
+  void setTextColor(int color) {
     ssd1306.setTextColor(color);
   }
 
-  void setCursor(int x, int y) override {
+  void setCursor(int x, int y) {
     ssd1306.setCursor(x, y);
   }
 
-  void print(const char *text) override {
+  void print(const char *text) {
     ssd1306.print(text);
   }
 
-  void drawLine(int x0, int y0, int x1, int y1, int color) override {
+  void drawLine(int x0, int y0, int x1, int y1, int color) {
     ssd1306.drawLine(x0, y0, x1, y1, color);
   }
 
-  void drawRect(int x, int y, int w, int h, int color) override {
+  void drawRect(int x, int y, int w, int h, int color) {
     ssd1306.drawRect(x, y, w, h, color);
   }
 
-  void fillRect(int x, int y, int w, int h, int color) override {
+  void fillRect(int x, int y, int w, int h, int color) {
     ssd1306.fillRect(x, y, w, h, color);
   }
 
-  void drawCircle(int x0, int y0, int r, int color) override {
+  void drawCircle(int x0, int y0, int r, int color) {
     ssd1306.drawCircle(x0, y0, r, color);
   }
 
-  void getTextBounds(const char *string, int16_t x, int16_t y, int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h) override {
+  void getTextBounds(const char *string, int16_t x, int16_t y, int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h) {
     ssd1306.getTextBounds(string, x, y, x1, y1, w, h);
   }
 
-  int getWidth() const override {
+  int getWidth() const {
     return Config::OLED::WIDTH;
   }
 
-  int getHeight() const override {
+  int getHeight() const {
     return Config::OLED::HEIGHT;
   }
 };

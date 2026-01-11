@@ -14,23 +14,23 @@ using ::testing::ReturnRef;
 using ::testing::StrEq;
 
 // Mock OLED
-class MockOLED : public ui::GraphicsContext {
+class MockOLED {
 public:
-  MOCK_METHOD(void, clear, (), (override));
-  MOCK_METHOD(void, display, (), (override));
-  MOCK_METHOD(void, setTextSize, (int), (override));
-  MOCK_METHOD(void, setTextColor, (int), (override));
-  MOCK_METHOD(void, setCursor, (int, int), (override));
-  MOCK_METHOD(void, print, (const char *), (override));
-  MOCK_METHOD(void, drawLine, (int, int, int, int, int), (override));
-  MOCK_METHOD(void, drawRect, (int, int, int, int, int), (override));
-  MOCK_METHOD(void, fillRect, (int, int, int, int, int), (override));
-  MOCK_METHOD(void, drawCircle, (int, int, int, int), (override));
+  MOCK_METHOD(void, clear, ());
+  MOCK_METHOD(void, display, ());
+  MOCK_METHOD(void, setTextSize, (int));
+  MOCK_METHOD(void, setTextColor, (int));
+  MOCK_METHOD(void, setCursor, (int, int));
+  MOCK_METHOD(void, print, (const char *));
+  MOCK_METHOD(void, drawLine, (int, int, int, int, int));
+  MOCK_METHOD(void, drawRect, (int, int, int, int, int));
+  MOCK_METHOD(void, fillRect, (int, int, int, int, int));
+  MOCK_METHOD(void, drawCircle, (int, int, int, int));
 
-  MOCK_METHOD(void, getTextBounds, (const char *, int16_t, int16_t, int16_t *, int16_t *, uint16_t *, uint16_t *), (override));
+  MOCK_METHOD(void, getTextBounds, (const char *, int16_t, int16_t, int16_t *, int16_t *, uint16_t *, uint16_t *));
 
-  MOCK_METHOD(int, getWidth, (), (const, override));
-  MOCK_METHOD(int, getHeight, (), (const, override));
+  MOCK_METHOD(int, getWidth, (), (const));
+  MOCK_METHOD(int, getHeight, (), (const));
 
   MockOLED() {
     ON_CALL(*this, getWidth()).WillByDefault(Return(Config::OLED::WIDTH));
@@ -83,7 +83,8 @@ protected:
     ON_CALL(mockBtnB, isPressed()).WillByDefault(Return(false));
     ON_CALL(mockBtnB, isHeld()).WillByDefault(Return(false));
 
-    computer = new application::CycleComputer<NiceMock<MockOLED>, NiceMock<MockGnssProvider>, NiceMock<MockButton>>(mockDisplay, mockGnss, mockBtnA, mockBtnB);
+    computer = new application::CycleComputer<NiceMock<MockOLED>, NiceMock<MockGnssProvider>, NiceMock<MockButton>>(mockDisplay, mockGnss, mockBtnA,
+                                                                                                                    mockBtnB);
   }
 
   void TearDown() override {

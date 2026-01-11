@@ -5,12 +5,11 @@
 
 #include "../domain/Clock.h"
 #include "../domain/Trip.h"
-#include "GraphicsContext.h"
 #include "Mode.h"
 
 namespace ui {
 
-class Renderer {
+template <typename ContextT> class Renderer {
 private:
   int batteryLevel   = 85;
   int satelliteCount = 5;
@@ -21,7 +20,7 @@ private:
   };
 
 public:
-  void render(GraphicsContext &ctx, const domain::Trip &trip, const domain::Clock &clock, Mode::ID modeId) {
+  void render(ContextT &ctx, const domain::Trip &trip, const domain::Clock &clock, Mode::ID modeId) {
     ctx.clear();
 
     drawHeader(ctx);
@@ -89,7 +88,7 @@ private:
   }
 
   // Taken from OLED.h
-  void drawHeader(GraphicsContext &ctx) {
+  void drawHeader(ContextT &ctx) {
     ctx.setTextSize(1);
     ctx.setTextColor(1); // WHITE
     ctx.setCursor(0, 0);
@@ -101,7 +100,7 @@ private:
     ctx.drawLine(0, 10, ctx.getWidth(), 10, 1); // WHITE
   }
 
-  void drawFooter(GraphicsContext &ctx) {
+  void drawFooter(ContextT &ctx) {
     ctx.drawLine(0, ctx.getHeight() - 10, ctx.getWidth(), ctx.getHeight() - 10, 1); // WHITE
 
     ctx.setTextSize(1);
@@ -109,7 +108,7 @@ private:
     ctx.print("Ready"); // Placeholder for status
   }
 
-  void drawMainArea(GraphicsContext &ctx, const char *title, const char *value, const char *unit) {
+  void drawMainArea(ContextT &ctx, const char *title, const char *value, const char *unit) {
     // Title
     ctx.setTextSize(1);
     ctx.setCursor(0, 14);
@@ -131,7 +130,7 @@ private:
     ctx.print(unit);
   }
 
-  void drawBatteryIcon(GraphicsContext &ctx, int x, int y, int percentage) {
+  void drawBatteryIcon(ContextT &ctx, int x, int y, int percentage) {
     ctx.drawRect(x, y, 12, 6, 1);
     ctx.fillRect(x + 12, y + 2, 2, 2, 1); // Battery positive terminal
 
@@ -139,7 +138,7 @@ private:
     ctx.fillRect(x + 1, y + 1, width, 4, 1);
   }
 
-  void drawSatelliteIcon(GraphicsContext &ctx, int x, int y, int count) {
+  void drawSatelliteIcon(ContextT &ctx, int x, int y, int count) {
     ctx.drawCircle(x + 3, y + 3, 2, 1); // Placeholder for satellite icon
   }
 };
