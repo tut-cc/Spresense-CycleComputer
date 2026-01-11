@@ -19,20 +19,26 @@ private:
     const char *unit;
   };
 
+  char     lastRenderedValue[32] = "";
+  Mode::ID lastRenderedMode      = Mode::ID::SPEED;
+  bool     firstRender           = true;
+
 public:
   void render(ContextT &ctx, const domain::Trip &trip, const domain::Clock &clock, Mode::ID modeId) {
+    char currentBuf[32];
+    getDisplayValue(trip, clock, modeId, currentBuf, sizeof(currentBuf));
+    if (!firstRender && modeId == lastRenderedMode && strcmp(currentBuf, lastRenderedValue) == 0) return;
+
+    // Update Cache
+    firstRender      = false;
+    lastRenderedMode = modeId;
+    strcpy(lastRenderedValue, currentBuf);
+
     ctx.clear();
-
     drawHeader(ctx);
-
-    char buf[32];
-    getDisplayValue(trip, clock, modeId, buf, sizeof(buf));
-
     Metadata meta = getMetadata(modeId);
-    drawMainArea(ctx, meta.title, buf, meta.unit);
-
+    drawMainArea(ctx, meta.title, currentBuf, meta.unit);
     drawFooter(ctx);
-
     ctx.display();
   }
 
@@ -128,18 +134,6 @@ private:
     ctx.setTextSize(1);
     ctx.setCursor(ctx.getWidth() - 24, 45); // Bottom right of main area
     ctx.print(unit);
-  }
-
-  void drawBatteryIcon(ContextT &ctx, int x, int y, int percentage) {
-    ctx.drawRect(x, y, 12, 6, 1);
-    ctx.fillRect(x + 12, y + 2, 2, 2, 1); // Battery positive terminal
-
-    int width = map(percentage, 0, 100, 0, 10);
-    ctx.fillRect(x + 1, y + 1, width, 4, 1);
-  }
-
-  void drawSatelliteIcon(ContextT &ctx, int x, int y, int count) {
-    ctx.drawCircle(x + 3, y + 3, 2, 1); // Placeholder for satellite icon
   }
 };
 

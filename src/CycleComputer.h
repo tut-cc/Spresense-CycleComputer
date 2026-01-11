@@ -20,8 +20,6 @@ private:
   domain::Trip           trip;
   domain::Clock          clock;
   ui::Renderer<DisplayT> renderer;
-  unsigned long          lastDisplayUpdate = 0;
-  bool                   forceUpdate       = false;
 
 public:
   CycleComputer(DisplayT &displayData, GnssT &gnss, ButtonT &btnA, ButtonT &btnB) : display(displayData), input(btnA, btnB), gnss(gnss) {}
@@ -39,7 +37,7 @@ public:
     const auto &navData = gnss.getNavData();
     trip.update(navData, millis());
     clock.update(navData);
-    updateDisplay();
+    renderer.render(display, trip, clock, mode.get());
   }
 
 private:
@@ -49,30 +47,16 @@ private:
     switch (event) {
     case ui::InputEvent::BTN_A:
       mode.next();
-      forceUpdate = true;
       break;
     case ui::InputEvent::BTN_B:
       mode.prev();
-      forceUpdate = true;
       break;
     case ui::InputEvent::BTN_BOTH:
       trip.reset();
-      forceUpdate = true;
       break;
     default:
       break;
     }
-  }
-
-  void updateDisplay() {
-    unsigned long currentMillis = millis();
-
-    if (!forceUpdate && (currentMillis - lastDisplayUpdate < Config::DISPLAY_UPDATE_INTERVAL_MS)) return;
-
-    lastDisplayUpdate = currentMillis;
-    forceUpdate       = false;
-
-    renderer.render(display, trip, clock, mode.get());
   }
 };
 
