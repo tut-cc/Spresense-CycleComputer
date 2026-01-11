@@ -12,8 +12,8 @@ using ::testing::NiceMock;
 using ::testing::Return;
 using ::testing::StrEq;
 
-// Mock OLEDDriver
-class MockOLEDDriver {
+// Mock OLED
+class MockOLED {
 public:
   MOCK_METHOD(void, begin, ());
   MOCK_METHOD(void, show, (application::DisplayDataType, const char *));
@@ -37,17 +37,17 @@ public:
 
 class CycleComputerTest : public ::testing::Test {
 protected:
-  NiceMock<MockOLEDDriver>                                                                                       mockDisplay;
-  NiceMock<MockGnssProvider>                                                                                     mockGnss;
-  NiceMock<MockInputProvider>                                                                                    mockInput;
-  application::CycleComputer<NiceMock<MockOLEDDriver>, NiceMock<MockGnssProvider>, NiceMock<MockInputProvider>> *computer;
+  NiceMock<MockOLED>                                                                                       mockDisplay;
+  NiceMock<MockGnssProvider>                                                                               mockGnss;
+  NiceMock<MockInputProvider>                                                                              mockInput;
+  application::CycleComputer<NiceMock<MockOLED>, NiceMock<MockGnssProvider>, NiceMock<MockInputProvider>> *computer;
 
   void SetUp() override {
     // Default behaviors
     ON_CALL(mockGnss, getSpeedKmh()).WillByDefault(Return(0.0f));
     ON_CALL(mockInput, update()).WillByDefault(Return(application::InputEvent::NONE));
 
-    computer = new application::CycleComputer<NiceMock<MockOLEDDriver>, NiceMock<MockGnssProvider>, NiceMock<MockInputProvider>>(mockDisplay, mockGnss, mockInput);
+    computer = new application::CycleComputer<NiceMock<MockOLED>, NiceMock<MockGnssProvider>, NiceMock<MockInputProvider>>(mockDisplay, mockGnss, mockInput);
   }
 
   void TearDown() override {

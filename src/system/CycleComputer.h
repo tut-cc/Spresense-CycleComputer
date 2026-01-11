@@ -3,9 +3,8 @@
 #include "../Config.h"
 #include "DisplayData.h"
 #include "InputEvent.h"
-#include "ModeManager.h"
-#include "PowerManager.h"
-#include "TripManager.h"
+#include "Mode.h"
+#include "Trip.h"
 #include <cstdio>
 
 namespace application {
@@ -13,30 +12,27 @@ namespace application {
 template <typename DisplayT, typename GnssT, typename InputT> class CycleComputer {
 private:
   DisplayT     &display;
-  InputT       &inputProvider;
-  GnssT        &gnssProvider;
-  ModeManager   modeManager;
-  TripManager   tripManager;
-  PowerManager  powerManager;
+  InputT       &input;
+  GnssT        &gnss;
+  Mode          mode;
+  Trip          trip;
   unsigned long lastDisplayUpdate = 0;
   bool          forceUpdate       = false;
 
 public:
-  CycleComputer(DisplayT &displayData, GnssT &gnss, InputT &input) : display(displayData), gnssProvider(gnss), inputProvider(input) {}
+  CycleComputer(DisplayT &displayData, GnssT &gnss, InputT &input) : display(displayData), gnss(gnss), input(input) {}
 
   void begin() {
     display.begin();
-    inputProvider.begin();
-    gnssProvider.begin();
-    tripManager.begin();
-    powerManager.begin();
+    input.begin();
+    gnss.begin();
+    trip.begin();
   }
 
   void update() {
     handleInput();
-    gnssProvider.update();
-    tripManager.update(gnssProvider.getSpeedKmh(), millis());
-    powerManager.update();
+    gnss.update();
+    trip.update(gnss.getSpeedKmh(), millis());
     updateDisplay();
   }
 
@@ -48,19 +44,19 @@ private:
   }
 
   void handleInput() {
-    InputEvent event = inputProvider.update();
+    InputEvent event = input.update();
 
     switch (event) {
     case InputEvent::BTN_A:
-      modeManager.nextMode();
+      mode.next();
       forceUpdate = true;
       break;
     case InputEvent::BTN_B:
-      modeManager.prevMode();
+      mode.prev();
       forceUpdate = true;
       break;
     case InputEvent::BTN_BOTH:
-      tripManager.reset();
+      trip.reset();
       forceUpdate = true;
       break;
     default:
@@ -78,40 +74,40 @@ private:
 
     char            buf[20];
     DisplayDataType type;
-    getDisplayData(modeManager.getMode(), type, buf, sizeof(buf));
+    getDisplayData(mode.get(), type, buf, sizeof(buf));
 
     display.show(type, buf);
   }
 
-  void getDisplayData(Mode mode, DisplayDataType &type, char *buf, size_t size) {
-    switch (mode) {
-    case Mode::SPEED:
+  void getDisplayData(Mode::ID modeId, DisplayDataType &type, char *buf, size_t size) {
+    switch (modeId) {
+    case Mode::ID::SPEED:
       type = DisplayDataType::SPEED;
-      formatFloat(gnssProvider.getSpeedKmh(), 4, 1, buf, size);
+      formatFloat(gnss.getSpeedKmh(), 4, 1, buf, size);
       break;
-    case Mode::TIME:
+    case Mode::ID::TIME:
       type = DisplayDataType::TIME;
-      gnssProvider.getTimeJST(buf, size);
+      gnss.getTimeJST(buf, size);
       break;
-    case Mode::MAX_SPEED:
+    case Mode::ID::MAX_SPEED:
       type = DisplayDataType::MAX_SPEED;
-      formatFloat(tripManager.getMaxSpeedKmh(), 4, 1, buf, size);
+      formatFloat(trip.getMaxSpeedKmh(), 4, 1, buf, size);
       break;
-    case Mode::DISTANCE:
+    case Mode::ID::DISTANCE:
       type = DisplayDataType::DISTANCE;
-      formatFloat(tripManager.getDistanceKm(), 5, 2, buf, size);
+      formatFloat(trip.getDistanceKm(), 5, 2, buf, size);
       break;
-    case Mode::MOVING_TIME:
+    case Mode::ID::MOVING_TIME:
       type = DisplayDataType::MOVING_TIME;
-      tripManager.getMovingTimeStr(buf, size);
+      trip.getMovingTimeStr(buf, size);
       break;
-    case Mode::ELAPSED_TIME:
+    case Mode::ID::ELAPSED_TIME:
       type = DisplayDataType::ELAPSED_TIME;
-      tripManager.getElapsedTimeStr(buf, size);
+      trip.getElapsedTimeStr(buf, size);
       break;
-    case Mode::AVG_SPEED:
+    case Mode::ID::AVG_SPEED:
       type = DisplayDataType::AVG_SPEED;
-      formatFloat(tripManager.getAvgSpeedKmh(), 4, 1, buf, size);
+      formatFloat(trip.getAvgSpeedKmh(), 4, 1, buf, size);
       break;
     default:
       type   = DisplayDataType::INVALID;

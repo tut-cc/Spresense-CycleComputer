@@ -11,14 +11,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # ensuring compilation on host works
 set(MOCK_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/host/mocks")
 
-# Recursively find all source files in src/
-file(GLOB_RECURSE SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
-
-# Create an object library for the code in src/
-add_library(spresense_core OBJECT ${SOURCES})
+# Create an interface library for the header-only code in src/
+add_library(spresense_core INTERFACE)
 
 # Configure include directories for the core library
-target_include_directories(spresense_core PUBLIC
+target_include_directories(spresense_core INTERFACE
     src
     ${MOCK_INCLUDE_DIR}
 )

@@ -6,7 +6,7 @@
 
 namespace drivers {
 
-class ButtonDriver {
+class Button {
 private:
   const int     pinNumber;
   bool          stablePinLevel;
@@ -14,7 +14,7 @@ private:
   unsigned long lastDebounceTime;
 
 public:
-  ButtonDriver(int pin) : pinNumber(pin) {}
+  Button(int pin) : pinNumber(pin) {}
 
   void begin() {
     pinMode(pinNumber, INPUT_PULLUP);

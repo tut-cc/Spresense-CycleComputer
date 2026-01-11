@@ -1,18 +1,18 @@
 #pragma once
 
-#include "../drivers/ButtonDriver.h"
+#include "../drivers/Button.h"
 
 #include "InputEvent.h"
 
 namespace application {
 
-class InputManager {
+class Input {
 private:
-  drivers::ButtonDriver btnA;
-  drivers::ButtonDriver btnB;
+  drivers::Button btnA;
+  drivers::Button btnB;
 
 public:
-  InputManager() : btnA(Config::Pin::BTN_A), btnB(Config::Pin::BTN_B) {}
+  Input() : btnA(Config::Pin::BTN_A), btnB(Config::Pin::BTN_B) {}
 
   void begin() {
     btnA.begin();

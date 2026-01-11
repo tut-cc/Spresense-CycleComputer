@@ -16,10 +16,10 @@ FetchContent_MakeAvailable(googletest)
 set(TEST_SOURCES
     mocks/MockGlobals.cpp
     mocks/MockLibs.cpp
-    TripComputerTest.cpp
-    InputManagerTest.cpp
+    TripTest.cpp
+    InputTest.cpp
     CycleComputerTest.cpp
-    ModeManagerTest.cpp
+    ModeTest.cpp
 )
 
 # Define executable

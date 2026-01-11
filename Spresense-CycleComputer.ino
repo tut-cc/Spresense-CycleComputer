@@ -1,14 +1,18 @@
-#include "src/drivers/OLEDDriver.h"
-#include "src/system/CycleComputer.h"
-#include "src/system/GPSManager.h"
-#include "src/system/InputManager.h"
+#include <LowPower.h>
 
-drivers::OLEDDriver                                                                                 display(Wire);
-application::GPSManager                                                                             gps;
-application::InputManager                                                                           inputManager;
-application::CycleComputer<drivers::OLEDDriver, application::GPSManager, application::InputManager> computer(display, gps, inputManager);
+#include "src/drivers/Gnss.h"
+#include "src/drivers/OLED.h"
+#include "src/system/CycleComputer.h"
+#include "src/system/Input.h"
+
+drivers::OLED                                                                display(Wire);
+drivers::Gnss                                                                gps;
+application::Input                                                           input;
+application::CycleComputer<drivers::OLED, drivers::Gnss, application::Input> computer(display, gps, input);
 
 void setup() {
+  LowPower.begin();
+  LowPower.clockMode(CLOCK_MODE_32MHz);
   computer.begin();
 }
 

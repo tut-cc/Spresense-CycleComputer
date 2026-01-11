@@ -5,9 +5,9 @@
 
 #include "../Config.h"
 
-namespace application {
+namespace drivers {
 
-class GPSManager {
+class Gnss {
 private:
   SpGnss    gnss;
   SpNavData navData;
@@ -45,4 +45,4 @@ public:
   }
 };
 
-} // namespace application
+} // namespace drivers

@@ -9,7 +9,7 @@
 
 namespace drivers {
 
-class OLEDDriver {
+class OLED {
 private:
   Adafruit_SSD1306 display;
   TwoWire         &wire;
@@ -17,7 +17,7 @@ private:
   int              satelliteCount = 5;
 
 public:
-  OLEDDriver(TwoWire &i2c) : display(Config::OLED::WIDTH, Config::OLED::HEIGHT, &i2c, -1), wire(i2c) {}
+  OLED(TwoWire &i2c) : display(Config::OLED::WIDTH, Config::OLED::HEIGHT, &i2c, -1), wire(i2c) {}
 
   void begin() {
     if (!display.begin(SSD1306_SWITCHCAPVCC, Config::OLED::ADDRESS))
