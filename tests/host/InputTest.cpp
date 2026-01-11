@@ -1,16 +1,21 @@
 #include "ui/Input.h"
 #include "../mocks/Arduino.h"
+#include "drivers/Button.h"
 #include <gtest/gtest.h>
 
 // Test fixture for Input
 class InputTest : public ::testing::Test {
 protected:
-  ui::Input *input;
+  ui::Input<drivers::Button> *input;
+  drivers::Button            *btnA;
+  drivers::Button            *btnB;
 
   void SetUp() override {
     // Reset mocks
     // drivers::Button::resetMock(); // Removed
-    input = new ui::Input();
+    btnA  = new drivers::Button(Config::Pin::BTN_A);
+    btnB  = new drivers::Button(Config::Pin::BTN_B);
+    input = new ui::Input<drivers::Button>(*btnA, *btnB);
     input->begin();
 
     // Ensure initial state is released (HIGH)
@@ -21,17 +26,19 @@ protected:
 
   void TearDown() override {
     delete input;
+    delete btnA;
+    delete btnB;
   }
 };
 
 // Helper to simulate Button press with debounce
-void pressButton(ui::Input *im, int pin) {
+void pressButton(ui::Input<drivers::Button> *im, int pin) {
   setPinState(pin, LOW);
   im->update();       // Detect change (start debounce)
   _mock_millis += 70; // Wait > 50ms (Config::DEBOUNCE_DELAY assumed 50)
 }
 
-void releaseButton(ui::Input *im, int pin) {
+void releaseButton(ui::Input<drivers::Button> *im, int pin) {
   setPinState(pin, HIGH);
   im->update(); // Detect change
   _mock_millis += 70;

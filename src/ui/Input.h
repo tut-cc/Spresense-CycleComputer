@@ -1,18 +1,16 @@
 #pragma once
 
-#include "../drivers/Button.h"
-
 #include "InputEvent.h"
 
 namespace ui {
 
-class Input {
+template <typename ButtonT> class Input {
 private:
-  drivers::Button btnA;
-  drivers::Button btnB;
+  ButtonT &btnA;
+  ButtonT &btnB;
 
 public:
-  Input() : btnA(Config::Pin::BTN_A), btnB(Config::Pin::BTN_B) {}
+  Input(ButtonT &buttonA, ButtonT &buttonB) : btnA(buttonA), btnB(buttonB) {}
 
   void begin() {
     btnA.begin();

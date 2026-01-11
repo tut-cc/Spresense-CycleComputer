@@ -1,13 +1,16 @@
 #include <LowPower.h>
 
 #include "src/CycleComputer.h"
+#include "src/drivers/Button.h"
 #include "src/drivers/Gnss.h"
 #include "src/drivers/OLED.h"
-#include "src/ui/Input.h"
 
-drivers::OLED                                                       display;
-ui::Input                                                           input;
-application::CycleComputer<drivers::OLED, drivers::Gnss, ui::Input> computer(display, drivers::Gnss::getInstance(), input);
+using namespace drivers;
+
+OLED                                           oled;
+Button                                         btnA(Config::Pin::BTN_A);
+Button                                         btnB(Config::Pin::BTN_B);
+application::CycleComputer<OLED, Gnss, Button> computer(oled, Gnss::getInstance(), btnA, btnB);
 
 void setup() {
   LowPower.begin();

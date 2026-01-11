@@ -3,6 +3,7 @@
 #include "Config.h"
 #include "domain/Clock.h"
 #include "domain/Trip.h"
+#include "ui/Input.h"
 #include "ui/InputEvent.h"
 #include "ui/Mode.h"
 #include "ui/Renderer.h"
@@ -10,20 +11,20 @@
 
 namespace application {
 
-template <typename DisplayT, typename GnssT, typename InputT> class CycleComputer {
+template <typename DisplayT, typename GnssT, typename ButtonT> class CycleComputer {
 private:
-  DisplayT     &display;
-  InputT       &input;
-  GnssT        &gnss;
-  ui::Mode      mode;
-  domain::Trip  trip;
-  domain::Clock clock;
-  ui::Renderer  renderer;
-  unsigned long lastDisplayUpdate = 0;
-  bool          forceUpdate       = false;
+  DisplayT          &display;
+  ui::Input<ButtonT> input;
+  GnssT             &gnss;
+  ui::Mode           mode;
+  domain::Trip       trip;
+  domain::Clock      clock;
+  ui::Renderer       renderer;
+  unsigned long      lastDisplayUpdate = 0;
+  bool               forceUpdate       = false;
 
 public:
-  CycleComputer(DisplayT &displayData, GnssT &gnss, InputT &input) : display(displayData), input(input), gnss(gnss) {}
+  CycleComputer(DisplayT &displayData, GnssT &gnss, ButtonT &btnA, ButtonT &btnB) : display(displayData), input(btnA, btnB), gnss(gnss) {}
 
   void begin() {
     display.begin();
