@@ -104,9 +104,6 @@ private:
     ctx.setCursor(0, 0);
     ctx.print("GNSS ON");
 
-    drawSatelliteIcon(ctx, 100, 0, satelliteCount);
-    drawBatteryIcon(ctx, 115, 0, batteryLevel);
-
     ctx.drawLine(0, 10, ctx.getWidth(), 10, 1); // WHITE
   }
 
