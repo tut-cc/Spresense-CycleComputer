@@ -2,89 +2,98 @@
 #include "../mocks/Arduino.h"
 #include "hardware/Button.h"
 #include "ui/InputEvent.h"
+#include <gmock/gmock.h> // Required for NiceMock and ON_CALL
 #include <gtest/gtest.h>
+
+// Define MockButton class for testing
+class MockButton : public Button {
+public:
+  MockButton(int pin) : Button(pin) {}
+  MOCK_METHOD(void, begin, (), (override));
+  MOCK_METHOD(bool, isPressed, (), (override));
+  MOCK_METHOD(bool, isHeld, (), (const, override));
+};
+
+using ::testing::NiceMock;
+using ::testing::Return;
 
 // Test fixture for Input
 class InputTest : public ::testing::Test {
 protected:
-  ui::Input<hardware::Button> *input;
-  hardware::Button            *btnA;
-  hardware::Button            *btnB;
+  Input                *input;
+  NiceMock<MockButton> *mockBtnA;
+  NiceMock<MockButton> *mockBtnB;
 
   void SetUp() override {
-    // Reset mocks
-    // hardware::Button::resetMock(); // Removed
-    btnA  = new hardware::Button(Config::Pin::BTN_A);
-    btnB  = new hardware::Button(Config::Pin::BTN_B);
-    input = new ui::Input<hardware::Button>(*btnA, *btnB);
-    input->begin();
+    mockBtnA = new NiceMock<MockButton>(Config::Pin::BTN_A);
+    mockBtnB = new NiceMock<MockButton>(Config::Pin::BTN_B);
 
-    // Ensure initial state is released (HIGH)
-    // Ensure initial state is released (HIGH)
-    setPinState(Config::Pin::BTN_A, HIGH);
-    setPinState(Config::Pin::BTN_B, HIGH);
+    ON_CALL(*mockBtnA, isPressed()).WillByDefault(Return(false));
+    ON_CALL(*mockBtnA, isHeld()).WillByDefault(Return(false));
+    ON_CALL(*mockBtnB, isPressed()).WillByDefault(Return(false));
+    ON_CALL(*mockBtnB, isHeld()).WillByDefault(Return(false));
+
+    input = new Input(*mockBtnA, *mockBtnB);
+    // input->begin(); // begin() might not be needed with mock buttons, or its behavior needs to be mocked.
+    // Removing as per the spirit of the provided change.
   }
 
   void TearDown() override {
     delete input;
-    delete btnA;
-    delete btnB;
+    delete mockBtnA;
+    delete mockBtnB;
   }
 };
 
 // Helper to simulate Button press with debounce
-void pressButton(ui::Input<hardware::Button> *im, int pin) {
-  setPinState(pin, LOW);
-  im->update();       // Detect change (start debounce)
-  _mock_millis += 70; // Wait > 50ms (Config::DEBOUNCE_DELAY assumed 50)
+// Helpers to simulate button behavior
+void pressButton(Input *im, NiceMock<MockButton> *btn) {
+  EXPECT_CALL(*btn, isPressed()).WillOnce(Return(true));
+  EXPECT_CALL(*btn, isHeld()).WillRepeatedly(Return(false));
 }
 
-void releaseButton(ui::Input<hardware::Button> *im, int pin) {
-  setPinState(pin, HIGH);
-  im->update(); // Detect change
-  _mock_millis += 70;
+void releaseButton(Input *im, NiceMock<MockButton> *btn) {
+  EXPECT_CALL(*btn, isPressed()).WillOnce(Return(false));
+  EXPECT_CALL(*btn, isHeld()).WillRepeatedly(Return(false));
 }
 
 TEST_F(InputTest, InitialStateReturnsNone) {
-  EXPECT_EQ(input->update(), ui::InputEvent::NONE);
+  EXPECT_EQ(input->update(), InputEvent::NONE);
 }
 
 TEST_F(InputTest, ButtonAPress) {
-  pressButton(input, Config::Pin::BTN_A);
-  EXPECT_EQ(input->update(), ui::InputEvent::BTN_A);
+  pressButton(input, mockBtnA);
+  EXPECT_EQ(input->update(), InputEvent::BTN_A);
 
-  releaseButton(input, Config::Pin::BTN_A);
+  releaseButton(input, mockBtnA);
   // Release usually returns NONE unless logic triggers on release.
   // Current logic triggers on PRESS (falling edge stabilization).
   // So release should return NONE.
-  EXPECT_EQ(input->update(), ui::InputEvent::NONE);
+  EXPECT_EQ(input->update(), InputEvent::NONE);
 }
 
 TEST_F(InputTest, ButtonBPress) {
-  pressButton(input, Config::Pin::BTN_B);
-  EXPECT_EQ(input->update(), ui::InputEvent::BTN_B);
+  pressButton(input, mockBtnB);
+  EXPECT_EQ(input->update(), InputEvent::BTN_B);
 
-  releaseButton(input, Config::Pin::BTN_B);
-  EXPECT_EQ(input->update(), ui::InputEvent::NONE);
+  releaseButton(input, mockBtnB);
+  EXPECT_EQ(input->update(), InputEvent::NONE);
 }
 
 TEST_F(InputTest, SimultaneousPress) {
-  setPinState(Config::Pin::BTN_A, LOW);
-  setPinState(Config::Pin::BTN_B, LOW);
-  input->update(); // Detect both change
+  EXPECT_CALL(*mockBtnA, isPressed()).WillOnce(Return(true));
+  EXPECT_CALL(*mockBtnB, isHeld()).WillOnce(Return(true));
+  EXPECT_EQ(input->update(), InputEvent::BTN_BOTH);
 
-  _mock_millis += 70;
-  EXPECT_EQ(input->update(), ui::InputEvent::BTN_BOTH);
-
-  releaseButton(input, Config::Pin::BTN_A);
-  releaseButton(input, Config::Pin::BTN_B);
-  EXPECT_EQ(input->update(), ui::InputEvent::NONE);
+  releaseButton(input, mockBtnA);
+  releaseButton(input, mockBtnB);
+  EXPECT_EQ(input->update(), InputEvent::NONE);
 }
 
 TEST_F(InputTest, ButtonRelease) {
-  pressButton(input, Config::Pin::BTN_A);
-  EXPECT_EQ(input->update(), ui::InputEvent::BTN_A);
+  pressButton(input, mockBtnA);
+  EXPECT_EQ(input->update(), InputEvent::BTN_A);
 
-  releaseButton(input, Config::Pin::BTN_A);
-  EXPECT_EQ(input->update(), ui::InputEvent::NONE);
+  releaseButton(input, mockBtnA);
+  EXPECT_EQ(input->update(), InputEvent::NONE);
 }

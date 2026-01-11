@@ -4,7 +4,7 @@
 
 class TripTest : public ::testing::Test {
 protected:
-  domain::Trip trip;
+  Trip trip;
 
   void SetUp() override {
     trip.begin();

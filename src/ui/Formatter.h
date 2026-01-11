@@ -3,7 +3,6 @@
 #include <cstdio>
 #include <cstring>
 
-namespace ui {
 
 class Formatter {
 public:
@@ -33,4 +32,3 @@ public:
   }
 };
 
-} // namespace ui

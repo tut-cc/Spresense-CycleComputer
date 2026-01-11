@@ -2,7 +2,6 @@
 
 #include <GNSS.h>
 
-namespace domain {
 
 class Clock {
 public:
@@ -33,4 +32,3 @@ private:
   int validYearStart;
 };
 
-} // namespace domain

@@ -1,6 +1,5 @@
 #pragma once
 
-namespace ui {
 
 class Mode {
 public:
@@ -33,4 +32,3 @@ public:
   }
 };
 
-} // namespace ui

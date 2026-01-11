@@ -6,13 +6,14 @@
 #include "src/hardware/OLED.h"
 #include "src/ui/Input.h"
 
-using namespace hardware;
+// using namespace hardware;
 
-OLED                                            oled;
-Button                                          btnA(Config::Pin::BTN_A);
-Button                                          btnB(Config::Pin::BTN_B);
-ui::Input<Button>                               input(btnA, btnB);
-application::App<OLED, Gnss, ui::Input<Button>> app(oled, Gnss::getInstance(), input);
+OLED   oled;
+Gnss   gnss;
+Button btnA(Config::Pin::BTN_A);
+Button btnB(Config::Pin::BTN_B);
+Input  input(btnA, btnB);
+App    app(oled, gnss, input);
 
 void setup() {
   LowPower.begin();

@@ -1,23 +1,23 @@
 #pragma once
 
+#include "../hardware/Button.h"
 #include "InputEvent.h"
 
-namespace ui {
-
-template <typename ButtonT> class Input {
+class Input {
 private:
-  ButtonT &btnA;
-  ButtonT &btnB;
+  Button &btnA;
+  Button &btnB;
 
 public:
-  Input(ButtonT &buttonA, ButtonT &buttonB) : btnA(buttonA), btnB(buttonB) {}
+  Input(Button &buttonA, Button &buttonB) : btnA(buttonA), btnB(buttonB) {}
+  virtual ~Input() {}
 
-  void begin() {
+  virtual void begin() {
     btnA.begin();
     btnB.begin();
   }
 
-  InputEvent update() {
+  virtual InputEvent update() {
     bool aPressed = btnA.isPressed();
     bool bPressed = btnB.isPressed();
 
@@ -28,5 +28,3 @@ public:
     return InputEvent::NONE;
   }
 };
-
-} // namespace ui

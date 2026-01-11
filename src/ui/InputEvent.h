@@ -1,6 +1,5 @@
 #pragma once
 
-namespace ui {
 
 enum class InputEvent {
   NONE,
@@ -9,4 +8,3 @@ enum class InputEvent {
   BTN_BOTH,
 };
 
-} // namespace ui

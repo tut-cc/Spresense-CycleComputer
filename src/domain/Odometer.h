@@ -2,7 +2,6 @@
 
 #include <GNSS.h>
 
-namespace domain {
 
 class Odometer {
 private:
@@ -31,4 +30,3 @@ public:
   }
 };
 
-} // namespace domain

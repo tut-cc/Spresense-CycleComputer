@@ -8,8 +8,6 @@
 #include "Formatter.h"
 #include "Mode.h"
 
-namespace ui {
-
 template <typename ContextT> class Renderer {
 private:
   struct Metadata {
@@ -22,7 +20,7 @@ private:
   bool     firstRender           = true;
 
 public:
-  void render(ContextT &ctx, const domain::Trip &trip, const domain::Clock &clock, Mode::ID modeId) {
+  void render(ContextT &ctx, const Trip &trip, const Clock &clock, Mode::ID modeId) {
     char currentBuf[32];
     getDisplayValue(trip, clock, modeId, currentBuf, sizeof(currentBuf));
     if (!firstRender && modeId == lastRenderedMode && strcmp(currentBuf, lastRenderedValue) == 0) return;
@@ -41,7 +39,7 @@ public:
   }
 
 private:
-  void getDisplayValue(const domain::Trip &trip, const domain::Clock &clock, Mode::ID modeId, char *buf, size_t size) {
+  void getDisplayValue(const Trip &trip, const Clock &clock, Mode::ID modeId, char *buf, size_t size) {
     switch (modeId) {
     case Mode::ID::SPEED:
       Formatter::formatSpeed(trip.getSpeedKmh(), buf, size);
@@ -56,7 +54,7 @@ private:
       Formatter::formatDistance(trip.getDistanceKm(), buf, size);
       break;
     case Mode::ID::TIME: {
-      domain::Clock::Time t = clock.getTime();
+      Clock::Time t = clock.getTime();
       Formatter::formatTime(t.hour, t.minute, buf, size);
       break;
     }
@@ -152,5 +150,3 @@ private:
     ctx.print(unit);
   }
 };
-
-} // namespace ui

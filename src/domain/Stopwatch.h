@@ -3,7 +3,6 @@
 #include <Arduino.h>
 #include <GNSS.h>
 
-namespace domain {
 
 class Stopwatch {
 private:
@@ -38,4 +37,3 @@ public:
   }
 };
 
-} // namespace domain

@@ -18,92 +18,103 @@ using ::testing::StrEq;
 // I'll leave the Mocks alone by starting replacement at line 1. Wait, I can't mix-and-match easily without context.
 // I will rewrite the whole file content to be safe and consistent with previous tool usage pattern.
 
-// Mock OLED
-class MockOLED {
+// Include "real" headers which now have virtual methods
+#include "hardware/Button.h"
+#include "hardware/Gnss.h"
+#include "hardware/OLED.h"
+
+// Define Mocks inheriting from the concrete classes
+class MockOLED : public OLED {
 public:
-  MOCK_METHOD(void, clear, ());
-  MOCK_METHOD(void, display, ());
-  MOCK_METHOD(void, setTextSize, (int));
-  MOCK_METHOD(void, setTextColor, (int));
-  MOCK_METHOD(void, setCursor, (int, int));
-  MOCK_METHOD(void, print, (const char *));
-  MOCK_METHOD(void, drawLine, (int, int, int, int, int));
-  MOCK_METHOD(void, drawRect, (int, int, int, int, int));
-  MOCK_METHOD(void, fillRect, (int, int, int, int, int));
-  MOCK_METHOD(void, drawCircle, (int, int, int, int));
+  // Using explicit override to ensure we matched the virtual signature
+  MOCK_METHOD(void, clear, (), (override));
+  MOCK_METHOD(void, display, (), (override));
+  MOCK_METHOD(void, setTextSize, (int), (override));
+  MOCK_METHOD(void, setTextColor, (int), (override));
+  MOCK_METHOD(void, setCursor, (int, int), (override));
+  MOCK_METHOD(void, print, (const char *), (override));
+  MOCK_METHOD(void, drawLine, (int, int, int, int, int), (override));
+  MOCK_METHOD(void, drawRect, (int, int, int, int, int), (override));
+  MOCK_METHOD(void, fillRect, (int, int, int, int, int), (override));
+  MOCK_METHOD(void, drawCircle, (int, int, int, int), (override));
+  MOCK_METHOD(void, getTextBounds, (const char *, int16_t, int16_t, int16_t *, int16_t *, uint16_t *, uint16_t *), (override));
+  MOCK_METHOD(int, getWidth, (), (const, override));
+  MOCK_METHOD(int, getHeight, (), (const, override));
+  MOCK_METHOD(void, begin, (), (override));
 
-  MOCK_METHOD(void, getTextBounds, (const char *, int16_t, int16_t, int16_t *, int16_t *, uint16_t *, uint16_t *));
-
-  MOCK_METHOD(int, getWidth, (), (const));
-  MOCK_METHOD(int, getHeight, (), (const));
-
-  MockOLED() {
-    ON_CALL(*this, getWidth()).WillByDefault(Return(Config::OLED::WIDTH));
-    ON_CALL(*this, getHeight()).WillByDefault(Return(Config::OLED::HEIGHT));
+  MockOLED() : OLED() {
+    // Set default behavior for dimensions to avoid crashes if called
+    ON_CALL(*this, getWidth()).WillByDefault(Return(128));
+    ON_CALL(*this, getHeight()).WillByDefault(Return(64));
   }
-
-  // Helper legacy method if needed, but primarily we use the interface now.
-  MOCK_METHOD(void, begin, ());
 };
 
-// Mock GnssProvider
-class MockGnssProvider {
+class MockGnssProvider : public Gnss {
 public:
-  mutable SpNavData data;
-  void              setSpeed(float speedKmh) {
-    data.velocity   = speedKmh / 3.6f;
-    data.posFixMode = Fix3D;
-  }
+  mutable SpNavData data; // Helper to store test data
 
-  MockGnssProvider() {
+  MockGnssProvider() : Gnss() {
     memset(&data, 0, sizeof(data));
   }
 
-  MOCK_METHOD(bool, begin, ());
-  MOCK_METHOD(void, update, ());
-  MOCK_METHOD(const SpNavData &, getNavData, (), (const));
+  MOCK_METHOD(bool, begin, (), (override));
+  MOCK_METHOD(void, update, (), (override));
+
+  // We need to override getNavData to return our local 'data'
+  // But strictly, hardware::Gnss::getNavData returns 'const SpNavData &' reference to its internal member.
+  // We can return reference to our 'data' member.
+  MOCK_METHOD(const SpNavData &, getNavData, (), (const, override));
+
+  void setSpeed(float speedKmh) {
+    data.velocity   = speedKmh / 3.6f;
+    data.posFixMode = Fix3D;
+  }
 };
 
-// Mock Button
-class MockButton {
+class MockButton : public Button {
 public:
-  MOCK_METHOD(void, begin, ());
-  MOCK_METHOD(bool, isPressed, ());
-  MOCK_METHOD(bool, isHeld, (), (const));
+  MockButton(int pin) : Button(pin) {}
+  MOCK_METHOD(void, begin, (), (override));
+  MOCK_METHOD(bool, isPressed, (), (override));
+  MOCK_METHOD(bool, isHeld, (), (const, override));
 };
 
 class AppTest : public ::testing::Test {
 protected:
-  NiceMock<MockOLED>                                                                                 mockDisplay;
-  NiceMock<MockGnssProvider>                                                                         mockGnss;
-  NiceMock<MockButton>                                                                               mockBtnA;
-  NiceMock<MockButton>                                                                               mockBtnB;
-  ui::Input<NiceMock<MockButton>>                                                                   *input;
-  application::App<NiceMock<MockOLED>, NiceMock<MockGnssProvider>, ui::Input<NiceMock<MockButton>>> *app;
+  NiceMock<MockOLED>         mockDisplay;
+  NiceMock<MockGnssProvider> mockGnss;
+  NiceMock<MockButton>      *mockBtnA;
+  NiceMock<MockButton>      *mockBtnB;
+  Input                     *input;
+  App                       *app;
 
   void SetUp() override {
-    ON_CALL(mockGnss, getNavData()).WillByDefault(ReturnRef(mockGnss.data));
-    // Default Button behavior: Not pressed, Not held
-    ON_CALL(mockBtnA, isPressed()).WillByDefault(Return(false));
-    ON_CALL(mockBtnA, isHeld()).WillByDefault(Return(false));
-    ON_CALL(mockBtnB, isPressed()).WillByDefault(Return(false));
-    ON_CALL(mockBtnB, isHeld()).WillByDefault(Return(false));
+    mockBtnA = new NiceMock<MockButton>(Config::Pin::BTN_A);
+    mockBtnB = new NiceMock<MockButton>(Config::Pin::BTN_B);
 
-    input = new ui::Input<NiceMock<MockButton>>(mockBtnA, mockBtnB);
-    app   = new application::App<NiceMock<MockOLED>, NiceMock<MockGnssProvider>, ui::Input<NiceMock<MockButton>>>(mockDisplay, mockGnss, *input);
+    ON_CALL(mockGnss, getNavData()).WillByDefault(ReturnRef(mockGnss.data));
+    ON_CALL(*mockBtnA, isPressed()).WillByDefault(Return(false));
+    ON_CALL(*mockBtnA, isHeld()).WillByDefault(Return(false));
+    ON_CALL(*mockBtnB, isPressed()).WillByDefault(Return(false));
+    ON_CALL(*mockBtnB, isHeld()).WillByDefault(Return(false));
+
+    input = new Input(*mockBtnA, *mockBtnB);
+    app   = new App(mockDisplay, mockGnss, *input);
   }
 
   void TearDown() override {
     delete app;
     delete input;
+    delete mockBtnA;
+    delete mockBtnB;
   }
 };
 
 TEST_F(AppTest, InitialModeIsSpeed) {
   EXPECT_CALL(mockDisplay, begin()).Times(1);
   EXPECT_CALL(mockGnss, begin()).Times(1);
-  EXPECT_CALL(mockBtnA, begin()).Times(1);
-  EXPECT_CALL(mockBtnB, begin()).Times(1);
+  EXPECT_CALL(*mockBtnA, begin()).Times(1);
+  EXPECT_CALL(*mockBtnB, begin()).Times(1);
 
   EXPECT_CALL(mockDisplay, display()).Times(AtLeast(1));
 
@@ -117,8 +128,8 @@ TEST_F(AppTest, ModeChangeInput) {
   app->begin();
   app->update();
 
-  EXPECT_CALL(mockBtnA, isPressed()).WillOnce(Return(true)).WillRepeatedly(Return(false));
-  EXPECT_CALL(mockBtnB, isPressed()).WillRepeatedly(Return(false));
+  EXPECT_CALL(*mockBtnA, isPressed()).WillOnce(Return(true)).WillRepeatedly(Return(false));
+  EXPECT_CALL(*mockBtnB, isPressed()).WillRepeatedly(Return(false));
 
   app->update();
 }
@@ -144,15 +155,15 @@ TEST_F(AppTest, DisplayTime) {
   EXPECT_CALL(mockDisplay, print(_)).Times(AnyNumber());
 
   // Transition 1
-  EXPECT_CALL(mockBtnA, isPressed()).WillOnce(Return(true)).WillRepeatedly(Return(false));
+  EXPECT_CALL(*mockBtnA, isPressed()).WillOnce(Return(true)).WillRepeatedly(Return(false));
   app->update(); // Speed -> Trip
 
   // Transition 2
-  EXPECT_CALL(mockBtnA, isPressed()).WillOnce(Return(true)).WillRepeatedly(Return(false));
+  EXPECT_CALL(*mockBtnA, isPressed()).WillOnce(Return(true)).WillRepeatedly(Return(false));
   app->update(); // Trip -> Time (Actually Max Speed)
 
   // Transition 3
-  EXPECT_CALL(mockBtnA, isPressed()).WillOnce(Return(true)).WillRepeatedly(Return(false));
+  EXPECT_CALL(*mockBtnA, isPressed()).WillOnce(Return(true)).WillRepeatedly(Return(false));
   app->update(); // -> Time
 
   mockGnss.data.time.year   = 2025;
@@ -175,13 +186,13 @@ TEST_F(AppTest, ResetData) {
   mockGnss.setSpeed(testSpeed);
   app->update();
 
-  EXPECT_CALL(mockBtnA, isPressed()).WillOnce(Return(true)).WillRepeatedly(Return(false));
+  EXPECT_CALL(*mockBtnA, isPressed()).WillOnce(Return(true)).WillRepeatedly(Return(false));
   app->update(); // Change Mode
 
   mockGnss.setSpeed(0.0f);
 
-  EXPECT_CALL(mockBtnA, isPressed()).WillOnce(Return(true)).RetiresOnSaturation();
-  EXPECT_CALL(mockBtnB, isHeld()).WillOnce(Return(true)).RetiresOnSaturation();
+  EXPECT_CALL(*mockBtnA, isPressed()).WillOnce(Return(true)).RetiresOnSaturation();
+  EXPECT_CALL(*mockBtnB, isHeld()).WillOnce(Return(true)).RetiresOnSaturation();
 
   EXPECT_CALL(mockDisplay, print(testing::HasSubstr("0.0"))).Times(AtLeast(1));
 
