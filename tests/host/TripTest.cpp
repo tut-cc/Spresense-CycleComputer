@@ -51,12 +51,9 @@ TEST_F(TripTest, IgnoreLowSpeed) {
   EXPECT_FLOAT_EQ(trip.getDistanceKm(), 0.0f);
 }
 
-TEST_F(TripTest, TimeFormatting) {
-  char buffer[32];
-
+TEST_F(TripTest, MovingTimeCalculation) {
   // Test 0
-  trip.getMovingTimeStr(buffer, sizeof(buffer));
-  EXPECT_STREQ(buffer, "00:00");
+  EXPECT_EQ(trip.getMovingTimeMs(), 0);
 
   // Test 1h 1m 1s = 3600 + 60 + 1 = 3661 sec = 3661000 ms
   // Manually injecting moving time via update logic is hard without specific speed profile.
@@ -69,8 +66,7 @@ TEST_F(TripTest, TimeFormatting) {
   now += 3661000;
   trip.update(createNavData(10.0f), now); // Moving, so adds to moving time
 
-  trip.getMovingTimeStr(buffer, sizeof(buffer));
-  EXPECT_STREQ(buffer, "01:01");
+  EXPECT_EQ(trip.getMovingTimeMs(), 3661000);
 }
 
 TEST_F(TripTest, CalculateAvgSpeed) {
@@ -111,15 +107,12 @@ TEST_F(TripTest, StopMovingDoesNotIncreaseMovingTime) {
   trip.update(createNavData(10.0f), now); // Moving for 1 hour
   // movingTime = 1h
 
-  char buffer[32];
-  trip.getMovingTimeStr(buffer, sizeof(buffer));
-  // 1h -> 01:00
-  EXPECT_STREQ(buffer, "01:00");
+  // 1h -> 3600000ms
+  EXPECT_EQ(trip.getMovingTimeMs(), 3600000);
 
   now += 3600000;                        // Another hour passes...
   trip.update(createNavData(0.0f), now); // ...but not moving
   // movingTime should stay 1h
 
-  trip.getMovingTimeStr(buffer, sizeof(buffer));
-  EXPECT_STREQ(buffer, "01:00");
+  EXPECT_EQ(trip.getMovingTimeMs(), 3600000);
 }

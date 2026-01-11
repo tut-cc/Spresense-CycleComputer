@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Config.h"
 #include "domain/Clock.h"
 #include "domain/Trip.h"
 #include "ui/Input.h"

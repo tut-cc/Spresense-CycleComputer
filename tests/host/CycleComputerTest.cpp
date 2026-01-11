@@ -183,15 +183,14 @@ TEST_F(CycleComputerTest, ResetData) {
   computer->update(); // Change Mode
 
   // Simulate BTN_BOTH: (A Pressed && B Held) OR (B Pressed && A Held)
+  mockGnss.setSpeed(0.0f);
+
+  // Simulate BTN_BOTH: (A Pressed && B Held) OR (B Pressed && A Held)
   EXPECT_CALL(mockBtnA, isPressed()).WillOnce(Return(true)).RetiresOnSaturation();
   EXPECT_CALL(mockBtnB, isHeld()).WillOnce(Return(true)).RetiresOnSaturation();
 
-  computer->update();
-
-  mockGnss.setSpeed(0.0f);
-
+  // Expect the display to update with "0.0" after reset
   EXPECT_CALL(mockDisplay, print(testing::HasSubstr("0.0"))).Times(AtLeast(1));
 
-  delay(1000); // Advance time to trigger display update
   computer->update();
 }
