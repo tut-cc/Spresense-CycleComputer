@@ -3,9 +3,9 @@
 #include "Config.h"
 #include "domain/Clock.h"
 #include "domain/Trip.h"
-#include "ui/DisplayData.h"
 #include "ui/InputEvent.h"
 #include "ui/Mode.h"
+#include "ui/Renderer.h"
 #include <cstdio>
 
 namespace application {
@@ -18,6 +18,7 @@ private:
   ui::Mode      mode;
   domain::Trip  trip;
   domain::Clock clock;
+  ui::Renderer  renderer;
   unsigned long lastDisplayUpdate = 0;
   bool          forceUpdate       = false;
 
@@ -70,48 +71,7 @@ private:
     lastDisplayUpdate = currentMillis;
     forceUpdate       = false;
 
-    char                buf[32];
-    ui::DisplayDataType type;
-    getDisplayData(mode.get(), type, buf, sizeof(buf));
-
-    display.show(type, buf);
-  }
-
-  void getDisplayData(ui::Mode::ID modeId, ui::DisplayDataType &type, char *buf, size_t size) {
-    switch (modeId) {
-    case ui::Mode::ID::SPEED:
-      type = ui::DisplayDataType::SPEED;
-      trip.getSpeedStr(buf, size);
-      break;
-    case ui::Mode::ID::MAX_SPEED:
-      type = ui::DisplayDataType::MAX_SPEED;
-      trip.getMaxSpeedStr(buf, size);
-      break;
-    case ui::Mode::ID::AVG_SPEED:
-      type = ui::DisplayDataType::AVG_SPEED;
-      trip.getAvgSpeedStr(buf, size);
-      break;
-    case ui::Mode::ID::DISTANCE:
-      type = ui::DisplayDataType::DISTANCE;
-      trip.getDistanceStr(buf, size);
-      break;
-    case ui::Mode::ID::TIME:
-      type = ui::DisplayDataType::TIME;
-      clock.getTimeStr(buf, size);
-      break;
-    case ui::Mode::ID::MOVING_TIME:
-      type = ui::DisplayDataType::MOVING_TIME;
-      trip.getMovingTimeStr(buf, size);
-      break;
-    case ui::Mode::ID::ELAPSED_TIME:
-      type = ui::DisplayDataType::ELAPSED_TIME;
-      trip.getElapsedTimeStr(buf, size);
-      break;
-    default:
-      type   = ui::DisplayDataType::INVALID;
-      buf[0] = '\0';
-      break;
-    }
+    renderer.render(display, trip, clock, mode.get());
   }
 };
 

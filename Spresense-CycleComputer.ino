@@ -5,7 +5,7 @@
 #include "src/drivers/OLED.h"
 #include "src/ui/Input.h"
 
-drivers::OLED                                                       display(Wire);
+drivers::OLED                                                       display;
 ui::Input                                                           input;
 application::CycleComputer<drivers::OLED, drivers::Gnss, ui::Input> computer(display, drivers::Gnss::getInstance(), input);
 

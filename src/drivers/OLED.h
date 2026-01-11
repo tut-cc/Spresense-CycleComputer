@@ -3,93 +3,78 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <Arduino.h>
+#include <Wire.h>
 
 #include "../Config.h"
-#include "../ui/DisplayData.h"
+#include "../ui/GraphicsContext.h"
 
 namespace drivers {
 
-class OLED {
+class OLED : public ui::GraphicsContext {
 private:
-  Adafruit_SSD1306 display;
-  TwoWire         &wire;
-  int              batteryLevel   = 85;
-  int              satelliteCount = 5;
+  Adafruit_SSD1306 ssd1306;
 
 public:
-  OLED(TwoWire &i2c) : display(Config::OLED::WIDTH, Config::OLED::HEIGHT, &i2c, -1), wire(i2c) {}
+  OLED() : ssd1306(Config::OLED::WIDTH, Config::OLED::HEIGHT, &Wire, -1) {}
 
   void begin() {
-    if (!display.begin(SSD1306_SWITCHCAPVCC, Config::OLED::ADDRESS))
+    if (!ssd1306.begin(SSD1306_SWITCHCAPVCC, Config::OLED::ADDRESS))
       for (;;);
-    display.clearDisplay();
-    display.display();
+    ssd1306.clearDisplay();
+    ssd1306.display();
   }
 
-  void show(ui::DisplayDataType type, const char *value) {
-    display.clearDisplay();
-
-    drawHeader();
-    ui::DisplayMetadata meta = ui::getDisplayMetadata(type);
-    drawMainArea(meta.title.c_str(), value, meta.unit.c_str());
-    drawFooter();
-
-    display.display();
+  // GraphicsContext implementation
+  void clear() override {
+    ssd1306.clearDisplay();
   }
 
-private:
-  void drawHeader() {
-    display.setTextSize(1);
-    display.setTextColor(SSD1306_WHITE);
-    display.setCursor(0, 0);
-    display.print("GNSS ON");
-
-    drawSatelliteIcon(100, 0, satelliteCount);
-    drawBatteryIcon(115, 0, batteryLevel);
-
-    display.drawLine(0, 10, Config::OLED::WIDTH, 10, SSD1306_WHITE);
+  void display() override {
+    ssd1306.display();
   }
 
-  void drawFooter() {
-    display.drawLine(0, Config::OLED::HEIGHT - 10, Config::OLED::WIDTH, Config::OLED::HEIGHT - 10, SSD1306_WHITE);
-
-    display.setTextSize(1);
-    display.setCursor(0, Config::OLED::HEIGHT - 8);
-    display.print("Ready"); // Placeholder for status
+  void setTextSize(int size) override {
+    ssd1306.setTextSize(size);
   }
 
-  void drawMainArea(const char *title, const char *value, const char *unit) {
-    // Title
-    display.setTextSize(1);
-    display.setCursor(0, 14);
-    display.print(title);
-
-    // Value (Large)
-    display.setTextSize(2); // Make value bigger
-    int16_t  x1, y1;
-    uint16_t w, h;
-    display.getTextBounds(value, 0, 0, &x1, &y1, &w, &h);
-    display.setCursor((Config::OLED::WIDTH - w) / 2, 28);
-    display.print(value);
-
-    if (strlen(unit) == 0) return;
-
-    // Unit
-    display.setTextSize(1);
-    display.setCursor(Config::OLED::WIDTH - 24, 45); // Bottom right of main area
-    display.print(unit);
+  void setTextColor(int color) override {
+    ssd1306.setTextColor(color);
   }
 
-  void drawBatteryIcon(int x, int y, int percentage) {
-    display.drawRect(x, y, 12, 6, SSD1306_WHITE);
-    display.fillRect(x + 12, y + 2, 2, 2, SSD1306_WHITE); // Battery positive terminal
-
-    int width = map(percentage, 0, 100, 0, 10);
-    display.fillRect(x + 1, y + 1, width, 4, SSD1306_WHITE);
+  void setCursor(int x, int y) override {
+    ssd1306.setCursor(x, y);
   }
 
-  void drawSatelliteIcon(int x, int y, int count) {
-    display.drawCircle(x + 3, y + 3, 2, SSD1306_WHITE); // Placeholder for satellite icon
+  void print(const char *text) override {
+    ssd1306.print(text);
+  }
+
+  void drawLine(int x0, int y0, int x1, int y1, int color) override {
+    ssd1306.drawLine(x0, y0, x1, y1, color);
+  }
+
+  void drawRect(int x, int y, int w, int h, int color) override {
+    ssd1306.drawRect(x, y, w, h, color);
+  }
+
+  void fillRect(int x, int y, int w, int h, int color) override {
+    ssd1306.fillRect(x, y, w, h, color);
+  }
+
+  void drawCircle(int x0, int y0, int r, int color) override {
+    ssd1306.drawCircle(x0, y0, r, color);
+  }
+
+  void getTextBounds(const char *string, int16_t x, int16_t y, int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h) override {
+    ssd1306.getTextBounds(string, x, y, x1, y1, w, h);
+  }
+
+  int getWidth() const override {
+    return Config::OLED::WIDTH;
+  }
+
+  int getHeight() const override {
+    return Config::OLED::HEIGHT;
   }
 };
 
