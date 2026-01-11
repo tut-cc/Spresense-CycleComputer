@@ -1,8 +1,6 @@
 #include "system/CycleComputer.h"
 #include "Config.h"
-#include "hal/interfaces/IDisplay.h"
-#include "hal/interfaces/IGnssProvider.h"
-#include "hal/interfaces/IInputProvider.h"
+
 #include "system/InputEvent.h"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -15,41 +13,41 @@ using ::testing::Return;
 using ::testing::StrEq;
 
 // Mock OLEDDriver
-class MockOLEDDriver : public hal::IDisplay {
+class MockOLEDDriver {
 public:
-  MOCK_METHOD(void, begin, (), (override));
-  MOCK_METHOD(void, show, (application::DisplayDataType, const char *), (override));
+  MOCK_METHOD(void, begin, ());
+  MOCK_METHOD(void, show, (application::DisplayDataType, const char *));
 };
 
 // Mock GnssProvider
-class MockGnssProvider : public hal::IGnssProvider {
+class MockGnssProvider {
 public:
-  MOCK_METHOD(bool, begin, (), (override));
-  MOCK_METHOD(void, update, (), (override));
-  MOCK_METHOD(float, getSpeedKmh, (), (const, override));
-  MOCK_METHOD(void, getTimeJST, (char *buffer, size_t size), (const, override));
+  MOCK_METHOD(bool, begin, ());
+  MOCK_METHOD(void, update, ());
+  MOCK_METHOD(float, getSpeedKmh, (), (const));
+  MOCK_METHOD(void, getTimeJST, (char *buffer, size_t size), (const));
 };
 
 // Mock InputProvider
-class MockInputProvider : public hal::IInputProvider {
+class MockInputProvider {
 public:
-  MOCK_METHOD(void, begin, (), (override));
-  MOCK_METHOD(application::InputEvent, update, (), (override));
+  MOCK_METHOD(void, begin, ());
+  MOCK_METHOD(application::InputEvent, update, ());
 };
 
 class CycleComputerTest : public ::testing::Test {
 protected:
-  NiceMock<MockOLEDDriver>    mockDisplay;
-  NiceMock<MockGnssProvider>  mockGnss;
-  NiceMock<MockInputProvider> mockInput;
-  application::CycleComputer *computer;
+  NiceMock<MockOLEDDriver>                                                                                       mockDisplay;
+  NiceMock<MockGnssProvider>                                                                                     mockGnss;
+  NiceMock<MockInputProvider>                                                                                    mockInput;
+  application::CycleComputer<NiceMock<MockOLEDDriver>, NiceMock<MockGnssProvider>, NiceMock<MockInputProvider>> *computer;
 
   void SetUp() override {
     // Default behaviors
     ON_CALL(mockGnss, getSpeedKmh()).WillByDefault(Return(0.0f));
     ON_CALL(mockInput, update()).WillByDefault(Return(application::InputEvent::NONE));
 
-    computer = new application::CycleComputer(&mockDisplay, mockGnss, mockInput);
+    computer = new application::CycleComputer<NiceMock<MockOLEDDriver>, NiceMock<MockGnssProvider>, NiceMock<MockInputProvider>>(mockDisplay, mockGnss, mockInput);
   }
 
   void TearDown() override {

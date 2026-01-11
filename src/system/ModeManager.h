@@ -17,10 +17,19 @@ private:
   Mode currentMode;
 
 public:
-  ModeManager();
-  void nextMode();
-  void prevMode();
-  Mode getMode() const;
+  ModeManager() : currentMode(Mode::SPEED) {}
+
+  void nextMode() {
+    currentMode = static_cast<Mode>((static_cast<int>(currentMode) + 1) % 7);
+  }
+
+  void prevMode() {
+    currentMode = static_cast<Mode>((static_cast<int>(currentMode) + 6) % 7);
+  }
+
+  Mode getMode() const {
+    return currentMode;
+  }
 };
 
 } // namespace application

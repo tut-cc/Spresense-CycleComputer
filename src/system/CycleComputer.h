@@ -1,34 +1,124 @@
 #pragma once
 
-#include "../hal/interfaces/IDisplay.h"
-#include "../hal/interfaces/IGnssProvider.h"
-#include "../hal/interfaces/IInputProvider.h"
+#include "../Config.h"
+#include "DisplayData.h"
+#include "InputEvent.h"
 #include "ModeManager.h"
 #include "PowerManager.h"
 #include "TripManager.h"
+#include <cstdio>
 
 namespace application {
 
-class CycleComputer {
+template <typename DisplayT, typename GnssT, typename InputT> class CycleComputer {
 private:
-  hal::IDisplay       *display;
-  hal::IInputProvider &inputProvider;
-  hal::IGnssProvider  &gnssProvider;
-  ModeManager          modeManager;
-  TripManager          tripManager;
-  PowerManager         powerManager;
-
+  DisplayT     &display;
+  InputT       &inputProvider;
+  GnssT        &gnssProvider;
+  ModeManager   modeManager;
+  TripManager   tripManager;
+  PowerManager  powerManager;
   unsigned long lastDisplayUpdate = 0;
   bool          forceUpdate       = false;
 
-  void handleInput();
-  void updateDisplay();
-  void getDisplayData(Mode mode, DisplayDataType &type, char *buf, size_t size);
-
 public:
-  CycleComputer(hal::IDisplay *display, hal::IGnssProvider &gnss, hal::IInputProvider &input);
-  void begin();
-  void update();
+  CycleComputer(DisplayT &displayData, GnssT &gnss, InputT &input) : display(displayData), gnssProvider(gnss), inputProvider(input) {}
+
+  void begin() {
+    display.begin();
+    inputProvider.begin();
+    gnssProvider.begin();
+    tripManager.begin();
+    powerManager.begin();
+  }
+
+  void update() {
+    handleInput();
+    gnssProvider.update();
+    tripManager.update(gnssProvider.getSpeedKmh(), millis());
+    powerManager.update();
+    updateDisplay();
+  }
+
+private:
+  void formatFloat(float val, int width, int prec, char *buf, size_t size) {
+    char fmt[6];
+    snprintf(fmt, sizeof(fmt), "%%%d.%df", width, prec);
+    snprintf(buf, size, fmt, val);
+  }
+
+  void handleInput() {
+    InputEvent event = inputProvider.update();
+
+    switch (event) {
+    case InputEvent::BTN_A:
+      modeManager.nextMode();
+      forceUpdate = true;
+      break;
+    case InputEvent::BTN_B:
+      modeManager.prevMode();
+      forceUpdate = true;
+      break;
+    case InputEvent::BTN_BOTH:
+      tripManager.reset();
+      forceUpdate = true;
+      break;
+    default:
+      break;
+    }
+  }
+
+  void updateDisplay() {
+    unsigned long currentMillis = millis();
+
+    if (!forceUpdate && (currentMillis - lastDisplayUpdate < Config::DISPLAY_UPDATE_INTERVAL_MS)) return;
+
+    lastDisplayUpdate = currentMillis;
+    forceUpdate       = false;
+
+    char            buf[20];
+    DisplayDataType type;
+    getDisplayData(modeManager.getMode(), type, buf, sizeof(buf));
+
+    display.show(type, buf);
+  }
+
+  void getDisplayData(Mode mode, DisplayDataType &type, char *buf, size_t size) {
+    switch (mode) {
+    case Mode::SPEED:
+      type = DisplayDataType::SPEED;
+      formatFloat(gnssProvider.getSpeedKmh(), 4, 1, buf, size);
+      break;
+    case Mode::TIME:
+      type = DisplayDataType::TIME;
+      gnssProvider.getTimeJST(buf, size);
+      break;
+    case Mode::MAX_SPEED:
+      type = DisplayDataType::MAX_SPEED;
+      formatFloat(tripManager.getMaxSpeedKmh(), 4, 1, buf, size);
+      break;
+    case Mode::DISTANCE:
+      type = DisplayDataType::DISTANCE;
+      formatFloat(tripManager.getDistanceKm(), 5, 2, buf, size);
+      break;
+    case Mode::MOVING_TIME:
+      type = DisplayDataType::MOVING_TIME;
+      tripManager.getMovingTimeStr(buf, size);
+      break;
+    case Mode::ELAPSED_TIME:
+      type = DisplayDataType::ELAPSED_TIME;
+      tripManager.getElapsedTimeStr(buf, size);
+      break;
+    case Mode::AVG_SPEED:
+      type = DisplayDataType::AVG_SPEED;
+      formatFloat(tripManager.getAvgSpeedKmh(), 4, 1, buf, size);
+      break;
+    default:
+      type   = DisplayDataType::INVALID;
+      buf[0] = '\0';
+      break;
+    }
+  }
 };
 
 } // namespace application

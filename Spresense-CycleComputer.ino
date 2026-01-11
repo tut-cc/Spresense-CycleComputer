@@ -3,10 +3,10 @@
 #include "src/system/GPSManager.h"
 #include "src/system/InputManager.h"
 
-drivers::OLEDDriver        display(Wire);
-application::GPSManager    gps;
-application::InputManager  inputManager;
-application::CycleComputer computer(&display, gps, inputManager);
+drivers::OLEDDriver                                                                                 display(Wire);
+application::GPSManager                                                                             gps;
+application::InputManager                                                                           inputManager;
+application::CycleComputer<drivers::OLEDDriver, application::GPSManager, application::InputManager> computer(display, gps, inputManager);
 
 void setup() {
   computer.begin();

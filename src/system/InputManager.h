@@ -1,21 +1,34 @@
 #pragma once
 
 #include "../drivers/ButtonDriver.h"
-#include "../hal/interfaces/IInputProvider.h"
+
 #include "InputEvent.h"
 
 namespace application {
 
-class InputManager : public hal::IInputProvider {
+class InputManager {
 private:
   drivers::ButtonDriver btnA;
   drivers::ButtonDriver btnB;
-  unsigned long         lastInputTime = 0;
 
 public:
-  InputManager();
-  void       begin() override;
-  InputEvent update() override;
+  InputManager() : btnA(Config::Pin::BTN_A), btnB(Config::Pin::BTN_B) {}
+
+  void begin() {
+    btnA.begin();
+    btnB.begin();
+  }
+
+  InputEvent update() {
+    bool aPressed = btnA.isPressed();
+    bool bPressed = btnB.isPressed();
+
+    if ((aPressed && btnB.isHeld()) || (bPressed && btnA.isHeld())) return InputEvent::BTN_BOTH;
+    if (aPressed) return InputEvent::BTN_A;
+    if (bPressed) return InputEvent::BTN_B;
+
+    return InputEvent::NONE;
+  }
 };
 
 } // namespace application
