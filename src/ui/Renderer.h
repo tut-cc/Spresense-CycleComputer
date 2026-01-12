@@ -45,30 +45,30 @@ private:
     switch (modeId) {
     case Mode::ID::SPEED:
       Formatter::formatSpeed(trip.speedometer.get(), buf, size);
-      break;
+      return;
     case Mode::ID::MAX_SPEED:
       Formatter::formatSpeed(trip.speedometer.getMax(), buf, size);
-      break;
+      return;
     case Mode::ID::AVG_SPEED:
       Formatter::formatSpeed(trip.getAvgSpeedKmh(), buf, size);
-      break;
+      return;
     case Mode::ID::DISTANCE:
       Formatter::formatDistance(trip.odometer.getDistance(), buf, size);
-      break;
+      return;
     case Mode::ID::TIME: {
       Clock::Time t = clock.getTime();
       Formatter::formatTime(t.hour, t.minute, buf, size);
-      break;
+      return;
     }
     case Mode::ID::MOVING_TIME:
       Formatter::formatDuration(trip.stopwatch.getMovingTimeMs(), buf, size);
-      break;
+      return;
     case Mode::ID::ELAPSED_TIME:
       Formatter::formatDuration(trip.stopwatch.getElapsedTimeMs(), buf, size);
-      break;
+      return;
     default:
       buf[0] = '\0';
-      break;
+      return;
     }
   }
 
