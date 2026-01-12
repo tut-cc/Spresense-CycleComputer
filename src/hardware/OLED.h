@@ -2,7 +2,6 @@
 
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include <Arduino.h>
 #include <Wire.h>
 
 #include "../Config.h"

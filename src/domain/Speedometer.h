@@ -1,7 +1,5 @@
 #pragma once
 
-#include <GNSS.h>
-
 /**
  * @brief Logic for tracking current and maximum speed.
  *

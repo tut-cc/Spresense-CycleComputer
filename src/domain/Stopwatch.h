@@ -1,8 +1,5 @@
 #pragma once
 
-// #include <Arduino.h>
-#include <GNSS.h>
-
 class Stopwatch {
 public:
   void update(bool isMoving, unsigned long dt) {
