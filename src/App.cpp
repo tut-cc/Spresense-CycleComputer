@@ -16,7 +16,7 @@ void App::update() {
   const auto &navData = gnss.getNavData();
   trip.update(navData, millis());
   clock.update(navData);
-  renderer.render(display, trip, clock, mode.get());
+  renderer.render(display, trip, clock, mode.get(), gnss.isFixed());
 }
 
 void App::handleInput() {

@@ -11,28 +11,29 @@
  *   dependencies and reusable in other contexts.
  */
 class Speedometer {
-private:
-  float speedKmh;
-  float maxSpeedKmh;
-
 public:
-  Speedometer() : speedKmh(0.0f), maxSpeedKmh(0.0f) {}
-
-  void update(float speedKmh) {
-    this->speedKmh = speedKmh;
-    if (this->speedKmh > maxSpeedKmh) maxSpeedKmh = this->speedKmh;
+  void update(float currentKmh) {
+    speed.currentKmh = currentKmh;
+    if (speed.currentKmh > speed.maxKmh) speed.maxKmh = speed.currentKmh;
   }
 
   void reset() {
-    speedKmh    = 0.0f;
-    maxSpeedKmh = 0.0f;
+    speed = {};
   }
 
   float get() const {
-    return speedKmh;
+    return speed.currentKmh;
   }
 
   float getMax() const {
-    return maxSpeedKmh;
+    return speed.maxKmh;
   }
+
+private:
+  struct Speed {
+    float currentKmh = 0.0f;
+    float maxKmh     = 0.0f;
+  };
+
+  Speed speed;
 };

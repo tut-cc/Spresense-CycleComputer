@@ -1,7 +1,7 @@
 #pragma once
 
 #include <GNSS.h>
-
+#include <cstring>
 
 class Gnss {
 private:
@@ -12,7 +12,9 @@ private:
   Gnss &operator=(const Gnss &) = delete;
 
 public:
-  Gnss() {}
+  Gnss() {
+    memset(&navData, 0, sizeof(navData));
+  }
   virtual ~Gnss() {}
 
   virtual bool begin() {
@@ -31,5 +33,8 @@ public:
   virtual const SpNavData &getNavData() const {
     return navData;
   }
-};
 
+  virtual bool isFixed() const {
+    return navData.posFixMode >= 1;
+  }
+};

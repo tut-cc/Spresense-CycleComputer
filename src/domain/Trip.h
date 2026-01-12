@@ -74,7 +74,6 @@ public:
     initialized    = false;
   }
 
-  /* Deprecated getters removed - use public members directly */
   float getAvgSpeedKmh() const {
     unsigned long movingTimeMs = stopwatch.getMovingTimeMs();
     if (movingTimeMs == 0) return 0.0f;

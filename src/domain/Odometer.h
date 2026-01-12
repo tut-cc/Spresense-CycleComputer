@@ -1,7 +1,5 @@
 #pragma once
 
-#include <GNSS.h>
-
 /**
  * @brief Logic for tracking total distance.
  *
@@ -11,21 +9,23 @@
  *   allowing Odometer to focus solely on accumulation and persistence (future).
  */
 class Odometer {
-private:
-  float distanceKm;
-
 public:
-  Odometer() : distanceKm(0.0f) {}
-
   void update(float distanceDeltaKm) {
-    distanceKm += distanceDeltaKm;
+    distance.totalKm += distanceDeltaKm;
   }
 
   void reset() {
-    distanceKm = 0.0f;
+    distance = {};
   }
 
   float getDistance() const {
-    return distanceKm;
+    return distance.totalKm;
   }
+
+private:
+  struct Distance {
+    float totalKm = 0.0f;
+  };
+
+  Distance distance;
 };

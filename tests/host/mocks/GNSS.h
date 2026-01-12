@@ -18,7 +18,7 @@ struct SpNavTime {
   int day;
   int hour;
   int minute;
-  int second;
+  int sec;
   int usec;
 };
 

@@ -17,21 +17,23 @@ private:
 
   char     lastRenderedValue[32] = "";
   Mode::ID lastRenderedMode      = Mode::ID::SPEED;
+  bool     lastIsGnssFixed       = false;
   bool     firstRender           = true;
 
 public:
-  void render(ContextT &ctx, const Trip &trip, const Clock &clock, Mode::ID modeId) {
+  void render(ContextT &ctx, const Trip &trip, const Clock &clock, Mode::ID modeId, bool isGnssFixed) {
     char currentBuf[32];
     getDisplayValue(trip, clock, modeId, currentBuf, sizeof(currentBuf));
-    if (!firstRender && modeId == lastRenderedMode && strcmp(currentBuf, lastRenderedValue) == 0) return;
+    if (!firstRender && modeId == lastRenderedMode && isGnssFixed == lastIsGnssFixed && strcmp(currentBuf, lastRenderedValue) == 0) return;
 
     // Update Cache
     firstRender      = false;
     lastRenderedMode = modeId;
+    lastIsGnssFixed  = isGnssFixed;
     strcpy(lastRenderedValue, currentBuf);
 
     ctx.clear();
-    drawHeader(ctx);
+    drawHeader(ctx, isGnssFixed);
     Metadata meta = getMetadata(modeId);
     drawMainArea(ctx, meta.title, currentBuf, meta.unit);
     drawFooter(ctx);
@@ -96,11 +98,15 @@ private:
   static constexpr int16_t FOOTER_HEIGHT = 12;
 
   // Taken from OLED.h
-  void drawHeader(ContextT &ctx) {
+  void drawHeader(ContextT &ctx, bool isGnssFixed) {
     ctx.setTextSize(1);
     ctx.setTextColor(1); // WHITE
     ctx.setCursor(0, 0);
-    ctx.print("GNSS ON");
+    if (isGnssFixed) {
+      ctx.print("GNSS ON");
+    } else {
+      ctx.print("WAITING...");
+    }
 
     int16_t lineY = HEADER_HEIGHT - 2;
     ctx.drawLine(0, lineY, ctx.getWidth(), lineY, 1); // WHITE

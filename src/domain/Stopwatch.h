@@ -1,33 +1,32 @@
 #pragma once
 
-#include <Arduino.h>
+// #include <Arduino.h>
 #include <GNSS.h>
 
 class Stopwatch {
-private:
-  unsigned long movingTimeMs;
-  unsigned long startTimeMs;
-  unsigned long elapsedTimeMs; // Added to track elapsed time directly
-
 public:
-  Stopwatch() : movingTimeMs(0), startTimeMs(0), elapsedTimeMs(0) {} // Initialize new member
-
   void update(bool isMoving, unsigned long dt) {
-    if (isMoving) { movingTimeMs += dt; }
-    elapsedTimeMs += dt; // Update elapsed time
+    if (isMoving) { duration.movingTimeMs += dt; }
+    duration.totalTimeMs += dt;
   }
 
   void reset() {
-    movingTimeMs = 0;
-    startTimeMs  = millis();
+    duration = {};
   }
 
   unsigned long getMovingTimeMs() const {
-    return movingTimeMs;
+    return duration.movingTimeMs;
   }
 
   unsigned long getElapsedTimeMs() const {
-    if (startTimeMs == 0) return 0;
-    return millis() - startTimeMs;
+    return duration.totalTimeMs;
   }
+
+private:
+  struct Duration {
+    unsigned long movingTimeMs = 0;
+    unsigned long totalTimeMs  = 0;
+  };
+
+  Duration duration;
 };
