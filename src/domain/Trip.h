@@ -6,21 +6,6 @@
 
 #include <GNSS.h>
 
-/**
- * @brief Manage trip related data (Speed, Distance, Time).
- *
- * Design Decision:
- * 1. Data Distribution:
- *    Trip class acts as a "Distributor" of the SpNavData. It extracts refined values
- *    (e.g. speed in km/h, distance delta) from the huge SpNavData structure and
- *    passes them to the child components (Speedometer, Odometer, Stopwatch).
- *    This prevents child components from depending on the hardware-specific SpNavData.
- *
- * 2. Public Members:
- *    Member objects (speedometer, odometer, stopwatch) are public to avoid redundant
- *    pass-through getters and to keep the class simple as a data holder.
- *    Access them directly like `trip.speedometer.get()`.
- */
 class Trip {
 public:
   Speedometer speedometer;
@@ -54,9 +39,6 @@ public:
     speedometer.update(speedKmh);
 
     if (isMoving) {
-      // Calculate distance increment based on speed and time
-      // m/s * ms / 1000 = meters; / 1000 = km
-      // (navData.velocity * dt) / 1000000.0f
       float distanceDeltaKm = (navData.velocity * dt) / 1000000.0f;
       odometer.update(distanceDeltaKm);
     } else {

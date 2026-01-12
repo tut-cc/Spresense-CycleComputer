@@ -1,13 +1,5 @@
 #pragma once
 
-/**
- * @brief Logic for tracking current and maximum speed.
- *
- * Design Decision:
- * - Pure Logic: This class accepts simple `float` values (speed in km/h) instead of
- *   the raw `SpNavData` structure. This makes the class testable without hardware
- *   dependencies and reusable in other contexts.
- */
 class Speedometer {
 public:
   void update(float currentKmh) {
