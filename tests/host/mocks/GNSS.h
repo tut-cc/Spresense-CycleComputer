@@ -5,7 +5,9 @@
 // Mock constants
 #define GPS 0
 #define GLONASS 2
+#define GALILEO 3
 #define QZ_L1CA 1
+#define QZ_L1S 4
 #define COLD_START 0
 #define HOT_START 1
 

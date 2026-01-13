@@ -30,47 +30,50 @@ public:
     }
 
     snprintf(frame.satelliteCount, sizeof(frame.satelliteCount), "St:%d", numSatellites);
+
+    Clock::Time t = clock.getTime();
+    Formatter::formatTime(t.hour, t.minute, frame.footerTime, sizeof(frame.footerTime));
   }
 
 private:
   void getModeData(Frame &frame, const Trip &trip, const Clock &clock, Mode::ID modeId) {
     switch (modeId) {
     case Mode::ID::SPEED:
-      strcpy(frame.title, "SPEED");
       Formatter::formatSpeed(trip.speedometer.get(), frame.value, sizeof(frame.value));
       strcpy(frame.unit, "km/h");
+      strcpy(frame.footerMode, "SPEED");
       break;
     case Mode::ID::MAX_SPEED:
-      strcpy(frame.title, "MAX SPEED");
       Formatter::formatSpeed(trip.speedometer.getMax(), frame.value, sizeof(frame.value));
       strcpy(frame.unit, "km/h");
+      strcpy(frame.footerMode, "MAX SPEED");
       break;
     case Mode::ID::AVG_SPEED:
-      strcpy(frame.title, "AVG SPEED");
       Formatter::formatSpeed(trip.getAvgSpeedKmh(), frame.value, sizeof(frame.value));
       strcpy(frame.unit, "km/h");
+      strcpy(frame.footerMode, "AVG SPEED");
       break;
     case Mode::ID::DISTANCE:
-      strcpy(frame.title, "DISTANCE");
       Formatter::formatDistance(trip.odometer.getDistance(), frame.value, sizeof(frame.value));
       strcpy(frame.unit, "km");
+      strcpy(frame.footerMode, "DISTANCE");
       break;
     case Mode::ID::TIME: {
-      strcpy(frame.title, "TIME");
       Clock::Time t = clock.getTime();
       Formatter::formatTime(t.hour, t.minute, frame.value, sizeof(frame.value));
       frame.unit[0] = '\0';
+      strcpy(frame.footerMode, "TIME");
       break;
     }
     case Mode::ID::MOVING_TIME:
-      strcpy(frame.title, "TRIP TIME");
       Formatter::formatDuration(trip.stopwatch.getMovingTimeMs(), frame.value, sizeof(frame.value));
       frame.unit[0] = '\0';
+      strcpy(frame.footerMode, "TRIP TIME");
       break;
     case Mode::ID::ELAPSED_TIME:
-      strcpy(frame.title, "ELAPSED TIME");
       Formatter::formatDuration(trip.stopwatch.getElapsedTimeMs(), frame.value, sizeof(frame.value));
       frame.unit[0] = '\0';
+      strcpy(frame.footerMode, "ELAPSED TIME");
       break;
     }
   }
