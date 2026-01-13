@@ -3,10 +3,6 @@
 #include "../hardware/Button.h"
 
 class Input {
-private:
-  Button &btnA;
-  Button &btnB;
-
 public:
   enum class ID {
     NONE,
@@ -15,6 +11,11 @@ public:
     BTN_BOTH,
   };
 
+private:
+  Button &btnA;
+  Button &btnB;
+
+public:
   Input(Button &buttonA, Button &buttonB) : btnA(buttonA), btnB(buttonB) {}
   virtual ~Input() {}
 

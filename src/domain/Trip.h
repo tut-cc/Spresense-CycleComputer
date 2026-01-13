@@ -1,11 +1,10 @@
 #pragma once
 
+#include <GNSS.h>
+
 #include "Odometer.h"
 #include "Speedometer.h"
 #include "Stopwatch.h"
-
-#include <Arduino.h>
-#include <GNSS.h>
 
 class Trip {
 public:

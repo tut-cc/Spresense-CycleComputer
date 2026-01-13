@@ -15,6 +15,9 @@ public:
   virtual ~Button() {}
   Button(int pin) : pinNumber(pin) {}
 
+  Button(const Button &)            = delete;
+  Button &operator=(const Button &) = delete;
+
   virtual void begin() {
     pinMode(pinNumber, INPUT_PULLUP);
     stablePinLevel   = digitalRead(pinNumber);

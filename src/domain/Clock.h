@@ -10,6 +10,13 @@ public:
     int second = 0;
   };
 
+private:
+  Time time;
+  int  year = 0;
+  int  timeOffset;
+  int  validYearStart;
+
+public:
   Clock(int timeOffset = 9, int validYearStart = 2025) : timeOffset(timeOffset), validYearStart(validYearStart) {}
 
   void update(const SpNavData &navData) {
@@ -23,10 +30,4 @@ public:
     if (year < validYearStart) return Time();
     return time;
   }
-
-private:
-  Time time;
-  int  year = 0;
-  int  timeOffset;
-  int  validYearStart;
 };

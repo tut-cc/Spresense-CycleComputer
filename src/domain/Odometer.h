@@ -7,6 +7,16 @@
 #endif
 
 class Odometer {
+private:
+  struct Distance {
+    float totalKm = 0.0f;
+  };
+
+  Distance distance;
+  bool     initialized = false;
+  double   lastLat     = 0.0;
+  double   lastLon     = 0.0;
+
 public:
   void update(double lat, double lon, bool accumulate) {
     if (!initialized) {
@@ -37,15 +47,6 @@ public:
   }
 
 private:
-  struct Distance {
-    float totalKm = 0.0f;
-  };
-
-  Distance distance;
-  bool     initialized = false;
-  double   lastLat     = 0.0;
-  double   lastLon     = 0.0;
-
   double toRadians(double degrees) {
     return degrees * PI / 180.0;
   }

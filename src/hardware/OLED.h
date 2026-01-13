@@ -14,6 +14,9 @@ public:
   virtual ~OLED() {}
   OLED() : ssd1306(Config::OLED::WIDTH, Config::OLED::HEIGHT, &Wire, -1) {}
 
+  OLED(const OLED &)            = delete;
+  OLED &operator=(const OLED &) = delete;
+
   virtual void begin() {
     if (!ssd1306.begin(SSD1306_SWITCHCAPVCC, Config::OLED::ADDRESS))
       for (;;);
