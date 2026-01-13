@@ -19,7 +19,6 @@ output/
 *.gcov
 
 # Metadata/Generated
-compile_commands.json
 generate_compdb.sh
 .cache/
 

@@ -12,17 +12,26 @@ jobs:
       - name: Setup Arduino CLI
         uses: arduino/setup-arduino-cli@v1
 
-      - name: Configure CMake
+      # ------------------------------------------------------------------------
+      # Host Unit Tests
+      # ------------------------------------------------------------------------
+      - name: Configure CMake (Host Tests)
+        run: cmake -S tests/host -B tests/host/build
+
+      - name: Build Tests
+        run: cmake --build tests/host/build
+
+      - name: Run Tests
+        run: ./tests/host/build/run_tests
+
+      # ------------------------------------------------------------------------
+      # Spresense Build
+      # ------------------------------------------------------------------------
+      - name: Configure CMake (Spresense)
         run: cmake -S . -B build
 
       - name: Setup Environment
         run: cmake --build build --target setup
-
-      - name: Build Tests
-        run: cmake --build build --target run_tests
-
-      - name: Run Tests
-        run: ./build/tests/host/run_tests
 
       - name: Compile Sketch
         run: cmake --build build --target spresense
