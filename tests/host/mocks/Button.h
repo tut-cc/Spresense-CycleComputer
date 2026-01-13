@@ -4,7 +4,6 @@
 
 #include "../Config.h"
 
-
 class Button {
 private:
   const int     pinNumber;
@@ -53,4 +52,3 @@ private:
     return (millis() - lastDebounceTime) > Config::DEBOUNCE_DELAY;
   }
 };
-

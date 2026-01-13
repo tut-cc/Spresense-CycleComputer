@@ -33,9 +33,4 @@ public:
   virtual const SpNavData &getNavData() const {
     return navData;
   }
-
-  virtual bool isFixed() const {
-    // 0: No fix, 1: 2D fix, 2: 3D fix
-    return navData.posFixMode >= 1;
-  }
 };

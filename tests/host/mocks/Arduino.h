@@ -11,7 +11,6 @@
 #include <iostream>
 
 // Mock basic types
-// Mock basic types
 using std::abs;
 using std::max;
 using std::min;
@@ -42,8 +41,6 @@ inline unsigned long micros() {
 inline void delay(unsigned long ms) {
   _mock_millis += ms;
 }
-
-// Pin mocks
 
 // Pin mocks
 #define PIN_D00 0

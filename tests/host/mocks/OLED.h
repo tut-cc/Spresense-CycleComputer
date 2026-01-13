@@ -7,7 +7,6 @@
 
 #include "../Config.h"
 
-
 class OLED {
 private:
   Adafruit_SSD1306 ssd1306;
@@ -76,4 +75,3 @@ public:
     return Config::OLED::HEIGHT;
   }
 };
-

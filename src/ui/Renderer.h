@@ -7,6 +7,7 @@
 #include "../domain/Trip.h"
 #include "Formatter.h"
 #include "Mode.h"
+#include <GNSS.h>
 
 template <typename ContextT> class Renderer {
 private:
@@ -15,27 +16,42 @@ private:
     const char *unit;
   };
 
-  char     lastRenderedValue[32] = "";
-  Mode::ID lastRenderedMode      = Mode::ID::SPEED;
-  bool     lastIsGnssFixed       = false;
-  bool     firstRender           = true;
+  struct Frame {
+    Mode::ID  modeId;
+    SpFixMode fixMode;
+    int       numSatellites;
+    char      value[32];
+
+    bool operator==(const Frame &other) const {
+      return modeId == other.modeId && fixMode == other.fixMode && numSatellites == other.numSatellites && strcmp(value, other.value) == 0;
+    }
+  };
+
+  Frame lastFrame;
+  bool  firstRender = true;
+
+  // Layout Constants
+  static constexpr int16_t HEADER_HEIGHT = 12;
+  static constexpr int16_t FOOTER_HEIGHT = 12;
 
 public:
-  void render(ContextT &ctx, const Trip &trip, const Clock &clock, Mode::ID modeId, bool isGnssFixed) {
-    char currentBuf[32];
-    getDisplayValue(trip, clock, modeId, currentBuf, sizeof(currentBuf));
-    if (!firstRender && modeId == lastRenderedMode && isGnssFixed == lastIsGnssFixed && strcmp(currentBuf, lastRenderedValue) == 0) return;
+  void render(ContextT &ctx, const Trip &trip, const Clock &clock, Mode::ID modeId, SpFixMode fixMode, int numSatellites) {
+    Frame currentFrame;
+    currentFrame.modeId        = modeId;
+    currentFrame.fixMode       = fixMode;
+    currentFrame.numSatellites = numSatellites;
+    getDisplayValue(trip, clock, modeId, currentFrame.value, sizeof(currentFrame.value));
+
+    if (!firstRender && currentFrame == lastFrame) return;
 
     // Update Cache
-    firstRender      = false;
-    lastRenderedMode = modeId;
-    lastIsGnssFixed  = isGnssFixed;
-    strcpy(lastRenderedValue, currentBuf);
+    firstRender = false;
+    lastFrame   = currentFrame;
 
     ctx.clear();
-    drawHeader(ctx, isGnssFixed);
-    Metadata meta = getMetadata(modeId);
-    drawMainArea(ctx, meta.title, currentBuf, meta.unit);
+    drawHeader(ctx, currentFrame.fixMode, currentFrame.numSatellites);
+    Metadata meta = getMetadata(currentFrame.modeId);
+    drawMainArea(ctx, meta.title, currentFrame.value, meta.unit);
     drawFooter(ctx);
     ctx.display();
   }
@@ -66,9 +82,6 @@ private:
     case Mode::ID::ELAPSED_TIME:
       Formatter::formatDuration(trip.stopwatch.getElapsedTimeMs(), buf, size);
       return;
-    default:
-      buf[0] = '\0';
-      return;
     }
   }
 
@@ -93,23 +106,60 @@ private:
     }
   }
 
-  // Layout Constants
-  static constexpr int16_t HEADER_HEIGHT = 12;
-  static constexpr int16_t FOOTER_HEIGHT = 12;
-
-  // Taken from OLED.h
-  void drawHeader(ContextT &ctx, bool isGnssFixed) {
+  void drawHeader(ContextT &ctx, SpFixMode fixMode, int numSatellites) {
     ctx.setTextSize(1);
     ctx.setTextColor(1); // WHITE
     ctx.setCursor(0, 0);
-    if (isGnssFixed) {
-      ctx.print("GNSS ON");
-    } else {
-      ctx.print("WAITING...");
+    switch (fixMode) {
+    case FixInvalid:
+      ctx.print("WAIT");
+      break;
+    case Fix2D:
+      ctx.print("2D");
+      break;
+    case Fix3D:
+      ctx.print("3D");
+      break;
     }
+
+    // Right-aligned satellite count
+    char satBuf[8];
+    snprintf(satBuf, sizeof(satBuf), "St:%d", numSatellites);
+    int16_t  x1, y1;
+    uint16_t w, h;
+    ctx.getTextBounds(satBuf, 0, 0, &x1, &y1, &w, &h);
+    ctx.setCursor(ctx.getWidth() - w, 0);
+    ctx.print(satBuf);
 
     int16_t lineY = HEADER_HEIGHT - 2;
     ctx.drawLine(0, lineY, ctx.getWidth(), lineY, 1); // WHITE
+  }
+
+  void drawMainArea(ContextT &ctx, const char *title, const char *value, const char *unit) {
+    int16_t contentTop = HEADER_HEIGHT;
+    int16_t contentY   = ctx.getHeight() - FOOTER_HEIGHT;
+
+    // Title (Top Left of Main Area)
+    ctx.setTextSize(1);
+    ctx.setCursor(0, contentTop + 2);
+    ctx.print(title);
+
+    // Value (Large, Centered in remaining space)
+    ctx.setTextSize(2);
+    int16_t  x1, y1;
+    uint16_t w, h;
+    ctx.getTextBounds(value, 0, 0, &x1, &y1, &w, &h);
+    int16_t valueY = (contentY + contentTop - h) / 2;
+    ctx.setCursor((ctx.getWidth() - w) / 2, valueY);
+    ctx.print(value);
+
+    // Unit (Bottom Right of Main Area)
+    if (strlen(unit) != 0) {
+      ctx.setTextSize(1);
+      ctx.getTextBounds(unit, 0, 0, &x1, &y1, &w, &h);
+      ctx.setCursor(ctx.getWidth() - w, contentY - h - 2);
+      ctx.print(unit);
+    }
   }
 
   void drawFooter(ContextT &ctx) {
@@ -117,42 +167,9 @@ private:
     ctx.drawLine(0, lineY, ctx.getWidth(), lineY, 1); // WHITE
 
     ctx.setTextSize(1);
-    // Align text vertically in footer
     int16_t textH = 8; // Approx height for size 1
     int16_t textY = lineY + (FOOTER_HEIGHT - textH) / 2 + 1;
     ctx.setCursor(0, textY);
     ctx.print("Ready"); // Placeholder for status
-  }
-
-  void drawMainArea(ContextT &ctx, const char *title, const char *value, const char *unit) {
-    int16_t contentTop = HEADER_HEIGHT;
-    int16_t contentY   = ctx.getHeight() - FOOTER_HEIGHT;
-
-    // Title (Top Left of Content Area)
-    ctx.setTextSize(1);
-    ctx.setCursor(0, contentTop + 2);
-    ctx.print(title);
-
-    // Value (Large, Centered in remaining space)
-    ctx.setTextSize(2); // Make value bigger
-    int16_t  x1, y1;
-    uint16_t w, h;
-    ctx.getTextBounds(value, 0, 0, &x1, &y1, &w, &h);
-
-    // Vertically center value in the content area
-    // (contentY + contentTop) / 2 yields the visual center y
-    // Subtract h/2 to place the top-left corner of the text
-    int16_t valueY = (contentY + contentTop - h) / 2;
-
-    ctx.setCursor((ctx.getWidth() - w) / 2, valueY);
-    ctx.print(value);
-
-    if (strlen(unit) == 0) return;
-
-    // Unit (Bottom Right of Content Area)
-    ctx.setTextSize(1);
-    ctx.getTextBounds(unit, 0, 0, &x1, &y1, &w, &h);
-    ctx.setCursor(ctx.getWidth() - w, contentY - h - 2);
-    ctx.print(unit);
   }
 };

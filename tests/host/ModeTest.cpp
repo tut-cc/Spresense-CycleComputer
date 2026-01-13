@@ -11,14 +11,6 @@ TEST_F(ModeTest, InitialModeIsSpeed) {
 }
 
 TEST_F(ModeTest, CycleThroughModes) {
-  // Sequence per description or previous implementation:
-  // Initial -> SPEED
-  // next() -> DISTANCE
-  // next() -> TIME
-  // next() -> SPEED
-
-  // Sequence: SPEED -> MAX_SPEED -> AVG_SPEED -> TIME -> MOVING_TIME -> ELAPSED_TIME -> DISTANCE -> SPEED
-
   mode.next();
   EXPECT_EQ(mode.get(), Mode::ID::MAX_SPEED);
 

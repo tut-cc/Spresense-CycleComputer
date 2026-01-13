@@ -35,7 +35,7 @@ public:
     const auto &navData = gnss.getNavData();
     trip.update(navData, millis());
     clock.update(navData);
-    renderer.render(display, trip, clock, mode.get(), gnss.isFixed());
+    renderer.render(display, trip, clock, mode.get(), (SpFixMode)navData.posFixMode, navData.numSatellites);
   }
 
 private:
