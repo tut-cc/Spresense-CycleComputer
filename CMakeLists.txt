@@ -25,7 +25,7 @@ endif()
 
 set(ARDUINO_CLI "arduino-cli" CACHE STRING "Path to arduino-cli executable")
 set(SPRESENSE_FQBN "SPRESENSE:spresense:spresense" CACHE STRING "FQBN for Spresense")
-set(PORT "/dev/ttyACM0" CACHE STRING "Serial port for upload")
+set(PORT "/dev/ttyUSB0" CACHE STRING "Serial port for upload")
 set(SKETCH "." CACHE STRING "Path to sketch directory")
 
 if(NOT DEFINED FQBN)

@@ -14,7 +14,6 @@ Input  input(btnA, btnB);
 App    app(oled, gnss, input);
 
 void setup() {
-  Serial.begin(115200);
   LowPower.begin();
   LowPower.clockMode(CLOCK_MODE_32MHz);
   app.begin();
