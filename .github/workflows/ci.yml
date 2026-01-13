@@ -3,9 +3,8 @@ name: Arduino Build
 on: [push]
 
 jobs:
-  build:
+  ci:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -13,33 +12,17 @@ jobs:
       - name: Setup Arduino CLI
         uses: arduino/setup-arduino-cli@v1
 
-      - name: Install Spresense Core
-        run: |
-          arduino-cli core update-index --additional-urls https://github.com/sonydevworld/spresense-arduino-compatible/releases/download/generic/package_spresense_index.json
-          arduino-cli core install Spresense:spresense --additional-urls https://github.com/sonydevworld/spresense-arduino-compatible/releases/download/generic/package_spresense_index.json
-
-      - name: Install Libraries
-        run: |
-          arduino-cli lib install LiquidCrystal
-          arduino-cli lib install "LiquidCrystal I2C"
-          arduino-cli lib install "Adafruit GFX Library"
-          arduino-cli lib install "Adafruit SSD1306"
-          arduino-cli lib install "Adafruit BusIO"
-
-      - name: Compile Sketch
-        run: arduino-cli compile --fqbn SPRESENSE:spresense:spresense . --additional-urls https://github.com/sonydevworld/spresense-arduino-compatible/releases/download/generic/package_spresense_index.json --warnings all
-
-  test-host:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
       - name: Configure CMake
         run: cmake -S . -B build
+
+      - name: Setup Environment
+        run: cmake --build build --target setup
 
       - name: Build Tests
         run: cmake --build build --target run_tests
 
       - name: Run Tests
         run: ./build/tests/host/run_tests
+
+      - name: Compile Sketch
+        run: cmake --build build --target spresense
