@@ -141,7 +141,6 @@ TEST_F(AppTest, DisplayGPSSpeed) {
   mockGnss.setSpeed(testSpeed);
 
   EXPECT_CALL(mockDisplay, print(_)).Times(AnyNumber());
-
   EXPECT_CALL(mockDisplay, print(testing::HasSubstr("36.0"))).Times(AtLeast(1));
   EXPECT_CALL(mockDisplay, display()).Times(AtLeast(1));
 
@@ -195,7 +194,6 @@ TEST_F(AppTest, ResetData) {
 
   EXPECT_CALL(*mockBtnA, isPressed()).WillOnce(Return(true)).RetiresOnSaturation();
   EXPECT_CALL(*mockBtnB, isHeld()).WillOnce(Return(true)).RetiresOnSaturation();
-
   EXPECT_CALL(mockDisplay, print(testing::HasSubstr("0.0"))).Times(AtLeast(1));
 
   app->update();
