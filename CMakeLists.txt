@@ -34,7 +34,7 @@ add_custom_target(spresense
 )
 
 add_custom_target(upload
-    COMMAND ${ARDUINO_CLI} upload -p ${PORT} --fqbn ${FQBN} ${SKETCH}
+    COMMAND ${ARDUINO_CLI} upload -p ${PORT} --fqbn ${FQBN} --input-dir ${SPRESENSE_BUILD_PATH} ${SKETCH}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "Uploading to ${PORT} for ${FQBN}..."
 )

@@ -20,6 +20,7 @@ public:
   virtual bool begin() {
     if (gnss.begin() != 0) return false;
     gnss.select(GPS);
+    gnss.select(GLONASS);
     gnss.select(QZ_L1CA);
     if (gnss.start(COLD_START) != 0) return false;
     return true;

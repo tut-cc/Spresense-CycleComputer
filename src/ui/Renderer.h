@@ -78,11 +78,5 @@ private:
   void drawFooter(ScreenT &screen) {
     int16_t lineY = screen.getHeight() - FOOTER_HEIGHT;
     screen.drawLine(0, lineY, screen.getWidth(), lineY, 1); // WHITE
-
-    screen.setTextSize(1);
-    int16_t textH = 8; // Approx height for size 1
-    int16_t textY = lineY + (FOOTER_HEIGHT - textH) / 2 + 1;
-    screen.setCursor(0, textY);
-    screen.print("Ready"); // Placeholder for status
   }
 };
