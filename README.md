@@ -51,6 +51,7 @@ Arduino IDE を使って `Spresense-CycleComputer.ino` を開き、ビルド・�
 本プロジェクトには GoogleTest を使用したPC上で動作する Unit Test が含まれている。
 
 ```bash
-cmake --build build --target run_tests # テストのビルド
-./build/tests/host/run_tests # テストの実行
+cmake -S tests/host -B tests/host/build # テストのビルド設定
+cmake --build tests/host/build          # テストのビルド
+./tests/host/build/run_tests            # テストの実行
 ```
