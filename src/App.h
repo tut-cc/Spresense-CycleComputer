@@ -4,6 +4,8 @@
 #include "domain/Trip.h"
 #include "hardware/Gnss.h"
 #include "hardware/OLED.h"
+#include "ui/Frame.h"
+#include "ui/FrameBuilder.h"
 #include "ui/Input.h"
 #include "ui/Mode.h"
 #include "ui/Renderer.h"
@@ -16,6 +18,7 @@ private:
   Mode           mode;
   Trip           trip;
   Clock          clock;
+  FrameBuilder   frameBuilder;
   Renderer<OLED> renderer;
 
 public:
@@ -35,7 +38,10 @@ public:
     const auto &navData = gnss.getNavData();
     trip.update(navData, millis());
     clock.update(navData);
-    renderer.render(display, trip, clock, mode.get(), (SpFixMode)navData.posFixMode, navData.numSatellites);
+
+    Frame frame;
+    frameBuilder.build(frame, trip, clock, mode.get(), (SpFixMode)navData.posFixMode, navData.numSatellites);
+    renderer.render(display, frame);
   }
 
 private:
