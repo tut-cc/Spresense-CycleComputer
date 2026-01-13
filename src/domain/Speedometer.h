@@ -10,7 +10,7 @@ private:
   Speed speed;
 
 public:
-  void update(float currentKmh) {
+  void update(const float currentKmh) {
     speed.currentKmh = currentKmh;
     if (speed.currentKmh > speed.maxKmh) speed.maxKmh = speed.currentKmh;
   }

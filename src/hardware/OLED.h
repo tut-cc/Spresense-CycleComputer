@@ -20,6 +20,8 @@ public:
   virtual void begin() {
     if (!ssd1306.begin(SSD1306_SWITCHCAPVCC, Config::OLED::ADDRESS))
       for (;;);
+    ssd1306.clearDisplay();
+    ssd1306.display();
   }
 
   virtual void clear() {

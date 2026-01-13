@@ -17,10 +17,10 @@ public:
   }
 
   static void formatDuration(unsigned long millis, char *buffer, size_t size) {
-    unsigned long seconds = millis / 1000;
-    unsigned long h       = seconds / 3600;
-    unsigned long m       = (seconds % 3600) / 60;
-    unsigned long s       = seconds % 60;
+    const unsigned long seconds = millis / 1000;
+    const unsigned long h       = seconds / 3600;
+    const unsigned long m       = (seconds % 3600) / 60;
+    const unsigned long s       = seconds % 60;
 
     if (h > 0) snprintf(buffer, size, "%lu:%02lu:%02lu", h, m, s);
     else snprintf(buffer, size, "%02lu:%02lu", m, s);

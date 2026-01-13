@@ -23,9 +23,9 @@ public:
     reset();
   }
 
-  void update(const SpNavData &navData, unsigned long currentMillis) {
-    float speedKmh = navData.velocity * 3.6f;
-    bool  isMoving = (speedKmh > 2.0f);
+  void update(const SpNavData &navData, const unsigned long currentMillis) {
+    const float speedKmh = navData.velocity * 3.6f;
+    const bool  isMoving = (speedKmh > 0.01f);
 
     if (!initialized) {
       lastUpdateTime = currentMillis;
@@ -33,8 +33,8 @@ public:
       return;
     }
 
-    unsigned long dt = currentMillis - lastUpdateTime;
-    lastUpdateTime   = currentMillis;
+    const unsigned long dt = currentMillis - lastUpdateTime;
+    lastUpdateTime         = currentMillis;
 
     speedometer.update(speedKmh);
     stopwatch.update(isMoving, dt);
@@ -50,8 +50,8 @@ public:
   }
 
   float getAvgSpeedKmh() const {
-    unsigned long movingTimeMs = stopwatch.getMovingTimeMs();
+    const unsigned long movingTimeMs = stopwatch.getMovingTimeMs();
     if (movingTimeMs == 0) return 0.0f;
-    return (odometer.getDistance() / (movingTimeMs / 3600000.0f));
+    return odometer.getDistance() * 3600000.0f / movingTimeMs;
   }
 };

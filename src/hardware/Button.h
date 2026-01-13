@@ -26,8 +26,8 @@ public:
   }
 
   virtual bool isPressed() {
-    bool rawPinLevel = digitalRead(pinNumber);
-    bool pressed     = false;
+    const bool rawPinLevel = digitalRead(pinNumber);
+    bool       pressed     = false;
 
     if (rawPinLevel != lastPinLevel) resetDebounceTimer();
 

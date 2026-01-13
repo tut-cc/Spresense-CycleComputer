@@ -25,8 +25,8 @@ public:
   }
 
   virtual ID update() {
-    bool aPressed = btnA.isPressed();
-    bool bPressed = btnB.isPressed();
+    const bool aPressed = btnA.isPressed();
+    const bool bPressed = btnB.isPressed();
 
     if ((aPressed && btnB.isHeld()) || (bPressed && btnA.isHeld())) return ID::BTN_BOTH;
     if (aPressed) return ID::BTN_A;

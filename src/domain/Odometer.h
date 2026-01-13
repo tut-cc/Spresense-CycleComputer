@@ -14,11 +14,13 @@ private:
 
   Distance distance;
   bool     initialized = false;
-  double   lastLat     = 0.0;
-  double   lastLon     = 0.0;
+  float    lastLat     = 0.0f;
+  float    lastLon     = 0.0f;
 
 public:
-  void update(double lat, double lon, bool accumulate) {
+  void update(const float lat, const float lon, const bool accumulate) {
+    if (std::abs(lat) < 1e-6 && std::abs(lon) < 1e-6) return;
+
     if (!initialized) {
       lastLat     = lat;
       lastLon     = lon;
@@ -27,8 +29,8 @@ public:
     }
 
     if (accumulate) {
-      float distanceDeltaKm = calculateDistanceKm(lastLat, lastLon, lat, lon);
-      distance.totalKm += distanceDeltaKm;
+      const float distanceDeltaKm = calculateDistanceKm(lastLat, lastLon, lat, lon);
+      if (distanceDeltaKm < 1.0f) distance.totalKm += distanceDeltaKm;
     }
 
     lastLat = lat;
@@ -38,8 +40,8 @@ public:
   void reset() {
     distance    = {};
     initialized = false;
-    lastLat     = 0.0;
-    lastLon     = 0.0;
+    lastLat     = 0.0f;
+    lastLon     = 0.0f;
   }
 
   float getDistance() const {
@@ -47,17 +49,21 @@ public:
   }
 
 private:
-  double toRadians(double degrees) {
-    return degrees * PI / 180.0;
+  float toRadians(const float degrees) const {
+    return degrees * PI / 180.0f;
   }
 
-  float calculateDistanceKm(double lat1, double lon1, double lat2, double lon2) {
-    double R    = 6371.0; // Earth radius in km
-    double dLat = toRadians(lat2 - lat1);
-    double dLon = toRadians(lon2 - lon1);
-    double a =
-        std::sin(dLat / 2) * std::sin(dLat / 2) + std::cos(toRadians(lat1)) * std::cos(toRadians(lat2)) * std::sin(dLon / 2) * std::sin(dLon / 2);
-    double c = 2 * std::atan2(std::sqrt(a), std::sqrt(1 - a));
-    return (float)(R * c);
+  // Haversine の公式
+  float calculateDistanceKm(const float lat1, const float lon1, const float lat2, const float lon2) const {
+    const float R       = 6371.0f; // 地球の半径 (km)
+    const float dLat    = toRadians(lat2 - lat1);
+    const float dLon    = toRadians(lon2 - lon1);
+    const float sinDLat = std::sin(dLat / 2.0f);
+    const float sinDLon = std::sin(dLon / 2.0f);
+    const float cosLat1 = std::cos(toRadians(lat1));
+    const float cosLat2 = std::cos(toRadians(lat2));
+    const float a       = sinDLat * sinDLat + cosLat1 * cosLat2 * sinDLon * sinDLon;
+    const float c       = 2.0f * std::atan2(std::sqrt(a), std::sqrt(1.0f - a));
+    return R * c;
   }
 };
