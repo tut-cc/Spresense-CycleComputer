@@ -57,6 +57,7 @@ add_custom_target(upload
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "Uploading to ${PORT} for ${FQBN}..."
 )
+add_dependencies(upload spresense)
 
 add_custom_target(clean_arduino_cache
     COMMAND ${ARDUINO_CLI} cache clean
@@ -72,6 +73,8 @@ add_custom_target(refresh
 
 add_custom_target(howto
     COMMAND ${CMAKE_COMMAND} -E echo "Custom Targets:"
+    COMMAND ${CMAKE_COMMAND} -E echo "  howto            - Display this help message"
+    COMMAND ${CMAKE_COMMAND} -E echo "  setup            - Install dependencies"
     COMMAND ${CMAKE_COMMAND} -E echo "  spresense        - Compile for Spresense"
     COMMAND ${CMAKE_COMMAND} -E echo "  upload           - Upload using current settings"
     COMMAND ${CMAKE_COMMAND} -E echo "  clean_arduino_cache - Clean arduino-cli cache"
