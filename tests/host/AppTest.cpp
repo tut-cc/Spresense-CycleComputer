@@ -58,7 +58,7 @@ public:
   }
 
   MOCK_METHOD(bool, begin, (), (override));
-  MOCK_METHOD(void, update, (), (override));
+  MOCK_METHOD(bool, update, (), (override));
 
   // We need to override getNavData to return our local 'data'
   // But strictly, hardware::Gnss::getNavData returns 'const SpNavData &' reference to its internal member.

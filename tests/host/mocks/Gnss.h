@@ -25,9 +25,10 @@ public:
     return true;
   }
 
-  virtual void update() {
-    if (!gnss.waitUpdate(0)) return;
+  virtual bool update() {
+    if (!gnss.waitUpdate(0)) return false;
     gnss.getNavData(&navData);
+    return true;
   }
 
   virtual const SpNavData &getNavData() const {
