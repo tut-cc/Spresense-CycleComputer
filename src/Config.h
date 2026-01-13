@@ -9,9 +9,9 @@ constexpr unsigned long DISPLAY_UPDATE_INTERVAL_MS = 100;
 
 namespace Pin {
 
-constexpr int BTN_A    = PIN_D00;
-constexpr int BTN_B    = PIN_D01;
-constexpr int WARN_LED = PIN_D02;
+constexpr int BTN_A    = PIN_D09;
+constexpr int BTN_B    = PIN_D04;
+constexpr int WARN_LED = PIN_D00;
 
 } // namespace Pin
 

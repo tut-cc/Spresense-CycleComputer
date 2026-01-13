@@ -4,7 +4,7 @@ ColumnLimit: 150
 AllowShortFunctionsOnASingleLine: Empty
 BreakBeforeBraces: Attach
 AllowShortBlocksOnASingleLine: Always
-AllowShortIfStatementsOnASingleLine: Always
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
 AllowShortLoopsOnASingleLine: true
 AlignConsecutiveAssignments: true
 AlignConsecutiveDeclarations: true

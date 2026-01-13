@@ -6,6 +6,8 @@
 #include "src/hardware/OLED.h"
 #include "src/ui/Input.h"
 
+#include <Arduino.h>
+
 OLED   oled;
 Gnss   gnss;
 Button btnA(Config::Pin::BTN_A);
@@ -14,6 +16,7 @@ Input  input(btnA, btnB);
 App    app(oled, gnss, input);
 
 void setup() {
+  Serial.begin(115200);
   LowPower.begin();
   LowPower.clockMode(CLOCK_MODE_32MHz);
   app.begin();

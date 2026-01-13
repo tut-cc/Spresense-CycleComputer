@@ -22,10 +22,7 @@ public:
     unsigned long m       = (seconds % 3600) / 60;
     unsigned long s       = seconds % 60;
 
-    if (h > 0) {
-      snprintf(buffer, size, "%lu:%02lu:%02lu", h, m, s);
-    } else {
-      snprintf(buffer, size, "%02lu:%02lu", m, s);
-    }
+    if (h > 0) snprintf(buffer, size, "%lu:%02lu:%02lu", h, m, s);
+    else snprintf(buffer, size, "%02lu:%02lu", m, s);
   }
 };

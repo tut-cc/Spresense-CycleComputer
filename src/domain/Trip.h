@@ -4,6 +4,7 @@
 #include "Speedometer.h"
 #include "Stopwatch.h"
 
+#include <Arduino.h>
 #include <GNSS.h>
 
 class Trip {
@@ -34,7 +35,8 @@ public:
     lastUpdateTime   = currentMillis;
 
     float speedKmh = navData.velocity * 3.6f;
-    bool  isMoving = (speedKmh > 2.0f);
+
+    bool isMoving = (speedKmh > 2.0f);
 
     speedometer.update(speedKmh);
 

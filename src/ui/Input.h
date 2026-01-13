@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../hardware/Button.h"
-#include "InputEvent.h"
 
 class Input {
 private:
@@ -9,6 +8,13 @@ private:
   Button &btnB;
 
 public:
+  enum class ID {
+    NONE,
+    BTN_A,
+    BTN_B,
+    BTN_BOTH,
+  };
+
   Input(Button &buttonA, Button &buttonB) : btnA(buttonA), btnB(buttonB) {}
   virtual ~Input() {}
 
@@ -17,14 +23,14 @@ public:
     btnB.begin();
   }
 
-  virtual InputEvent update() {
+  virtual ID update() {
     bool aPressed = btnA.isPressed();
     bool bPressed = btnB.isPressed();
 
-    if ((aPressed && btnB.isHeld()) || (bPressed && btnA.isHeld())) return InputEvent::BTN_BOTH;
-    if (aPressed) return InputEvent::BTN_A;
-    if (bPressed) return InputEvent::BTN_B;
+    if ((aPressed && btnB.isHeld()) || (bPressed && btnA.isHeld())) return ID::BTN_BOTH;
+    if (aPressed) return ID::BTN_A;
+    if (bPressed) return ID::BTN_B;
 
-    return InputEvent::NONE;
+    return ID::NONE;
   }
 };

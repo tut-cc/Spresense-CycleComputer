@@ -21,7 +21,6 @@ public:
     ssd1306.display();
   }
 
-  // GraphicsContext implementation
   virtual void clear() {
     ssd1306.clearDisplay();
   }

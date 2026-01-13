@@ -7,7 +7,6 @@
 #include "ui/Input.h"
 #include "ui/Mode.h"
 #include "ui/Renderer.h"
-#include <cstdio>
 
 class App {
 private:
@@ -20,11 +19,39 @@ private:
   Renderer<OLED> renderer;
 
 public:
-  App(OLED &displayData, Gnss &gnss, Input &inputModule);
+  App(OLED &displayData, Gnss &gnssData, Input &inputModule)
+      : display(displayData), input(inputModule), gnss(gnssData), clock(Config::Time::JST_OFFSET, 2025) {}
 
-  void begin();
-  void update();
+  void begin() {
+    display.begin();
+    input.begin();
+    gnss.begin();
+    trip.begin();
+  }
+
+  void update() {
+    handleInput();
+    gnss.update();
+    const auto &navData = gnss.getNavData();
+    trip.update(navData, millis());
+    clock.update(navData);
+    renderer.render(display, trip, clock, mode.get(), gnss.isFixed());
+  }
 
 private:
-  void handleInput();
+  void handleInput() {
+    switch (input.update()) {
+    case Input::ID::BTN_A:
+      mode.next();
+      return;
+    case Input::ID::BTN_B:
+      mode.prev();
+      return;
+    case Input::ID::BTN_BOTH:
+      trip.reset();
+      return;
+    case Input::ID::NONE:
+      return;
+    }
+  }
 };
