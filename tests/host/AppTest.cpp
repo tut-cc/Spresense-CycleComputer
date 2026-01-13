@@ -1,7 +1,7 @@
 #include "App.h"
 #include "Config.h"
 #include "ui/Input.h"
-#include "ui/InputEvent.h"
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 

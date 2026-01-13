@@ -1,7 +1,7 @@
 #include "ui/Input.h"
 #include "../mocks/Arduino.h"
 #include "hardware/Button.h"
-#include "ui/InputEvent.h"
+
 #include <gmock/gmock.h> // Required for NiceMock and ON_CALL
 #include <gtest/gtest.h>
 
@@ -58,42 +58,42 @@ void releaseButton(Input *im, NiceMock<MockButton> *btn) {
 }
 
 TEST_F(InputTest, InitialStateReturnsNone) {
-  EXPECT_EQ(input->update(), InputEvent::NONE);
+  EXPECT_EQ(input->update(), Input::ID::NONE);
 }
 
 TEST_F(InputTest, ButtonAPress) {
   pressButton(input, mockBtnA);
-  EXPECT_EQ(input->update(), InputEvent::BTN_A);
+  EXPECT_EQ(input->update(), Input::ID::BTN_A);
 
   releaseButton(input, mockBtnA);
   // Release usually returns NONE unless logic triggers on release.
   // Current logic triggers on PRESS (falling edge stabilization).
   // So release should return NONE.
-  EXPECT_EQ(input->update(), InputEvent::NONE);
+  EXPECT_EQ(input->update(), Input::ID::NONE);
 }
 
 TEST_F(InputTest, ButtonBPress) {
   pressButton(input, mockBtnB);
-  EXPECT_EQ(input->update(), InputEvent::BTN_B);
+  EXPECT_EQ(input->update(), Input::ID::BTN_B);
 
   releaseButton(input, mockBtnB);
-  EXPECT_EQ(input->update(), InputEvent::NONE);
+  EXPECT_EQ(input->update(), Input::ID::NONE);
 }
 
 TEST_F(InputTest, SimultaneousPress) {
   EXPECT_CALL(*mockBtnA, isPressed()).WillOnce(Return(true));
   EXPECT_CALL(*mockBtnB, isHeld()).WillOnce(Return(true));
-  EXPECT_EQ(input->update(), InputEvent::BTN_BOTH);
+  EXPECT_EQ(input->update(), Input::ID::BTN_BOTH);
 
   releaseButton(input, mockBtnA);
   releaseButton(input, mockBtnB);
-  EXPECT_EQ(input->update(), InputEvent::NONE);
+  EXPECT_EQ(input->update(), Input::ID::NONE);
 }
 
 TEST_F(InputTest, ButtonRelease) {
   pressButton(input, mockBtnA);
-  EXPECT_EQ(input->update(), InputEvent::BTN_A);
+  EXPECT_EQ(input->update(), Input::ID::BTN_A);
 
   releaseButton(input, mockBtnA);
-  EXPECT_EQ(input->update(), InputEvent::NONE);
+  EXPECT_EQ(input->update(), Input::ID::NONE);
 }

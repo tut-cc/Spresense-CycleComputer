@@ -16,10 +16,10 @@ FetchContent_MakeAvailable(googletest)
 set(TEST_SOURCES
     mocks/MockGlobals.cpp
     mocks/MockLibs.cpp
-    ../../src/App.cpp
     TripTest.cpp
     InputTest.cpp
     AppTest.cpp
+
     ModeTest.cpp
 )
 

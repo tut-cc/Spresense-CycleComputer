@@ -25,6 +25,9 @@ public:
   }
 
   void update(const SpNavData &navData, unsigned long currentMillis) {
+    float speedKmh = navData.velocity * 3.6f;
+    bool  isMoving = (speedKmh > 2.0f);
+
     if (!initialized) {
       lastUpdateTime = currentMillis;
       initialized    = true;
@@ -34,20 +37,9 @@ public:
     unsigned long dt = currentMillis - lastUpdateTime;
     lastUpdateTime   = currentMillis;
 
-    float speedKmh = navData.velocity * 3.6f;
-
-    bool isMoving = (speedKmh > 2.0f);
-
     speedometer.update(speedKmh);
-
-    if (isMoving) {
-      float distanceDeltaKm = (navData.velocity * dt) / 1000000.0f;
-      odometer.update(distanceDeltaKm);
-    } else {
-      odometer.update(0.0f);
-    }
-
     stopwatch.update(isMoving, dt);
+    odometer.update(navData.latitude, navData.longitude, isMoving);
   }
 
   void reset() {

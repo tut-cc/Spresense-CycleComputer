@@ -10,11 +10,13 @@ protected:
     trip.begin();
   }
 
-  SpNavData createNavData(float speedKmh) {
+  SpNavData createNavData(float speedKmh, double lat = 0.0, double lon = 0.0) {
     SpNavData data;
     data.velocity   = speedKmh / 3.6f;
     data.posFixMode = Fix3D;
     data.time       = {2021, 1, 1, 12, 0, 0, 0}; // Dummy time
+    data.latitude   = lat;
+    data.longitude  = lon;
     return data;
   }
 };
@@ -26,18 +28,17 @@ TEST_F(TripTest, InitialState) {
 }
 
 TEST_F(TripTest, CalculateDistance) {
-  // 36 km/h = 10 m/s = 0.01 km/s
-  // 1 hour = 3600000 ms
-  // 36 km/h for 1 hour -> 36 km
-
   unsigned long now = 1000;
-  trip.update(createNavData(0.0f), now); // Init start time
+  trip.update(createNavData(0.0f, 35.000000, 139.000000), now); // Init start time
 
   now += 3600000; // +1 hour
   float speed = 36.0f;
-  trip.update(createNavData(speed), now);
+  // Move approx 36km North
+  // 1 degree latitude ~= 111.32 km
+  // 36 km ~= 0.323392 degrees
+  trip.update(createNavData(speed, 35.323392, 139.000000), now);
 
-  EXPECT_NEAR(trip.odometer.getDistance(), 36.0f, 0.01f);
+  EXPECT_NEAR(trip.odometer.getDistance(), 36.0f, 0.1f);
 }
 
 TEST_F(TripTest, IgnoreLowSpeed) {
@@ -71,12 +72,14 @@ TEST_F(TripTest, MovingTimeCalculation) {
 
 TEST_F(TripTest, CalculateAvgSpeed) {
   unsigned long now = 1000;
-  trip.update(createNavData(0.0f), now);
+  trip.update(createNavData(0.0f, 35.0, 139.0), now);
 
-  now += 3600000;                         // 1 hour
-  trip.update(createNavData(60.0f), now); // 60 km/h for 1h -> 60km distance, 1h moving time
+  now += 3600000; // 1 hour
+  // 60 km North
+  // 60 / 111.32 = 0.538986
+  trip.update(createNavData(60.0f, 35.538986, 139.0), now);
 
-  EXPECT_NEAR(trip.getAvgSpeedKmh(), 60.0f, 0.1f);
+  EXPECT_NEAR(trip.getAvgSpeedKmh(), 60.0f, 0.5f);
 }
 
 TEST_F(TripTest, AvgSpeedWithNoMovement) {
@@ -85,10 +88,10 @@ TEST_F(TripTest, AvgSpeedWithNoMovement) {
 
 TEST_F(TripTest, Reset) {
   unsigned long now = 1000;
-  trip.update(createNavData(0.0f), now);
+  trip.update(createNavData(0.0f, 35.0, 139.0), now);
 
   now += 1000;
-  trip.update(createNavData(10.0f), now);
+  trip.update(createNavData(10.0f, 35.001, 139.0), now); // Small movement
 
   EXPECT_GT(trip.odometer.getDistance(), 0.0f);
   EXPECT_GT(trip.speedometer.getMax(), 0.0f);
