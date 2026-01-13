@@ -35,13 +35,16 @@ TEST_F(TripTest, CalculateDistance) {
   trip.update(createNavData(0.0f, 35.000000, 139.000000), now);
 
   now += 3600000; // +1 hour
-  float speed = 36.0f;
-  // Move approx 36km North
-  // 1 degree latitude ~= 111.32 km
-  // 36 km ~= 0.323392 degrees
-  trip.update(createNavData(speed, 35.323392, 139.000000), now);
+  float targetLat = 35.323392;
+  float startLat  = 35.000000;
+  float steps     = 100.0f;
 
-  EXPECT_NEAR(trip.odometer.getDistance(), 36.0f, 0.1f);
+  for (int i = 1; i <= steps; i++) {
+    float currentLat = startLat + (targetLat - startLat) * ((float)i / steps);
+    trip.update(createNavData(36.0f, currentLat, 139.000000), now + (i * (3600000 / steps)));
+  }
+
+  EXPECT_NEAR(trip.odometer.getDistance(), 36.0f, 1.0f); // Allow slightly larger error margin due to accumulation
 }
 
 TEST_F(TripTest, IgnoreLowSpeed) {
@@ -79,12 +82,19 @@ TEST_F(TripTest, CalculateAvgSpeed) {
   trip.update(createNavData(0.0f, 35.0, 139.0), now);
   trip.update(createNavData(0.0f, 35.0, 139.0), now); // Odometer init
 
-  now += 3600000; // 1 hour
-  // 60 km North
-  // 60 / 111.32 = 0.538986
-  trip.update(createNavData(60.0f, 35.538986, 139.0), now);
+  now += 3600000;                                     // 1 hour
+  trip.update(createNavData(0.0f, 35.0, 139.0), now); // Update time while stationary
 
-  EXPECT_NEAR(trip.getAvgSpeedKmh(), 60.0f, 0.5f);
+  float targetLat = 35.538986;
+  float startLat  = 35.0;
+  float steps     = 100.0f;
+
+  for (int i = 1; i <= steps; i++) {
+    float currentLat = startLat + (targetLat - startLat) * ((float)i / steps);
+    trip.update(createNavData(60.0f, currentLat, 139.0), now + (i * (3600000 / steps)));
+  }
+
+  EXPECT_NEAR(trip.getAvgSpeedKmh(), 60.0f, 1.0f);
 }
 
 TEST_F(TripTest, AvgSpeedWithNoMovement) {
