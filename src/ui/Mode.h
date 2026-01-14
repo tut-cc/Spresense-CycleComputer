@@ -13,11 +13,9 @@ public:
   };
 
 private:
-  ID currentID;
+  ID currentID = ID::SPEED;
 
 public:
-  Mode() : currentID(ID::SPEED) {}
-
   void next() {
     currentID = static_cast<ID>((static_cast<int>(currentID) + 1) % 7);
   }

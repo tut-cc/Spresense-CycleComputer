@@ -14,22 +14,22 @@ public:
 
 private:
   unsigned long lastMillis;
-  bool          initialized;
+  bool          hasLastMillis;
 
 public:
-  Trip() : lastMillis(0), initialized(false) {}
-
   void begin() {
     reset();
   }
 
   void update(const SpNavData &navData, unsigned long currentMillis) {
-    const float speedKmh = navData.velocity * 3.6f;
-    const bool  isMoving = (0.5f < speedKmh); // GPS ノイズ対策
+    const float rawSpeedKmh = navData.velocity * 60.0f * 60.0f / 1000.0f;
+    const bool  hasFix      = (navData.posFixMode != FixInvalid);
+    const bool  isMoving    = hasFix && (0.001f < rawSpeedKmh); // GPS ノイズ対策
+    const float speedKmh    = isMoving ? rawSpeedKmh : 0.0f;
 
-    if (!initialized) {
-      lastMillis  = currentMillis;
-      initialized = true;
+    if (!hasLastMillis) {
+      lastMillis    = currentMillis;
+      hasLastMillis = true;
       return;
     }
 
@@ -37,7 +37,7 @@ public:
     lastMillis             = currentMillis;
 
     stopwatch.update(isMoving, dt);
-    odometer.update(navData.latitude, navData.longitude, isMoving);
+    if (hasFix) odometer.update(navData.latitude, navData.longitude, isMoving);
     speedometer.update(speedKmh, stopwatch.getMovingTimeMs(), odometer.getDistance());
   }
 
@@ -45,7 +45,7 @@ public:
     speedometer.reset();
     odometer.reset();
     stopwatch.reset();
-    lastMillis  = 0;
-    initialized = false;
+    lastMillis    = 0;
+    hasLastMillis = false;
   }
 };
