@@ -12,17 +12,16 @@ private:
   unsigned long lastDebounceTime;
 
 public:
-  virtual ~Button() {}
   Button(int pin) : pinNumber(pin) {}
 
-  virtual void begin() {
+  void begin() {
     pinMode(pinNumber, INPUT_PULLUP);
     stablePinLevel   = digitalRead(pinNumber);
     lastPinLevel     = stablePinLevel;
     lastDebounceTime = millis();
   }
 
-  virtual bool isPressed() {
+  bool isPressed() {
     const bool rawPinLevel = digitalRead(pinNumber);
     bool       pressed     = false;
 
@@ -39,16 +38,16 @@ public:
     return pressed;
   }
 
-  virtual bool isHeld() const {
+  bool isHeld() const {
     return stablePinLevel == LOW;
   }
 
 private:
-  inline void resetDebounceTimer() {
+  void resetDebounceTimer() {
     lastDebounceTime = millis();
   }
 
-  inline bool hasDebounceTimePassed() const {
+  bool hasDebounceTimePassed() const {
     return Config::DEBOUNCE_DELAY < (millis() - lastDebounceTime);
   }
 };

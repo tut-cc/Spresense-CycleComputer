@@ -18,7 +18,7 @@ private:
   float    lastLon     = 0.0f;
 
 public:
-  void update(const float lat, const float lon, const bool isMoving) {
+  void update(float lat, float lon, bool isMoving) {
     if (abs(lat) < 1e-6f && abs(lon) < 1e-6f) return; // 無効な値を避ける
 
     if (!initialized) {
@@ -51,7 +51,7 @@ public:
   }
 
 private:
-  float toRadians(const float degrees) const {
+  float toRadians(float degrees) const {
     return degrees * PI / 180.0f;
   }
 

@@ -12,19 +12,18 @@ public:
   };
 
 private:
-  Button &btnA;
-  Button &btnB;
+  Button btnA;
+  Button btnB;
 
 public:
-  Input(Button &buttonA, Button &buttonB) : btnA(buttonA), btnB(buttonB) {}
-  virtual ~Input() {}
+  Input() : btnA(Config::Pin::BTN_A), btnB(Config::Pin::BTN_B) {}
 
-  virtual void begin() {
+  void begin() {
     btnA.begin();
     btnB.begin();
   }
 
-  virtual ID update() {
+  ID update() {
     const bool aPressed = btnA.isPressed();
     const bool bPressed = btnB.isPressed();
 

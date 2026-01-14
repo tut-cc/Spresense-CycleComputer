@@ -25,7 +25,7 @@ struct Frame {
     footerMode[0]     = '\0';
   }
 
-  bool operator==(const Frame &other) const {
+  bool operator==(Frame &other) const {
     const bool valueEq          = strcmp(value, other.value) == 0;
     const bool unitEq           = strcmp(unit, other.unit) == 0;
     const bool fixStatusEq      = strcmp(fixStatus, other.fixStatus) == 0;
@@ -60,7 +60,7 @@ struct Frame {
   }
 
 private:
-  void getModeData(const Trip &trip, const Clock &clock, Mode::ID modeId) {
+  void getModeData(Trip &trip, Clock &clock, Mode::ID modeId) {
     switch (modeId) {
     case Mode::ID::SPEED:
       Formatter::formatSpeed(trip.speedometer.get(), value, sizeof(value));

@@ -10,7 +10,7 @@ private:
   Duration duration;
 
 public:
-  void update(const bool isMoving, const unsigned long dt) {
+  void update(bool isMoving, unsigned long dt) {
     if (isMoving) duration.movingTimeMs += dt;
     duration.totalTimeMs += dt;
   }

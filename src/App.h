@@ -11,19 +11,16 @@
 
 class App {
 private:
-  OLED  &display;
-  Input &input;
-  Gnss  &gnss;
-  Mode   mode;
-  Trip   trip;
-  Clock  clock;
-
-  Renderer<OLED> renderer;
+  OLED     display;
+  Input    input;
+  Gnss     gnss;
+  Mode     mode;
+  Trip     trip;
+  Clock    clock;
+  Renderer renderer;
 
 public:
-  App(OLED &displayData, Gnss &gnssData, Input &inputModule)
-      : display(displayData), input(inputModule), gnss(gnssData),
-        clock(Config::Time::JST_OFFSET, 2025) {}
+  App() : clock(Config::Time::JST_OFFSET, 2025) {}
 
   void begin() {
     display.begin();
@@ -35,7 +32,7 @@ public:
   void update() {
     handleInput();
     gnss.update();
-    const auto &navData = gnss.getNavData();
+    const SpNavData &navData = gnss.getNavData();
     trip.update(navData, millis());
     clock.update(navData);
 

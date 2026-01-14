@@ -12,9 +12,8 @@ public:
   Gnss() {
     memset(&navData, 0, sizeof(navData));
   }
-  virtual ~Gnss() {}
 
-  virtual bool begin() {
+  bool begin() {
     if (gnss.begin() != 0) return false;
     gnss.select(GPS);
     gnss.select(GLONASS);
@@ -25,13 +24,13 @@ public:
     return true;
   }
 
-  virtual bool update() {
+  bool update() {
     if (gnss.waitUpdate(0) != 1) return false;
     gnss.getNavData(&navData);
     return true;
   }
 
-  virtual const SpNavData &getNavData() const {
+  const SpNavData &getNavData() const {
     return navData;
   }
 };
