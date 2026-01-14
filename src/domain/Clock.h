@@ -17,7 +17,8 @@ private:
   int  validYearStart;
 
 public:
-  Clock(int timeOffset = 9, int validYearStart = 2025) : timeOffset(timeOffset), validYearStart(validYearStart) {}
+  Clock(int timeOffset = 9, int validYearStart = 2025)
+      : timeOffset(timeOffset), validYearStart(validYearStart) {}
 
   void update(const SpNavData &navData) {
     year        = navData.time.year;

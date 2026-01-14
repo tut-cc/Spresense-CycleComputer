@@ -11,7 +11,8 @@
 
 class FrameBuilder {
 public:
-  void build(Frame &frame, const Trip &trip, const Clock &clock, Mode::ID modeId, SpFixMode fixMode, int numSatellites) {
+  void build(Frame &frame, const Trip &trip, const Clock &clock, Mode::ID modeId, SpFixMode fixMode,
+             int numSatellites) {
     getModeData(frame, trip, clock, modeId);
 
     switch (fixMode) {
@@ -71,7 +72,8 @@ private:
       strcpy(frame.footerMode, "TRIP TIME");
       break;
     case Mode::ID::ELAPSED_TIME:
-      Formatter::formatDuration(trip.stopwatch.getElapsedTimeMs(), frame.value, sizeof(frame.value));
+      Formatter::formatDuration(trip.stopwatch.getElapsedTimeMs(), frame.value,
+                                sizeof(frame.value));
       frame.unit[0] = '\0';
       strcpy(frame.footerMode, "ELAPSED TIME");
       break;

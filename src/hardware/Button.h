@@ -52,6 +52,6 @@ private:
   }
 
   inline bool hasDebounceTimePassed() const {
-    return (millis() - lastDebounceTime) > Config::DEBOUNCE_DELAY;
+    return Config::DEBOUNCE_DELAY < (millis() - lastDebounceTime);
   }
 };

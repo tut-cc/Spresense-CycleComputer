@@ -11,8 +11,9 @@ struct Frame {
   char footerMode[16];
 
   bool operator==(const Frame &other) const {
-    return strcmp(value, other.value) == 0 && strcmp(unit, other.unit) == 0 && strcmp(fixStatus, other.fixStatus) == 0 &&
-           strcmp(satelliteCount, other.satelliteCount) == 0 && strcmp(footerTime, other.footerTime) == 0 &&
-           strcmp(footerMode, other.footerMode) == 0;
+    return strcmp(value, other.value) == 0 && strcmp(unit, other.unit) == 0 &&
+           strcmp(fixStatus, other.fixStatus) == 0 &&
+           strcmp(satelliteCount, other.satelliteCount) == 0 &&
+           strcmp(footerTime, other.footerTime) == 0 && strcmp(footerMode, other.footerMode) == 0;
   }
 };

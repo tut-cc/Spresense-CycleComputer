@@ -17,11 +17,11 @@ public:
   OLED(const OLED &)            = delete;
   OLED &operator=(const OLED &) = delete;
 
-  virtual void begin() {
-    if (!ssd1306.begin(SSD1306_SWITCHCAPVCC, Config::OLED::ADDRESS))
-      for (;;);
+  virtual bool begin() {
+    if (!ssd1306.begin(SSD1306_SWITCHCAPVCC, Config::OLED::ADDRESS)) return false;
     ssd1306.clearDisplay();
     ssd1306.display();
+    return true;
   }
 
   virtual void clear() {
@@ -64,7 +64,8 @@ public:
     ssd1306.drawCircle(x0, y0, r, color);
   }
 
-  virtual void getTextBounds(const char *string, int16_t x, int16_t y, int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h) {
+  virtual void getTextBounds(const char *string, int16_t x, int16_t y, int16_t *x1, int16_t *y1,
+                             uint16_t *w, uint16_t *h) {
     ssd1306.getTextBounds(string, x, y, x1, y1, w, h);
   }
 

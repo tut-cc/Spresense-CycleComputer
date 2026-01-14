@@ -25,7 +25,7 @@ public:
 
   void update(const SpNavData &navData, const unsigned long currentMillis) {
     const float speedKmh = navData.velocity * 3.6f;
-    const bool  isMoving = (speedKmh > 0.01f);
+    const bool  isMoving = (speedKmh > 0.5f); // GPS ノイズ対策
 
     if (!initialized) {
       lastUpdateTime = currentMillis;

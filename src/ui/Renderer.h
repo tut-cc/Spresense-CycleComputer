@@ -62,7 +62,8 @@ private:
     screen.print(value);
   }
 
-  void drawFooter(ScreenT &screen, const char *footerTime, const char *footerMode, const char *unit) {
+  void drawFooter(ScreenT &screen, const char *footerTime, const char *footerMode,
+                  const char *unit) {
     int16_t lineY = screen.getHeight() - FOOTER_HEIGHT;
     screen.drawLine(0, lineY, screen.getWidth(), lineY, 1); // WHITE
 

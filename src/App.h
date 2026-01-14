@@ -23,7 +23,8 @@ private:
 
 public:
   App(OLED &displayData, Gnss &gnssData, Input &inputModule)
-      : display(displayData), input(inputModule), gnss(gnssData), clock(Config::Time::JST_OFFSET, 2025) {}
+      : display(displayData), input(inputModule), gnss(gnssData),
+        clock(Config::Time::JST_OFFSET, 2025) {}
 
   void begin() {
     display.begin();
@@ -40,7 +41,8 @@ public:
     clock.update(navData);
 
     Frame frame;
-    frameBuilder.build(frame, trip, clock, mode.get(), (SpFixMode)navData.posFixMode, navData.numSatellites);
+    frameBuilder.build(frame, trip, clock, mode.get(), (SpFixMode)navData.posFixMode,
+                       navData.numSatellites);
     renderer.render(display, frame);
   }
 
