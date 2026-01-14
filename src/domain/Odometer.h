@@ -86,7 +86,8 @@ private:
     const float     m_by_n      = (1.0f - e2) * n2; // meridian ratio
     const float     x           = sinf(londiffhalf) * coslat;
     const float     y           = cosf(londiffhalf) * sinf(latdiffhalf * m_by_n);
-    auto            asin2       = [](float x) { return x < 1.0f ? 2.0f * asinf(x) : PI; };
-    return n * a * asin2(hypotf(x, y));
+    const float     hypot_x_y   = hypotf(x, y);
+    const float     asin        = hypot_x_y < 1.0f ? 2.0f * asinf(hypot_x_y) : PI;
+    return n * a * asin;
   }
 };

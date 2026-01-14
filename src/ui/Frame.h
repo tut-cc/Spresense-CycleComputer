@@ -42,7 +42,7 @@ struct Frame {
       strcpy(fixStatus, "3D");
       break;
     default:
-      fixStatus[0] = '\0';
+      strcpy(fixStatus, "");
       break;
     }
 
@@ -73,12 +73,11 @@ private:
       strcpy(unit, "km");
       strcpy(footerMode, "DISTANCE");
       break;
-    case Mode::ID::TIME: {
+    case Mode::ID::TIME:
       Formatter::formatTime(clock.getTime(), value, sizeof(value));
       strcpy(unit, "");
       strcpy(footerMode, "TIME");
       break;
-    }
     case Mode::ID::MOVING_TIME:
       Formatter::formatDuration(trip.stopwatch.getMovingTimeMs(), value, sizeof(value));
       strcpy(unit, "");

@@ -7,6 +7,14 @@
 #include "../Config.h"
 
 class OLED {
+public:
+  struct Rect {
+    int16_t  x;
+    int16_t  y;
+    uint16_t w;
+    uint16_t h;
+  };
+
 private:
   Adafruit_SSD1306 ssd1306;
 
@@ -48,21 +56,10 @@ public:
     ssd1306.drawLine(x0, y0, x1, y1, color);
   }
 
-  void drawRect(int x, int y, int w, int h, int color) {
-    ssd1306.drawRect(x, y, w, h, color);
-  }
-
-  void fillRect(int x, int y, int w, int h, int color) {
-    ssd1306.fillRect(x, y, w, h, color);
-  }
-
-  void drawCircle(int x0, int y0, int r, int color) {
-    ssd1306.drawCircle(x0, y0, r, color);
-  }
-
-  void getTextBounds(char *string, int16_t x, int16_t y, int16_t *x1, int16_t *y1, uint16_t *w,
-                     uint16_t *h) {
-    ssd1306.getTextBounds(string, x, y, x1, y1, w, h);
+  Rect getTextBounds(const char *string) {
+    Rect rect;
+    ssd1306.getTextBounds(string, 0, 0, &rect.x, &rect.y, &rect.w, &rect.h);
+    return rect;
   }
 
   int getWidth() const {

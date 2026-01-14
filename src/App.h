@@ -11,7 +11,7 @@
 
 class App {
 private:
-  OLED     display;
+  OLED     oled;
   Input    input;
   Gnss     gnss;
   Mode     mode;
@@ -21,7 +21,7 @@ private:
 
 public:
   void begin() {
-    display.begin();
+    oled.begin();
     input.begin();
     gnss.begin();
     trip.begin();
@@ -37,7 +37,7 @@ public:
     clock.update(navData);
 
     Frame frame(trip, clock, mode.get(), (SpFixMode)navData.posFixMode, navData.numSatellites);
-    renderer.render(display, frame);
+    renderer.render(oled, frame);
   }
 
 private:
