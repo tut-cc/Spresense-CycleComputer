@@ -15,7 +15,6 @@ public:
   void render(OLED &oled, Frame &frame) {
     if (!firstRender && frame == lastFrame) return;
 
-    // Update Cache
     firstRender = false;
     lastFrame   = frame;
 

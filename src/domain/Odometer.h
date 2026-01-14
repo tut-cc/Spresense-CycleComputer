@@ -76,7 +76,6 @@ private:
     constexpr float a           = 6378137.0f;          // GRS80
     constexpr float f           = 1.0 / 298.257223563; // WGS84
     constexpr float e2          = f * (2.0f - f);
-    auto            asin2       = [](float x) { return x < 1.0f ? 2.0f * asinf(x) : PI; };
     const float     latdiffhalf = toRadians((lat1 - lat2) / 2.0f);
     const float     londiffhalf = toRadians((lon1 - lon2) / 2.0f);
     const float     latmid      = toRadians((lat1 + lat2) / 2.0f);
@@ -85,8 +84,9 @@ private:
     const float     n2          = 1.0f / (1.0f - e2 * sinlat * sinlat);
     const float     n           = sqrtf(n2);        // prime vertical radius of curvature
     const float     m_by_n      = (1.0f - e2) * n2; // meridian ratio
-    return n * a *
-           asin2(
-               hypotf(sinf(londiffhalf) * coslat, cosf(londiffhalf) * sinf(latdiffhalf * m_by_n)));
+    const float     x           = sinf(londiffhalf) * coslat;
+    const float     y           = cosf(londiffhalf) * sinf(latdiffhalf * m_by_n);
+    auto            asin2       = [](float x) { return x < 1.0f ? 2.0f * asinf(x) : PI; };
+    return n * a * asin2(hypotf(x, y));
   }
 };

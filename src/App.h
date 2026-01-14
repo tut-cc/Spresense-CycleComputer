@@ -31,8 +31,10 @@ public:
 
   void update() {
     handleInput();
+
     gnss.update();
     const SpNavData &navData = gnss.getNavData();
+
     trip.update(navData, millis());
     clock.update(navData);
 

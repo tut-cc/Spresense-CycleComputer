@@ -9,21 +9,14 @@
 #include "Mode.h"
 
 struct Frame {
-  char value[32];
-  char unit[16];
-  char fixStatus[8];
-  char satelliteCount[8];
-  char footerTime[16];
-  char footerMode[16];
+  char value[32]         = "";
+  char unit[16]          = "";
+  char fixStatus[8]      = "";
+  char satelliteCount[8] = "";
+  char footerTime[16]    = "";
+  char footerMode[16]    = "";
 
-  Frame() {
-    value[0]          = '\0';
-    unit[0]           = '\0';
-    fixStatus[0]      = '\0';
-    satelliteCount[0] = '\0';
-    footerTime[0]     = '\0';
-    footerMode[0]     = '\0';
-  }
+  Frame() = default;
 
   bool operator==(Frame &other) const {
     const bool valueEq          = strcmp(value, other.value) == 0;
@@ -54,16 +47,14 @@ struct Frame {
     }
 
     snprintf(satelliteCount, sizeof(satelliteCount), "St:%d", numSatellites);
-
-    Clock::Time t = clock.getTime();
-    Formatter::formatTime(t.hour, t.minute, footerTime, sizeof(footerTime));
+    Formatter::formatTime(clock.getTime(), footerTime, sizeof(footerTime));
   }
 
 private:
   void getModeData(Trip &trip, Clock &clock, Mode::ID modeId) {
     switch (modeId) {
     case Mode::ID::SPEED:
-      Formatter::formatSpeed(trip.speedometer.get(), value, sizeof(value));
+      Formatter::formatSpeed(trip.speedometer.getCur(), value, sizeof(value));
       strcpy(unit, "km/h");
       strcpy(footerMode, "SPEED");
       break;
@@ -73,7 +64,7 @@ private:
       strcpy(footerMode, "MAX SPEED");
       break;
     case Mode::ID::AVG_SPEED:
-      Formatter::formatSpeed(trip.getAvgSpeedKmh(), value, sizeof(value));
+      Formatter::formatSpeed(trip.speedometer.getAvg(), value, sizeof(value));
       strcpy(unit, "km/h");
       strcpy(footerMode, "AVG SPEED");
       break;
@@ -83,20 +74,19 @@ private:
       strcpy(footerMode, "DISTANCE");
       break;
     case Mode::ID::TIME: {
-      Clock::Time t = clock.getTime();
-      Formatter::formatTime(t.hour, t.minute, value, sizeof(value));
-      unit[0] = '\0';
+      Formatter::formatTime(clock.getTime(), value, sizeof(value));
+      strcpy(unit, "");
       strcpy(footerMode, "TIME");
       break;
     }
     case Mode::ID::MOVING_TIME:
       Formatter::formatDuration(trip.stopwatch.getMovingTimeMs(), value, sizeof(value));
-      unit[0] = '\0';
+      strcpy(unit, "");
       strcpy(footerMode, "TRIP TIME");
       break;
     case Mode::ID::ELAPSED_TIME:
       Formatter::formatDuration(trip.stopwatch.getElapsedTimeMs(), value, sizeof(value));
-      unit[0] = '\0';
+      strcpy(unit, "");
       strcpy(footerMode, "ELAPSED TIME");
       break;
     }

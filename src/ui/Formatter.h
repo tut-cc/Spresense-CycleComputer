@@ -2,6 +2,8 @@
 
 #include <cstdio>
 
+#include "../domain/Clock.h"
+
 class Formatter {
 public:
   static void formatSpeed(float speedKmh, char *buffer, size_t size) {
@@ -12,8 +14,8 @@ public:
     snprintf(buffer, size, "%5.2f", distanceKm);
   }
 
-  static void formatTime(int hour, int minute, char *buffer, size_t size) {
-    snprintf(buffer, size, "%02d:%02d", hour, minute);
+  static void formatTime(const Clock::Time time, char *buffer, size_t size) {
+    snprintf(buffer, size, "%02d:%02d", time.hour, time.minute);
   }
 
   static void formatDuration(unsigned long millis, char *buffer, size_t size) {

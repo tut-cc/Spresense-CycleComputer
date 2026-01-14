@@ -13,11 +13,11 @@ public:
   Stopwatch   stopwatch;
 
 private:
-  unsigned long lastUpdateTime;
+  unsigned long lastMillis;
   bool          initialized;
 
 public:
-  Trip() : lastUpdateTime(0), initialized(false) {}
+  Trip() : lastMillis(0), initialized(false) {}
 
   void begin() {
     reset();
@@ -25,33 +25,27 @@ public:
 
   void update(const SpNavData &navData, unsigned long currentMillis) {
     const float speedKmh = navData.velocity * 3.6f;
-    const bool  isMoving = (speedKmh > 0.5f); // GPS ノイズ対策
+    const bool  isMoving = (0.5f < speedKmh); // GPS ノイズ対策
 
     if (!initialized) {
-      lastUpdateTime = currentMillis;
-      initialized    = true;
+      lastMillis  = currentMillis;
+      initialized = true;
       return;
     }
 
-    const unsigned long dt = currentMillis - lastUpdateTime;
-    lastUpdateTime         = currentMillis;
+    const unsigned long dt = currentMillis - lastMillis;
+    lastMillis             = currentMillis;
 
-    speedometer.update(speedKmh);
     stopwatch.update(isMoving, dt);
     odometer.update(navData.latitude, navData.longitude, isMoving);
+    speedometer.update(speedKmh, stopwatch.getMovingTimeMs(), odometer.getDistance());
   }
 
   void reset() {
     speedometer.reset();
     odometer.reset();
     stopwatch.reset();
-    lastUpdateTime = 0;
-    initialized    = false;
-  }
-
-  float getAvgSpeedKmh() const {
-    const unsigned long movingTimeMs = stopwatch.getMovingTimeMs();
-    if (movingTimeMs == 0) return 0.0f;
-    return odometer.getDistance() * 3600000.0f / movingTimeMs;
+    lastMillis  = 0;
+    initialized = false;
   }
 };
