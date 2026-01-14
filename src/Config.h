@@ -7,6 +7,12 @@ namespace Config {
 constexpr unsigned long DEBOUNCE_DELAY             = 50;
 constexpr unsigned long DISPLAY_UPDATE_INTERVAL_MS = 100;
 
+namespace Time {
+
+constexpr int JST_OFFSET = 9;
+
+}
+
 namespace Pin {
 
 constexpr int BTN_A    = PIN_D09;
@@ -23,10 +29,11 @@ constexpr int ADDRESS = 0x3C;
 
 } // namespace OLED
 
-namespace Time {
+namespace Renderer {
 
-constexpr int JST_OFFSET = 9;
+constexpr int16_t HEADER_HEIGHT = 12;
+constexpr int16_t FOOTER_HEIGHT = 12;
 
-}
+} // namespace Renderer
 
 } // namespace Config
