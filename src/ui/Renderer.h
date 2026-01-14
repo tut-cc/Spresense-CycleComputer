@@ -29,7 +29,6 @@ private:
   void drawHeader(OLED &oled, const Frame &frame) {
     oled.setTextSize(1);
     oled.setTextColor(1);
-
     drawTextLeft(oled, 0, frame.fixStatus);
     drawTextRight(oled, 0, frame.satelliteCount);
 
@@ -43,6 +42,7 @@ private:
     int16_t centerY    = (contentY + contentTop) / 2;
 
     oled.setTextSize(4);
+    oled.setTextColor(1);
     drawTextCenter(oled, centerY, frame.value);
   }
 
@@ -50,10 +50,10 @@ private:
     int16_t lineY = oled.getHeight() - Config::Renderer::FOOTER_HEIGHT;
     oled.drawLine(0, lineY, oled.getWidth(), lineY, 1);
 
+    int16_t textY = lineY + (Config::Renderer::FOOTER_HEIGHT / 2) - 3;
+
     oled.setTextSize(1);
     oled.setTextColor(1);
-
-    int16_t textY = lineY + (Config::Renderer::FOOTER_HEIGHT / 2) - 3;
     drawTextRight(oled, textY, frame.footerTime);
 
     // Draw mode and optionally unit

@@ -38,7 +38,7 @@ public:
 
     stopwatch.update(isMoving, dt);
     if (hasFix) odometer.update(navData.latitude, navData.longitude, isMoving);
-    speedometer.update(speedKmh, stopwatch.getMovingTimeMs(), odometer.getDistance());
+    speedometer.update(speedKmh, stopwatch.getMovingTimeMs(), odometer.getTotalDistance());
   }
 
   void reset() {

@@ -11,10 +11,10 @@ private:
   Speed speed;
 
 public:
-  void update(float curKmh, unsigned long movingTimeMs, float distanceKm) {
+  void update(float curKmh, unsigned long movingTimeMs, float totalKm) {
     speed.curKmh = curKmh;
     if (speed.maxKmh < speed.curKmh) speed.maxKmh = speed.curKmh;
-    if (0 < movingTimeMs) speed.avgKmh = distanceKm * 3600000.0f / movingTimeMs;
+    if (0 < movingTimeMs) speed.avgKmh = totalKm / (movingTimeMs / (60.0f * 60.0f * 1000.0f));
   }
 
   void reset() {

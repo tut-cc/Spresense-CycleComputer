@@ -69,7 +69,7 @@ private:
       strcpy(footerMode, "AVG SPEED");
       break;
     case Mode::ID::DISTANCE:
-      Formatter::formatDistance(trip.odometer.getDistance(), value, sizeof(value));
+      Formatter::formatDistance(trip.odometer.getTotalDistance(), value, sizeof(value));
       strcpy(unit, "km");
       strcpy(footerMode, "DISTANCE");
       break;

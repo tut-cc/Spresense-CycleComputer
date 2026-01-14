@@ -8,18 +8,14 @@
 
 class Odometer {
 private:
-  struct Distance {
-    float totalKm = 0.0f;
-  };
-
-  Distance distance;
-  bool     initialized = false;
-  float    lastLat     = 0.0f;
-  float    lastLon     = 0.0f;
+  float totalKm     = 0.0f;
+  float lastLat     = 0.0f;
+  float lastLon     = 0.0f;
+  bool  initialized = false;
 
 public:
   void update(float lat, float lon, bool isMoving) {
-    if (abs(lat) < 1e-6f && abs(lon) < 1e-6f) return; // 無効な値を避ける
+    if (fabsf(lat) < 1e-6f && fabsf(lon) < 1e-6f) return; // 無効な値を避ける
 
     if (!initialized) {
       lastLat     = lat;
@@ -29,9 +25,9 @@ public:
     }
 
     if (isMoving) {
-      const float distanceDeltaKm = calculateDistanceKm(lastLat, lastLon, lat, lon);
-      if (0.001f < distanceDeltaKm && distanceDeltaKm < 1.0f) { // GPS ノイズ対策
-        distance.totalKm += distanceDeltaKm;
+      const float deltaKm = planarDistanceKm(lastLat, lastLon, lat, lon);
+      if (0.001f < deltaKm && deltaKm < 1.0f) { // GPS ノイズ対策
+        totalKm += deltaKm;
       }
     }
 
@@ -40,54 +36,28 @@ public:
   }
 
   void reset() {
-    distance    = {};
-    initialized = false;
+    totalKm     = 0.0f;
     lastLat     = 0.0f;
     lastLon     = 0.0f;
+    initialized = false;
   }
 
-  float getDistance() const {
-    return distance.totalKm;
+  float getTotalDistance() const {
+    return totalKm;
   }
 
 private:
-  float toRadians(float degrees) const {
+  static constexpr float toRadians(float degrees) {
     return degrees * PI / 180.0f;
   }
 
-  float calculateDistanceKm(float lat1, float lon1, float lat2, float lon2) const {
-    return gaussMidLatitude(lat1, lon1, lat2, lon2);
-  }
-
-  float Haversine(float lat1, float lon1, float lat2, float lon2) const {
-    constexpr float R       = 6371.0f; // 地球の半径 (km)
-    const float     dLat    = toRadians((lat2 - lat1) / 2.0f);
-    const float     dLon    = toRadians((lon2 - lon1) / 2.0f);
-    const float     sinDLat = sinf(dLat);
-    const float     sinDLon = sinf(dLon);
-    const float     cosLat1 = cosf(toRadians(lat1));
-    const float     cosLat2 = cosf(toRadians(lat2));
-    const float     a       = sinDLat * sinDLat + cosLat1 * cosLat2 * sinDLon * sinDLon;
-    const float     c       = 2.0f * atan2f(sqrtf(a), sqrtf(1.0f - a));
-    return R * c;
-  }
-
-  float gaussMidLatitude(float lat1, float lon1, float lat2, float lon2) const {
-    constexpr float a           = 6378137.0f;          // GRS80
-    constexpr float f           = 1.0 / 298.257223563; // WGS84
-    constexpr float e2          = f * (2.0f - f);
-    const float     latdiffhalf = toRadians((lat1 - lat2) / 2.0f);
-    const float     londiffhalf = toRadians((lon1 - lon2) / 2.0f);
-    const float     latmid      = toRadians((lat1 + lat2) / 2.0f);
-    const float     sinlat      = sinf(latmid);
-    const float     coslat      = cosf(latmid);
-    const float     n2          = 1.0f / (1.0f - e2 * sinlat * sinlat);
-    const float     n           = sqrtf(n2);        // prime vertical radius of curvature
-    const float     m_by_n      = (1.0f - e2) * n2; // meridian ratio
-    const float     x           = sinf(londiffhalf) * coslat;
-    const float     y           = cosf(londiffhalf) * sinf(latdiffhalf * m_by_n);
-    const float     hypot_x_y   = hypotf(x, y);
-    const float     asin        = hypot_x_y < 1.0f ? 2.0f * asinf(hypot_x_y) : PI;
-    return n * a * asin;
+  static float planarDistanceKm(float lat1, float lon1, float lat2, float lon2) {
+    constexpr float R      = 6378137.0f; // WGS84 [m]
+    const float     latRad = toRadians((lat1 + lat2) / 2.0f);
+    const float     dLat   = toRadians(lat2 - lat1);
+    const float     dLon   = toRadians(lon2 - lon1);
+    const float     x      = dLon * cosf(latRad) * R;
+    const float     y      = dLat * R;
+    return sqrtf(x * x + y * y) / 1000.0f; // km
   }
 };
