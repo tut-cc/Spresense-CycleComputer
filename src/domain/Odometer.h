@@ -55,12 +55,11 @@ private:
     return degrees * PI / 180.0f;
   }
 
-  float calculateDistanceKm(const float lat1, const float lon1, const float lat2,
-                            const float lon2) const {
+  float calculateDistanceKm(float lat1, float lon1, float lat2, float lon2) const {
     return gaussMidLatitude(lat1, lon1, lat2, lon2);
   }
 
-  float Haversine(const float lat1, const float lon1, const float lat2, const float lon2) const {
+  float Haversine(float lat1, float lon1, float lat2, float lon2) const {
     constexpr float R       = 6371.0f; // 地球の半径 (km)
     const float     dLat    = toRadians((lat2 - lat1) / 2.0f);
     const float     dLon    = toRadians((lon2 - lon1) / 2.0f);
@@ -73,12 +72,11 @@ private:
     return R * c;
   }
 
-  float gaussMidLatitude(const float lat1, const float lon1, const float lat2,
-                         const float lon2) const {
+  float gaussMidLatitude(float lat1, float lon1, float lat2, float lon2) const {
     constexpr float a           = 6378137.0f;          // GRS80
     constexpr float f           = 1.0 / 298.257223563; // WGS84
     constexpr float e2          = f * (2.0f - f);
-    auto            asin2       = [](const float x) { return x < 1.0f ? 2.0f * asinf(x) : PI; };
+    auto            asin2       = [](float x) { return x < 1.0f ? 2.0f * asinf(x) : PI; };
     const float     latdiffhalf = toRadians((lat1 - lat2) / 2.0f);
     const float     londiffhalf = toRadians((lon1 - lon2) / 2.0f);
     const float     latmid      = toRadians((lat1 + lat2) / 2.0f);

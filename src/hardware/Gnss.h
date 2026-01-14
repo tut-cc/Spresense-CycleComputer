@@ -14,9 +14,6 @@ public:
   }
   virtual ~Gnss() {}
 
-  Gnss(const Gnss &)            = delete;
-  Gnss &operator=(const Gnss &) = delete;
-
   virtual bool begin() {
     if (gnss.begin() != 0) return false;
     gnss.select(GPS);

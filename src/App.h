@@ -5,20 +5,19 @@
 #include "hardware/Gnss.h"
 #include "hardware/OLED.h"
 #include "ui/Frame.h"
-#include "ui/FrameBuilder.h"
 #include "ui/Input.h"
 #include "ui/Mode.h"
 #include "ui/Renderer.h"
 
 class App {
 private:
-  OLED          &display;
-  Input         &input;
-  Gnss          &gnss;
-  Mode           mode;
-  Trip           trip;
-  Clock          clock;
-  FrameBuilder   frameBuilder;
+  OLED  &display;
+  Input &input;
+  Gnss  &gnss;
+  Mode   mode;
+  Trip   trip;
+  Clock  clock;
+
   Renderer<OLED> renderer;
 
 public:
@@ -40,9 +39,7 @@ public:
     trip.update(navData, millis());
     clock.update(navData);
 
-    Frame frame;
-    frameBuilder.build(frame, trip, clock, mode.get(), (SpFixMode)navData.posFixMode,
-                       navData.numSatellites);
+    Frame frame(trip, clock, mode.get(), (SpFixMode)navData.posFixMode, navData.numSatellites);
     renderer.render(display, frame);
   }
 

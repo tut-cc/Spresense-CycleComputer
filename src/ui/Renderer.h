@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Arduino.h>
 #include <GNSS.h>
 #include <cstring>
 
@@ -62,8 +61,7 @@ private:
     screen.print(value);
   }
 
-  void drawFooter(ScreenT &screen, const char *footerTime, const char *footerMode,
-                  const char *unit) {
+  void drawFooter(ScreenT &screen, char *footerTime, char *footerMode, char *unit) {
     int16_t lineY = screen.getHeight() - FOOTER_HEIGHT;
     screen.drawLine(0, lineY, screen.getWidth(), lineY, 1); // WHITE
 

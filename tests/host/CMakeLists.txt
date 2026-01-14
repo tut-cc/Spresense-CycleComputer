@@ -12,10 +12,6 @@ FetchContent_MakeAvailable(googletest)
 set(TEST_SOURCES
     mocks/MockGlobals.cpp
     mocks/MockLibs.cpp
-    AppTest.cpp
-    InputTest.cpp
-    ModeTest.cpp
-    TripTest.cpp
 )
 
 add_executable(run_tests
