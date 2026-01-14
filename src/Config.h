@@ -9,9 +9,10 @@ constexpr unsigned long DISPLAY_UPDATE_INTERVAL_MS = 100;
 
 namespace Time {
 
-constexpr int JST_OFFSET = 9;
+constexpr int JST_OFFSET       = 9;
+constexpr int VALID_YEAR_START = 2025;
 
-}
+} // namespace Time
 
 namespace Pin {
 

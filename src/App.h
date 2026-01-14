@@ -20,8 +20,6 @@ private:
   Renderer renderer;
 
 public:
-  App() : clock(Config::Time::JST_OFFSET, 2025) {}
-
   void begin() {
     display.begin();
     input.begin();
