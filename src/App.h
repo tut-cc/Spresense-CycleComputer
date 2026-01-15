@@ -47,7 +47,6 @@ private:
       mode.next();
       return;
     case Input::ID::BTN_B:
-      mode.prev();
       return;
     case Input::ID::BTN_BOTH:
       trip.reset();

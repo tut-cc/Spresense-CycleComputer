@@ -13,11 +13,6 @@ public:
     currentID       = static_cast<ID>((static_cast<int>(currentID) + 1) % count);
   }
 
-  void prev() {
-    const int count = static_cast<int>(ID::Count);
-    currentID       = static_cast<ID>((static_cast<int>(currentID) + count - 1) % count);
-  }
-
   ID get() const {
     return currentID;
   }
