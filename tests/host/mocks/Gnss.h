@@ -1,41 +1,49 @@
 #pragma once
 
-#include <GNSS.h>
-#include <cstring>
+#include <stdint.h>
 
-class Gnss {
-private:
-  SpGnss    gnss;
-  SpNavData navData;
+// Mock constants
+#define GPS 0
+#define GLONASS 2
+#define GALILEO 3
+#define QZ_L1CA 1
+#define QZ_L1S 4
+#define COLD_START 0
+#define HOT_START 1
 
-  Gnss(const Gnss &)            = delete;
-  Gnss &operator=(const Gnss &) = delete;
+enum SpGnssFixType { FixInvalid = 0, Fix2D = 1, Fix3D = 2 };
+typedef SpGnssFixType SpFixMode;
 
+struct SpNavTime {
+  int year;
+  int month;
+  int day;
+  int hour;
+  int minute;
+  int sec;
+  int usec;
+};
+
+struct SpNavData {
+  SpNavTime     time;
+  float         velocity; // m/s
+  SpGnssFixType posFixMode;
+  double        latitude;
+  double        longitude;
+  float         altitude; // not used but good to have
+  int           numSatellites;
+};
+
+class SpGnss {
 public:
-  Gnss() {
-    memset(&navData, 0, sizeof(navData));
-  }
-  virtual ~Gnss() {}
+  int  begin();
+  int  start(int mode);
+  int  stop();
+  void select(int satelliteSystem);
+  bool waitUpdate(int timeout);
+  void getNavData(SpNavData *navData);
 
-  virtual bool begin() {
-    if (gnss.begin() != 0) return false;
-    gnss.select(GPS);
-    gnss.select(QZ_L1CA);
-    if (gnss.start(COLD_START) != 0) return false;
-    return true;
-  }
-
-  virtual bool update() {
-    if (!gnss.waitUpdate(0)) return false;
-    gnss.getNavData(&navData);
-    return true;
-  }
-
-  virtual const SpNavData &getNavData() const {
-    return navData;
-  }
-
-  virtual bool isFixed() const {
-    return navData.posFixMode >= 1;
-  }
+  // Mock control
+  static SpNavTime mockTimeData;
+  static float     mockVelocityData;
 };
