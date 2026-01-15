@@ -50,4 +50,10 @@ constexpr float MAX_DELTA = 1.0f;
 
 } // namespace Odometer
 
+namespace Input {
+
+constexpr unsigned long SIMULTANEOUS_DELAY_MS = 50;
+
+} // namespace Input
+
 } // namespace Config

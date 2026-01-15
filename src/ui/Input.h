@@ -1,60 +1,52 @@
 #pragma once
 
+#include "../Config.h"
 #include "../hardware/Button.h"
 
 class Input {
 public:
   enum class ID {
     NONE,
-    BTN_A,
-    BTN_B,
-    BTN_BOTH,
+    SELECT,
+    PAUSE,
+    RESET,
   };
 
 private:
-  Button btnA;
-  Button btnB;
+  Button btnSelect;
+  Button btnPause;
 
-  ID                         pendingEvent          = ID::NONE;
-  unsigned long              pendingTime           = 0;
-  static const unsigned long SIMULTANEOUS_DELAY_MS = 50;
+  ID            pendingEvent = ID::NONE;
+  unsigned long pendingTime  = 0;
 
 public:
-  Input() : btnA(Config::Pin::BTN_A), btnB(Config::Pin::BTN_B) {}
+  Input() : btnSelect(Config::Pin::BTN_A), btnPause(Config::Pin::BTN_B) {}
 
   void begin() {
-    btnA.begin();
-    btnB.begin();
+    btnSelect.begin();
+    btnPause.begin();
   }
 
   ID update() {
-    const bool aPressed = btnA.isPressed();
-    const bool bPressed = btnB.isPressed();
+    const bool          selectPressed = btnSelect.isPressed();
+    const bool          pausePressed  = btnPause.isPressed();
+    const unsigned long now           = millis();
 
-    if ((aPressed && btnB.isHeld()) || (bPressed && btnA.isHeld())) {
+    if ((selectPressed && (pausePressed || btnPause.isHeld())) ||
+        (pausePressed && (selectPressed || btnSelect.isHeld()))) {
       pendingEvent = ID::NONE;
-      return ID::BTN_BOTH;
+      return ID::RESET;
     }
-
-    if (aPressed && bPressed) {
-      pendingEvent = ID::NONE;
-      return ID::BTN_BOTH;
-    }
-
-    const unsigned long now = millis();
 
     if (pendingEvent != ID::NONE) {
-      bool otherPressed = false;
-      if (pendingEvent == ID::BTN_A && bPressed) otherPressed = true;
-      if (pendingEvent == ID::BTN_B && aPressed) otherPressed = true;
-
-      if (otherPressed) {
+      const bool otherPressed  = pendingEvent == ID::SELECT && pausePressed;
+      const bool otherPressed2 = pendingEvent == ID::PAUSE && selectPressed;
+      if (otherPressed || otherPressed2) {
         pendingEvent = ID::NONE;
-        return ID::BTN_BOTH;
+        return ID::RESET;
       }
 
-      // Check timeout
-      if (now - pendingTime >= SIMULTANEOUS_DELAY_MS) {
+      if (Config::Input::SIMULTANEOUS_DELAY_MS <= now - pendingTime) {
         ID confirmed = pendingEvent;
         pendingEvent = ID::NONE;
         return confirmed;
@@ -63,13 +55,14 @@ public:
       return ID::NONE;
     }
 
-    if (aPressed) {
-      pendingEvent = ID::BTN_A;
+    if (selectPressed) {
+      pendingEvent = ID::SELECT;
       pendingTime  = now;
       return ID::NONE;
     }
-    if (bPressed) {
-      pendingEvent = ID::BTN_B;
+
+    if (pausePressed) {
+      pendingEvent = ID::PAUSE;
       pendingTime  = now;
       return ID::NONE;
     }

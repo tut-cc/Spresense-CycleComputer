@@ -43,13 +43,13 @@ public:
 private:
   void handleInput() {
     switch (input.update()) {
-    case Input::ID::BTN_A:
+    case Input::ID::SELECT:
       mode.next();
       return;
-    case Input::ID::BTN_B:
+    case Input::ID::PAUSE:
       trip.pause();
       return;
-    case Input::ID::BTN_BOTH:
+    case Input::ID::BOTH:
       trip.reset();
       return;
     case Input::ID::NONE:
