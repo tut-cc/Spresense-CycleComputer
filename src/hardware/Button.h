@@ -2,39 +2,43 @@
 
 #include <Arduino.h>
 
-#include "../Config.h"
-
 class Button {
 private:
-  const int     pinNumber;
-  bool          stablePinLevel;
-  bool          lastPinLevel;
-  unsigned long lastDebounceTime;
+  const int                      pinNumber;
+  bool                           stablePinLevel;
+  bool                           lastPinLevel;
+  unsigned long                  lastDebounceTime;
+  bool                           pressed;
+  static constexpr unsigned long DEBOUNCE_DELAY_MS = 50;
 
 public:
-  Button(int pin) : pinNumber(pin) {}
+  Button(int pin) : pinNumber(pin), pressed(false) {}
 
   void begin() {
     pinMode(pinNumber, INPUT_PULLUP);
     stablePinLevel   = digitalRead(pinNumber);
     lastPinLevel     = stablePinLevel;
     lastDebounceTime = millis();
+    pressed          = false;
   }
 
-  bool isPressed() {
+  void update() {
+    pressed                = false;
     const bool rawPinLevel = digitalRead(pinNumber);
-    bool       pressed     = false;
 
     if (rawPinLevel != lastPinLevel) resetDebounceTimer();
 
     if (hasDebounceTimePassed()) {
       if (stablePinLevel != rawPinLevel) {
-        if (rawPinLevel == LOW) pressed = true;
         stablePinLevel = rawPinLevel;
+        if (stablePinLevel == LOW) { pressed = true; }
       }
     }
 
     lastPinLevel = rawPinLevel;
+  }
+
+  bool wasPressed() const {
     return pressed;
   }
 
@@ -48,6 +52,6 @@ private:
   }
 
   bool hasDebounceTimePassed() const {
-    return Config::DEBOUNCE_DELAY_MS < (millis() - lastDebounceTime);
+    return DEBOUNCE_DELAY_MS < (millis() - lastDebounceTime);
   }
 };

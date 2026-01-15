@@ -1,8 +1,7 @@
 #pragma once
 
+#include <Arduino.h>
 #include <math.h>
-
-#include "../Config.h"
 
 class Odometer {
 private:
@@ -11,28 +10,42 @@ private:
   float lastLon      = 0.0f;
   bool  hasLastCoord = false;
 
+  static bool isValidCoordinate(float lat, float lon) {
+    return !(fabsf(lat) < MIN_ABS && fabsf(lon) < MIN_ABS);
+  }
+
+private:
+  static constexpr float MIN_ABS   = 1e-6f;
+  static constexpr float MIN_DELTA = 0.002f;
+  static constexpr float MAX_DELTA = 1.0f;
+
 public:
-  void update(float lat, float lon, bool isMoving) {
-    if (fabsf(lat) < Config::Odometer::MIN_ABS && fabsf(lon) < Config::Odometer::MIN_ABS) {
-      return; // 無効な値を避ける
+  float update(float lat, float lon, bool isMoving) {
+    if (!isValidCoordinate(lat, lon)) {
+      return 0.0f; // Avoid invalid values
     }
 
     if (!hasLastCoord) {
       lastLat      = lat;
       lastLon      = lon;
       hasLastCoord = true;
-      return;
+      return 0.0f;
     }
 
+    float deltaKm = 0.0f;
     if (isMoving) {
-      const float deltaKm = planarDistanceKm(lastLat, lastLon, lat, lon);
-      const bool  isDeltaValid =
-          Config::Odometer::MIN_DELTA < deltaKm && deltaKm < Config::Odometer::MAX_DELTA;
-      if (isDeltaValid) totalKm += deltaKm; // GPS ノイズ対策
+      const float dist         = planarDistanceKm(lastLat, lastLon, lat, lon);
+      const bool  isDeltaValid = MIN_DELTA < dist && dist < MAX_DELTA;
+      if (isDeltaValid) {
+        deltaKm = dist;
+        totalKm += deltaKm; // Anti-GPS noise
+      }
     }
 
     lastLat = lat;
     lastLon = lon;
+
+    return deltaKm;
   }
 
   void reset() {
@@ -44,6 +57,10 @@ public:
 
   float getTotalDistance() const {
     return totalKm;
+  }
+
+  void setTotalDistance(float dist) {
+    totalKm = dist;
   }
 
 private:

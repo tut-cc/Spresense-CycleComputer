@@ -1,26 +1,25 @@
 #pragma once
 
 #include <GNSS.h>
-#include <cstring>
 
 class Gnss {
 private:
   SpGnss    gnss;
-  SpNavData navData;
+  SpNavData navData{};
 
 public:
-  Gnss() {
-    memset(&navData, 0, sizeof(navData));
-  }
+  enum class StartMode { COLD, HOT };
 
-  bool begin() {
+  Gnss() {}
+
+  bool begin(StartMode mode = StartMode::COLD) {
     if (gnss.begin() != 0) return false;
-    gnss.select(GPS);
-    gnss.select(GLONASS);
-    gnss.select(GALILEO);
-    gnss.select(QZ_L1CA);
-    gnss.select(QZ_L1S);
-    if (gnss.start(COLD_START) != 0) return false;
+
+    selectSatellites();
+
+    const SpStartMode startType = (mode == StartMode::COLD) ? COLD_START : HOT_START;
+    if (gnss.start(startType) != 0) return false;
+
     return true;
   }
 
@@ -32,5 +31,14 @@ public:
 
   const SpNavData &getNavData() const {
     return navData;
+  }
+
+private:
+  void selectSatellites() {
+    gnss.select(GPS);
+    gnss.select(GLONASS);
+    gnss.select(GALILEO);
+    gnss.select(QZ_L1CA);
+    gnss.select(QZ_L1S);
   }
 };

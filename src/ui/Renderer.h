@@ -7,11 +7,37 @@
 #include "Frame.h"
 
 class Renderer {
+public:
+  struct Layout {
+    int16_t headerHeight;
+    int16_t headerTextSize;
+    int16_t headerLineYOffset;
+    int16_t mainAreaYOffset;
+    int16_t mainValSize;
+    int16_t mainUnitSize;
+    int16_t subValSize;
+    int16_t subUnitSize;
+    int16_t unitSpacing;
+  };
+
+  static constexpr int16_t DEFAULT_HEADER_HEIGHT        = 12;
+  static constexpr int16_t DEFAULT_HEADER_TEXT_SIZE     = 1;
+  static constexpr int16_t DEFAULT_HEADER_LINE_Y_OFFSET = 2;
+  static constexpr int16_t DEFAULT_MAIN_AREA_Y_OFFSET   = 14;
+  static constexpr int16_t DEFAULT_MAIN_VAL_SIZE        = 3;
+  static constexpr int16_t DEFAULT_MAIN_UNIT_SIZE       = 1;
+  static constexpr int16_t DEFAULT_SUB_VAL_SIZE         = 2;
+  static constexpr int16_t DEFAULT_SUB_UNIT_SIZE        = 1;
+  static constexpr int16_t DEFAULT_UNIT_SPACING         = 4;
+
 private:
-  Frame lastFrame;
-  bool  firstRender = true;
+  const Layout layout;
+  Frame        lastFrame;
+  bool         firstRender = true;
 
 public:
+  Renderer(const Layout &layoutConfig) : layout(layoutConfig) {}
+
   void render(OLED &oled, Frame &frame) {
     if (!firstRender && frame == lastFrame) return;
 
@@ -26,28 +52,29 @@ public:
 
 private:
   void drawHeader(OLED &oled, const Frame &frame) {
-    oled.setTextSize(Config::Renderer::HEADER_TEXT_SIZE);
+    oled.setTextSize(layout.headerTextSize);
     oled.setTextColor(WHITE);
 
     drawTextLeft(oled, 0, frame.header.fixStatus);
     drawTextCenter(oled, 0, frame.header.modeSpeed);
     drawTextRight(oled, 0, frame.header.modeTime);
 
-    int16_t lineY = Config::Renderer::HEADER_HEIGHT - 2;
+    int16_t lineY = layout.headerHeight - layout.headerLineYOffset;
     oled.drawLine(0, lineY, oled.getWidth(), lineY, WHITE);
   }
 
   void drawMainArea(OLED &oled, const Frame &frame) {
-    const int16_t headerH = Config::Renderer::HEADER_HEIGHT;
+    const int16_t headerH = layout.headerHeight;
     const int16_t screenH = oled.getHeight();
 
-    drawItem(oled, frame.main, headerH + 14, 3, 1, false);
-    drawItem(oled, frame.sub, screenH, 2, 1, true);
+    drawItem(oled, frame.main, headerH + layout.mainAreaYOffset, layout.mainValSize,
+             layout.mainUnitSize, false);
+    drawItem(oled, frame.sub, screenH, layout.subValSize, layout.subUnitSize, true);
   }
 
   void drawItem(OLED &oled, const Frame::Item &item, int16_t y, uint8_t valSize, uint8_t unitSize,
                 bool alignBottom) {
-    const int16_t spacing = 4;
+    const int16_t spacing = layout.unitSpacing;
 
     oled.setTextSize(valSize);
     OLED::Rect valRect = oled.getTextBounds(item.value);

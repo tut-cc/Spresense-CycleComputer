@@ -12,9 +12,30 @@ public:
   Odometer    odometer;
   Stopwatch   stopwatch;
 
+  void setTripDistance(float dist) {
+    tripDistance = dist;
+  }
+
+  void setMovingTime(unsigned long ms) {
+    stopwatch.setMovingTime(ms);
+  }
+
+  float getTripDistance() const {
+    return tripDistance;
+  }
+
+  unsigned long getMovingTimeMs() const {
+    return stopwatch.getMovingTimeMs();
+  }
+
 private:
+  float         tripDistance = 0.0f;
   unsigned long lastMillis;
-  bool          hasLastMillis;
+
+  bool hasLastMillis;
+
+  static constexpr float MS_TO_KMH            = 3.6f;
+  static constexpr float MIN_MOVING_SPEED_KMH = 0.001f;
 
 public:
   void begin() {
@@ -22,11 +43,6 @@ public:
   }
 
   void update(const SpNavData &navData, unsigned long currentMillis) {
-    const float rawKmh   = navData.velocity * 60.0f * 60.0f / 1000.0f;
-    const bool  hasFix   = navData.posFixMode != FixInvalid;
-    const bool  isMoving = hasFix && (Config::MIN_MOVING_SPEED_KMH < rawKmh); // GPS ノイズ対策
-    const float speedKmh = isMoving ? rawKmh : 0.0f;
-
     if (!hasLastMillis) {
       lastMillis    = currentMillis;
       hasLastMillis = true;
@@ -36,19 +52,34 @@ public:
     const unsigned long dt = currentMillis - lastMillis;
     lastMillis             = currentMillis;
 
+    // Calculate Speed
+    const float rawKmh   = navData.velocity * MS_TO_KMH;
+    const bool  hasFix   = navData.posFixMode != FixInvalid;
+    const bool  isMoving = hasFix && (MIN_MOVING_SPEED_KMH < rawKmh); // Anti-GPS noise
+    const float speedKmh = isMoving ? rawKmh : 0.0f;
+
+    // Update Time
     stopwatch.update(isMoving, dt);
-    if (hasFix) odometer.update(navData.latitude, navData.longitude, isMoving);
-    speedometer.update(speedKmh, stopwatch.getMovingTimeMs(), odometer.getTotalDistance());
+
+    // Update Distance
+    float deltaKm = 0.0f;
+    if (hasFix) { deltaKm = odometer.update(navData.latitude, navData.longitude, isMoving); }
+    tripDistance += deltaKm;
+
+    // Update Speedometer
+    speedometer.update(speedKmh, stopwatch.getMovingTimeMs(), tripDistance);
   }
 
   void resetTime() {
     stopwatch.resetTotalTime();
+    tripDistance  = 0.0f;
     lastMillis    = 0;
     hasLastMillis = false;
   }
 
   void resetOdometerAndMovingTime() {
     odometer.reset();
+    tripDistance = 0.0f;
     stopwatch.resetMovingTime();
   }
 
@@ -58,6 +89,6 @@ public:
   }
 
   void pause() {
-    stopwatch.pause();
+    stopwatch.togglePause();
   }
 };

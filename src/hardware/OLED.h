@@ -4,8 +4,6 @@
 #include <Adafruit_SSD1306.h>
 #include <Wire.h>
 
-#include "../Config.h"
-
 class OLED {
 public:
   struct Rect {
@@ -16,13 +14,19 @@ public:
   };
 
 private:
+  const int16_t    width;
+  const int16_t    height;
   Adafruit_SSD1306 ssd1306;
 
 public:
-  OLED() : ssd1306(Config::OLED::WIDTH, Config::OLED::HEIGHT, &Wire, -1) {}
+  static constexpr int WIDTH   = 128;
+  static constexpr int HEIGHT  = 64;
+  static constexpr int ADDRESS = 0x3C;
 
-  bool begin() {
-    if (!ssd1306.begin(SSD1306_SWITCHCAPVCC, Config::OLED::ADDRESS)) return false;
+  OLED(int16_t w, int16_t h) : width(w), height(h), ssd1306(w, h, &Wire, -1) {}
+
+  bool begin(uint8_t address) {
+    if (!ssd1306.begin(SSD1306_SWITCHCAPVCC, address)) return false;
     ssd1306.clearDisplay();
     ssd1306.display();
     return true;
@@ -63,10 +67,10 @@ public:
   }
 
   int getWidth() const {
-    return Config::OLED::WIDTH;
+    return width;
   }
 
   int getHeight() const {
-    return Config::OLED::HEIGHT;
+    return height;
   }
 };

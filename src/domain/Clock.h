@@ -2,14 +2,12 @@
 
 #include <GNSS.h>
 
-#include "../Config.h"
-
 class Clock {
 public:
   struct Time {
-    int hour   = 0;
-    int minute = 0;
-    int second = 0;
+    uint8_t hour   = 0;
+    uint8_t minute = 0;
+    uint8_t second = 0;
   };
 
 private:
@@ -19,13 +17,25 @@ private:
 public:
   void update(const SpNavData &navData) {
     year        = navData.time.year;
-    time.hour   = (navData.time.hour + Config::Time::JST_OFFSET + 24) % 24;
+    time.hour   = adjustHour(navData.time.hour, JST_OFFSET);
     time.minute = navData.time.minute;
     time.second = navData.time.sec;
   }
 
+  bool isValid() const {
+    return year >= VALID_YEAR_START;
+  }
+
   Time getTime() const {
-    if (year < Config::Time::VALID_YEAR_START) return Time();
+    if (!isValid()) return Time();
     return time;
+  }
+
+private:
+  static constexpr int JST_OFFSET       = 9;
+  static constexpr int VALID_YEAR_START = 2026;
+
+  static uint8_t adjustHour(int hour_utc, int offset) {
+    return (hour_utc + offset + 24) % 24;
   }
 };

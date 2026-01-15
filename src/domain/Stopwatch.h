@@ -2,26 +2,26 @@
 
 class Stopwatch {
 private:
-  struct Duration {
-    unsigned long movingTimeMs = 0;
-    unsigned long totalTimeMs  = 0;
-  };
-
-  Duration duration;
-  bool     isPaused = false;
+  unsigned long movingTimeMs = 0;
+  unsigned long totalTimeMs  = 0;
+  bool          isPaused     = false;
 
 public:
   void update(bool isMoving, unsigned long dt) {
-    if (isMoving) duration.movingTimeMs += dt;
-    if (!isPaused) duration.totalTimeMs += dt;
+    if (isMoving) movingTimeMs += dt;
+    if (!isPaused) totalTimeMs += dt;
   }
 
   void resetTotalTime() {
-    duration.totalTimeMs = 0;
+    totalTimeMs = 0;
   }
 
   void resetMovingTime() {
-    duration.movingTimeMs = 0;
+    movingTimeMs = 0;
+  }
+
+  void setMovingTime(unsigned long ms) {
+    movingTimeMs = ms;
   }
 
   void reset() {
@@ -29,16 +29,15 @@ public:
     resetMovingTime();
   }
 
-  void pause() {
-    if (isPaused) isPaused = false;
-    else isPaused = true;
+  void togglePause() {
+    isPaused = !isPaused;
   }
 
   unsigned long getMovingTimeMs() const {
-    return duration.movingTimeMs;
+    return movingTimeMs;
   }
 
   unsigned long getElapsedTimeMs() const {
-    return duration.totalTimeMs;
+    return totalTimeMs;
   }
 };
