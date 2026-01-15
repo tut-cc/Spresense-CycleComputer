@@ -22,11 +22,10 @@ public:
   }
 
   void update(const SpNavData &navData, unsigned long currentMillis) {
-    const float rawKmh = navData.velocity * 60.0f * 60.0f / 1000.0f;
-    const float filteredKmh = rawKmh * 0.2f + speedometer.getCur() * 0.8f; // 簡易移動平均フィルタ
-    const bool hasFix = navData.posFixMode != FixInvalid;
-    const bool isMoving = hasFix && (Config::MIN_MOVING_SPEED_KMH < filteredKmh); // GPS ノイズ対策
-    const float speedKmh = isMoving ? filteredKmh : 0.0f;
+    const float rawKmh   = navData.velocity * 60.0f * 60.0f / 1000.0f;
+    const bool  hasFix   = navData.posFixMode != FixInvalid;
+    const bool  isMoving = hasFix && (Config::MIN_MOVING_SPEED_KMH < rawKmh); // GPS ノイズ対策
+    const float speedKmh = isMoving ? rawKmh : 0.0f;
 
     if (!hasLastMillis) {
       lastMillis    = currentMillis;
