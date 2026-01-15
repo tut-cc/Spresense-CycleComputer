@@ -9,26 +9,24 @@
 #include "Mode.h"
 
 struct Frame {
-  char value[32]         = "";
-  char unit[16]          = "";
-  char fixStatus[8]      = "";
-  char satelliteCount[8] = "";
-  char footerTime[16]    = "";
-  char footerMode[16]    = "";
+  char value[32]      = "";
+  char unit[16]       = "";
+  char fixStatus[8]   = "";
+  char footerTime[16] = "";
+  char footerMode[16] = "";
 
   Frame() = default;
 
   bool operator==(Frame &other) const {
-    const bool valueEq          = strcmp(value, other.value) == 0;
-    const bool unitEq           = strcmp(unit, other.unit) == 0;
-    const bool fixStatusEq      = strcmp(fixStatus, other.fixStatus) == 0;
-    const bool satelliteCountEq = strcmp(satelliteCount, other.satelliteCount) == 0;
-    const bool footerTimeEq     = strcmp(footerTime, other.footerTime) == 0;
-    const bool footerModeEq     = strcmp(footerMode, other.footerMode) == 0;
-    return valueEq && unitEq && fixStatusEq && satelliteCountEq && footerTimeEq && footerModeEq;
+    const bool valueEq      = strcmp(value, other.value) == 0;
+    const bool unitEq       = strcmp(unit, other.unit) == 0;
+    const bool fixStatusEq  = strcmp(fixStatus, other.fixStatus) == 0;
+    const bool footerTimeEq = strcmp(footerTime, other.footerTime) == 0;
+    const bool footerModeEq = strcmp(footerMode, other.footerMode) == 0;
+    return valueEq && unitEq && fixStatusEq && footerTimeEq && footerModeEq;
   }
 
-  Frame(Trip &trip, Clock &clock, Mode::ID modeId, SpFixMode fixMode, int numSatellites) {
+  Frame(Trip &trip, Clock &clock, Mode::ID modeId, SpFixMode fixMode) {
     getModeData(trip, clock, modeId);
 
     switch (fixMode) {
@@ -46,7 +44,6 @@ struct Frame {
       break;
     }
 
-    snprintf(satelliteCount, sizeof(satelliteCount), "St:%d", numSatellites);
     Formatter::formatTime(clock.getTime(), footerTime, sizeof(footerTime));
   }
 

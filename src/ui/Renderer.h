@@ -30,7 +30,6 @@ private:
     oled.setTextSize(Config::Renderer::HEADER_TEXT_SIZE);
     oled.setTextColor(WHITE);
     drawTextLeft(oled, 0, frame.fixStatus);
-    drawTextRight(oled, 0, frame.satelliteCount);
 
     int16_t lineY = Config::Renderer::HEADER_HEIGHT - 2;
     oled.drawLine(0, lineY, oled.getWidth(), lineY, WHITE);

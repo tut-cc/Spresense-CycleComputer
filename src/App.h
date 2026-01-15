@@ -36,7 +36,7 @@ public:
     trip.update(navData, millis());
     clock.update(navData);
 
-    Frame frame(trip, clock, mode.get(), (SpFixMode)navData.posFixMode, navData.numSatellites);
+    Frame frame(trip, clock, mode.get(), (SpFixMode)navData.posFixMode);
     renderer.render(oled, frame);
   }
 
