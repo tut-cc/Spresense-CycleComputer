@@ -1,20 +1,41 @@
 #pragma once
 
+#include "../domain/DataStore.h"
+#include "../domain/Trip.h"
+
+#include "ConcreteModes.h"
+
 class Mode {
-public:
-  enum class ID { SPD_TIME, AVG_ODO, MAX_CLOCK, Count };
-
 private:
-  ID currentID = ID::SPD_TIME;
+  SpdTimeState  spdTimeState;
+  AvgOdoState   avgOdoState;
+  MaxClockState maxClockState;
+
+  ModeState *currentState;
+
+  // We use an internal index just for next() logic simplicity, or a circular linked list approach.
+  // Simple approach: Array of pointers
+  ModeState *states[3];
+  int        currentIndex = 0;
 
 public:
-  void next() {
-    auto nextVal = static_cast<int>(currentID) + 1;
-    if (nextVal >= static_cast<int>(ID::Count)) nextVal = 0;
-    currentID = static_cast<ID>(nextVal);
+  Mode() : currentState(&spdTimeState) {
+    states[0] = &spdTimeState;
+    states[1] = &avgOdoState;
+    states[2] = &maxClockState;
   }
 
-  ID get() const {
-    return currentID;
+  void next() {
+    currentIndex++;
+    if (currentIndex >= 3) currentIndex = 0;
+    currentState = states[currentIndex];
+  }
+
+  ModeState *getCurrentState() const {
+    return currentState;
+  }
+
+  void reset(Trip &trip, DataStore &dataStore) {
+    currentState->reset(trip, dataStore);
   }
 };

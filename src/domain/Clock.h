@@ -1,6 +1,6 @@
 #pragma once
 
-#include <GNSS.h>
+#include "NavData.h"
 
 class Clock {
 public:
@@ -15,11 +15,11 @@ private:
   int  year = 0;
 
 public:
-  void update(const SpNavData &navData) {
+  void update(const NavData &navData) {
     year        = navData.time.year;
     time.hour   = adjustHour(navData.time.hour, JST_OFFSET);
     time.minute = navData.time.minute;
-    time.second = navData.time.sec;
+    time.second = navData.time.second;
   }
 
   bool isValid() const {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <GNSS.h>
+#include "NavData.h"
 
 #include "Odometer.h"
 #include "Speedometer.h"
@@ -42,7 +42,7 @@ public:
     reset();
   }
 
-  void update(const SpNavData &navData, unsigned long currentMillis) {
+  void update(const NavData &navData, unsigned long currentMillis) {
     if (!hasLastMillis) {
       lastMillis    = currentMillis;
       hasLastMillis = true;
@@ -54,7 +54,7 @@ public:
 
     // Calculate Speed
     const float rawKmh   = navData.velocity * MS_TO_KMH;
-    const bool  hasFix   = navData.posFixMode != FixInvalid;
+    const bool  hasFix   = navData.fixType != FixType::NoFix;
     const bool  isMoving = hasFix && (MIN_MOVING_SPEED_KMH < rawKmh); // Anti-GPS noise
     const float speedKmh = isMoving ? rawKmh : 0.0f;
 

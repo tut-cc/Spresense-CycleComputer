@@ -3,6 +3,7 @@
 #include <stddef.h>
 
 #include "Config.h"
+#include "domain/AutoSaver.h"
 #include "domain/Clock.h"
 #include "domain/DataStore.h"
 #include "domain/Trip.h"
@@ -25,7 +26,7 @@ private:
   Renderer  renderer;
   DataStore dataStore;
 
-  unsigned long lastSaveMillis = 0;
+  AutoSaver autoSaver;
 
 public:
   App()
@@ -40,7 +41,8 @@ public:
             .subValSize        = Renderer::DEFAULT_SUB_VAL_SIZE,
             .subUnitSize       = Renderer::DEFAULT_SUB_UNIT_SIZE,
             .unitSpacing       = Renderer::DEFAULT_UNIT_SPACING,
-        }) {}
+        }),
+        autoSaver(dataStore, trip) {}
 
   void begin() {
     oled.begin(OLED::ADDRESS);
@@ -54,31 +56,21 @@ public:
     trip.setTripDistance(savedData.tripDistance);
     trip.setMovingTime(savedData.movingTimeMs);
 
-    lastSaveMillis = millis();
+    autoSaver.begin();
   }
 
   void update() {
     handleInput();
 
     gnss.update();
-    const SpNavData &navData = gnss.getNavData();
+    const NavData navData = gnss.getNavData();
 
     trip.update(navData, millis());
     clock.update(navData);
 
-    // Auto save logic
-    const unsigned long currentMillis = millis();
-    if (currentMillis - lastSaveMillis > DataStore::SAVE_INTERVAL_MS) {
-      AppData currentData;
-      currentData.totalDistance = trip.odometer.getTotalDistance();
-      currentData.tripDistance  = trip.getTripDistance();
-      currentData.movingTimeMs  = trip.getMovingTimeMs();
+    autoSaver.update(millis());
 
-      dataStore.save(currentData);
-      lastSaveMillis = currentMillis;
-    }
-
-    Frame frame = FrameBuilder::build(trip, clock, mode.get(), (SpFixMode)navData.posFixMode);
+    Frame frame = FrameBuilder::build(trip, clock, *mode.getCurrentState(), navData.fixType);
     renderer.render(oled, frame);
   }
 
@@ -92,17 +84,7 @@ private:
       trip.pause();
       return;
     case Input::ID::RESET:
-      switch (mode.get()) {
-      case Mode::ID::SPD_TIME:
-        trip.resetTime();
-        break;
-      case Mode::ID::AVG_ODO:
-        // Resetting ODO also clears storage
-        dataStore.clear();
-        break;
-      default:
-        break;
-      }
+      mode.reset(trip, dataStore);
       return;
     case Input::ID::NONE:
       return;
