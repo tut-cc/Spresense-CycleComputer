@@ -9,21 +9,21 @@
 #include "Mode.h"
 
 struct Frame {
-  char value[32]      = "";
-  char unit[16]       = "";
-  char fixStatus[8]   = "";
-  char footerTime[16] = "";
-  char footerMode[16] = "";
+  char mainValue[16] = "";
+  char mainUnit[16]  = "";
+  char subValue[16]  = "";
+  char subUnit[16]   = "";
+  char fixStatus[8]  = "";
 
   Frame() = default;
 
   bool operator==(Frame &other) const {
-    const bool valueEq      = strcmp(value, other.value) == 0;
-    const bool unitEq       = strcmp(unit, other.unit) == 0;
-    const bool fixStatusEq  = strcmp(fixStatus, other.fixStatus) == 0;
-    const bool footerTimeEq = strcmp(footerTime, other.footerTime) == 0;
-    const bool footerModeEq = strcmp(footerMode, other.footerMode) == 0;
-    return valueEq && unitEq && fixStatusEq && footerTimeEq && footerModeEq;
+    const bool mainValueEq = strcmp(mainValue, other.mainValue) == 0;
+    const bool mainUnitEq  = strcmp(mainUnit, other.mainUnit) == 0;
+    const bool subValueEq  = strcmp(subValue, other.subValue) == 0;
+    const bool subUnitEq   = strcmp(subUnit, other.subUnit) == 0;
+    const bool fixStatusEq = strcmp(fixStatus, other.fixStatus) == 0;
+    return mainValueEq && mainUnitEq && subValueEq && subUnitEq && fixStatusEq;
   }
 
   Frame(Trip &trip, Clock &clock, Mode::ID modeId, SpFixMode fixMode) {
@@ -43,52 +43,34 @@ struct Frame {
       strcpy(fixStatus, "");
       break;
     }
-
-    Formatter::formatTime(clock.getTime(), footerTime, sizeof(footerTime));
   }
 
 private:
   void getModeData(Trip &trip, Clock &clock, Mode::ID modeId) {
     switch (modeId) {
-    case Mode::ID::SPEED:
-      Formatter::formatSpeed(trip.speedometer.getCur(), value, sizeof(value));
-      strcpy(unit, "km/h");
-      strcpy(footerMode, "SPEED");
+    case Mode::ID::SPEED_TIME:
+      Formatter::formatSpeed(trip.speedometer.getCur(), mainValue, sizeof(mainValue));
+      strcpy(mainUnit, "km/h");
+      Formatter::formatDuration(trip.stopwatch.getElapsedTimeMs(), subValue, sizeof(subValue));
+      strcpy(subUnit, "");
       break;
-    case Mode::ID::MAX_SPEED:
-      Formatter::formatSpeed(trip.speedometer.getMax(), value, sizeof(value));
-      strcpy(unit, "km/h");
-      strcpy(footerMode, "MAX SPEED");
+    case Mode::ID::AVG_ODO:
+      Formatter::formatSpeed(trip.speedometer.getAvg(), mainValue, sizeof(mainValue));
+      strcpy(mainUnit, "km/h");
+      Formatter::formatDistance(trip.odometer.getTotalDistance(), subValue, sizeof(subValue));
+      strcpy(subUnit, "km");
       break;
-    case Mode::ID::AVG_SPEED:
-      Formatter::formatSpeed(trip.speedometer.getAvg(), value, sizeof(value));
-      strcpy(unit, "km/h");
-      strcpy(footerMode, "AVG SPEED");
-      break;
-    case Mode::ID::DISTANCE:
-      Formatter::formatDistance(trip.odometer.getTotalDistance(), value, sizeof(value));
-      strcpy(unit, "km");
-      strcpy(footerMode, "DISTANCE");
-      break;
-    case Mode::ID::TIME:
-      Formatter::formatTime(clock.getTime(), value, sizeof(value));
-      strcpy(unit, "");
-      strcpy(footerMode, "TIME");
-      break;
-    case Mode::ID::MOVING_TIME:
-      Formatter::formatDuration(trip.stopwatch.getMovingTimeMs(), value, sizeof(value));
-      strcpy(unit, "");
-      strcpy(footerMode, "TRIP TIME");
-      break;
-    case Mode::ID::ELAPSED_TIME:
-      Formatter::formatDuration(trip.stopwatch.getElapsedTimeMs(), value, sizeof(value));
-      strcpy(unit, "");
-      strcpy(footerMode, "ELAPSED TIME");
+    case Mode::ID::MAX_CLOCK:
+      Formatter::formatSpeed(trip.speedometer.getMax(), mainValue, sizeof(mainValue));
+      strcpy(mainUnit, "km/h");
+      Formatter::formatTime(clock.getTime(), subValue, sizeof(subValue));
+      strcpy(subUnit, "");
       break;
     default:
-      strcpy(value, "ERROR");
-      strcpy(unit, "");
-      strcpy(footerMode, "ERROR");
+      strcpy(mainValue, "ERROR");
+      strcpy(mainUnit, "");
+      strcpy(subValue, "");
+      strcpy(subUnit, "");
       break;
     }
   }
