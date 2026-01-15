@@ -49,7 +49,7 @@ private:
     case Input::ID::PAUSE:
       trip.pause();
       return;
-    case Input::ID::BOTH:
+    case Input::ID::RESET:
       trip.reset();
       return;
     case Input::ID::NONE:
