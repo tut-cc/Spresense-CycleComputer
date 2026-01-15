@@ -41,10 +41,20 @@ public:
     speedometer.update(speedKmh, stopwatch.getMovingTimeMs(), odometer.getTotalDistance());
   }
 
-  void reset() {
-    stopwatch.reset();
+  void resetTime() {
+    stopwatch.resetTotalTime();
     lastMillis    = 0;
     hasLastMillis = false;
+  }
+
+  void resetOdometerAndMovingTime() {
+    odometer.reset();
+    stopwatch.resetMovingTime();
+  }
+
+  void reset() {
+    resetTime();
+    resetOdometerAndMovingTime();
   }
 
   void pause() {

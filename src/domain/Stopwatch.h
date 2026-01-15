@@ -16,8 +16,17 @@ public:
     if (!isPaused) duration.totalTimeMs += dt;
   }
 
-  void reset() {
+  void resetTotalTime() {
     duration.totalTimeMs = 0;
+  }
+
+  void resetMovingTime() {
+    duration.movingTimeMs = 0;
+  }
+
+  void reset() {
+    resetTotalTime();
+    resetMovingTime();
   }
 
   void pause() {

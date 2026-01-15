@@ -2,10 +2,10 @@
 
 class Mode {
 public:
-  enum class ID { SPEED_TIME, AVG_ODO, MAX_CLOCK, Count };
+  enum class ID { SPD_TIME, AVG_ODO, MAX_CLOCK, Count };
 
 private:
-  ID currentID = ID::SPEED_TIME;
+  ID currentID = ID::SPD_TIME;
 
 public:
   void next() {

@@ -50,7 +50,16 @@ private:
       trip.pause();
       return;
     case Input::ID::RESET:
-      trip.reset();
+      switch (mode.get()) {
+      case Mode::ID::SPD_TIME:
+        trip.resetTime();
+        break;
+      case Mode::ID::AVG_ODO:
+        trip.resetOdometerAndMovingTime();
+        break;
+      default:
+        break;
+      }
       return;
     case Input::ID::NONE:
       return;

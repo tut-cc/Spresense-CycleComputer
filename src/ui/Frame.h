@@ -63,7 +63,7 @@ struct Frame {
 private:
   void getModeData(Trip &trip, Clock &clock, Mode::ID modeId) {
     switch (modeId) {
-    case Mode::ID::SPEED_TIME:
+    case Mode::ID::SPD_TIME:
       strcpy(header.modeSpeed, "SPD");
       strcpy(header.modeTime, "Time");
       Formatter::formatSpeed(trip.speedometer.getCur(), main.value, sizeof(main.value));
