@@ -4,7 +4,7 @@
 
 namespace Config {
 
-constexpr unsigned long DEBOUNCE_DELAY             = 50;
+constexpr unsigned long DEBOUNCE_DELAY_MS          = 50;
 constexpr unsigned long DISPLAY_UPDATE_INTERVAL_MS = 100;
 
 namespace Time {
@@ -33,10 +33,7 @@ constexpr int ADDRESS = 0x3C;
 namespace Renderer {
 
 constexpr int16_t HEADER_HEIGHT    = 12;
-constexpr int16_t FOOTER_HEIGHT    = 12;
-constexpr int16_t MAIN_TEXT_SIZE   = 4;
 constexpr int16_t HEADER_TEXT_SIZE = 1;
-constexpr int16_t FOOTER_TEXT_SIZE = 1;
 
 } // namespace Renderer
 

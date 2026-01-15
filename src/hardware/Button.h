@@ -48,6 +48,6 @@ private:
   }
 
   bool hasDebounceTimePassed() const {
-    return Config::DEBOUNCE_DELAY < (millis() - lastDebounceTime);
+    return Config::DEBOUNCE_DELAY_MS < (millis() - lastDebounceTime);
   }
 };
