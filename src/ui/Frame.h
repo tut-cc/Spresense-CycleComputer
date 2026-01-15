@@ -88,6 +88,11 @@ private:
       strcpy(unit, "");
       strcpy(footerMode, "ELAPSED TIME");
       break;
+    default:
+      strcpy(value, "ERROR");
+      strcpy(unit, "");
+      strcpy(footerMode, "ERROR");
+      break;
     }
   }
 };

@@ -32,9 +32,22 @@ constexpr int ADDRESS = 0x3C;
 
 namespace Renderer {
 
-constexpr int16_t HEADER_HEIGHT = 12;
-constexpr int16_t FOOTER_HEIGHT = 12;
+constexpr int16_t HEADER_HEIGHT    = 12;
+constexpr int16_t FOOTER_HEIGHT    = 12;
+constexpr int16_t MAIN_TEXT_SIZE   = 4;
+constexpr int16_t HEADER_TEXT_SIZE = 1;
+constexpr int16_t FOOTER_TEXT_SIZE = 1;
 
 } // namespace Renderer
+
+constexpr float MIN_MOVING_SPEED_KMH = 0.001f;
+
+namespace Odometer {
+
+constexpr float MIN_ABS   = 1e-6f;
+constexpr float MIN_DELTA = 0.002f;
+constexpr float MAX_DELTA = 1.0f;
+
+} // namespace Odometer
 
 } // namespace Config

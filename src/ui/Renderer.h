@@ -27,13 +27,13 @@ public:
 
 private:
   void drawHeader(OLED &oled, const Frame &frame) {
-    oled.setTextSize(1);
-    oled.setTextColor(1);
+    oled.setTextSize(Config::Renderer::HEADER_TEXT_SIZE);
+    oled.setTextColor(WHITE);
     drawTextLeft(oled, 0, frame.fixStatus);
     drawTextRight(oled, 0, frame.satelliteCount);
 
     int16_t lineY = Config::Renderer::HEADER_HEIGHT - 2;
-    oled.drawLine(0, lineY, oled.getWidth(), lineY, 1);
+    oled.drawLine(0, lineY, oled.getWidth(), lineY, WHITE);
   }
 
   void drawMainArea(OLED &oled, const Frame &frame) {
@@ -41,24 +41,24 @@ private:
     int16_t contentY   = oled.getHeight() - Config::Renderer::FOOTER_HEIGHT;
     int16_t centerY    = (contentY + contentTop) / 2;
 
-    oled.setTextSize(4);
-    oled.setTextColor(1);
+    oled.setTextSize(Config::Renderer::MAIN_TEXT_SIZE);
+    oled.setTextColor(WHITE);
     drawTextCenter(oled, centerY, frame.value);
   }
 
   void drawFooter(OLED &oled, const Frame &frame) {
     int16_t lineY = oled.getHeight() - Config::Renderer::FOOTER_HEIGHT;
-    oled.drawLine(0, lineY, oled.getWidth(), lineY, 1);
+    oled.drawLine(0, lineY, oled.getWidth(), lineY, WHITE);
 
     int16_t textY = lineY + (Config::Renderer::FOOTER_HEIGHT / 2) - 3;
 
-    oled.setTextSize(1);
-    oled.setTextColor(1);
+    oled.setTextSize(Config::Renderer::FOOTER_TEXT_SIZE);
+    oled.setTextColor(WHITE);
     drawTextRight(oled, textY, frame.footerTime);
 
     // Draw mode and optionally unit
     drawTextLeft(oled, textY, frame.footerMode);
-    if (strlen(frame.unit) > 0) {
+    if (0 < strlen(frame.unit)) {
       oled.print(" ");
       oled.print(frame.unit);
     }

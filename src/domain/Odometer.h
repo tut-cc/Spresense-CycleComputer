@@ -2,31 +2,32 @@
 
 #include <math.h>
 
-#ifndef PI
-#define PI 3.1415926535897932384626433832795f
-#endif
+#include "../Config.h"
 
 class Odometer {
 private:
-  float totalKm     = 0.0f;
-  float lastLat     = 0.0f;
-  float lastLon     = 0.0f;
-  bool  initialized = false;
+  float totalKm      = 0.0f;
+  float lastLat      = 0.0f;
+  float lastLon      = 0.0f;
+  bool  hasLastCoord = false;
 
 public:
   void update(float lat, float lon, bool isMoving) {
-    if (fabsf(lat) < 1e-6f && fabsf(lon) < 1e-6f) return; // 無効な値を避ける
+    if (fabsf(lat) < Config::Odometer::MIN_ABS && fabsf(lon) < Config::Odometer::MIN_ABS) {
+      return; // 無効な値を避ける
+    }
 
-    if (!initialized) {
-      lastLat     = lat;
-      lastLon     = lon;
-      initialized = true;
+    if (!hasLastCoord) {
+      lastLat      = lat;
+      lastLon      = lon;
+      hasLastCoord = true;
       return;
     }
 
     if (isMoving) {
       const float deltaKm = planarDistanceKm(lastLat, lastLon, lat, lon);
-      if (0.001f < deltaKm && deltaKm < 1.0f) { // GPS ノイズ対策
+      if (Config::Odometer::MIN_DELTA < deltaKm &&
+          deltaKm < Config::Odometer::MAX_DELTA) { // GPS ノイズ対策
         totalKm += deltaKm;
       }
     }
@@ -36,10 +37,10 @@ public:
   }
 
   void reset() {
-    totalKm     = 0.0f;
-    lastLat     = 0.0f;
-    lastLon     = 0.0f;
-    initialized = false;
+    totalKm      = 0.0f;
+    lastLat      = 0.0f;
+    lastLon      = 0.0f;
+    hasLastCoord = false;
   }
 
   float getTotalDistance() const {
