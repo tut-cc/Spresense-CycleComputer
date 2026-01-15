@@ -14,6 +14,8 @@ struct Frame {
   char subValue[16]  = "";
   char subUnit[16]   = "";
   char fixStatus[8]  = "";
+  char modeLabel[8]  = "";
+  char modeTime[8]  = "";
 
   Frame() = default;
 
@@ -23,7 +25,9 @@ struct Frame {
     const bool subValueEq  = strcmp(subValue, other.subValue) == 0;
     const bool subUnitEq   = strcmp(subUnit, other.subUnit) == 0;
     const bool fixStatusEq = strcmp(fixStatus, other.fixStatus) == 0;
-    return mainValueEq && mainUnitEq && subValueEq && subUnitEq && fixStatusEq;
+    const bool modeLabelEq = strcmp(modeLabel, other.modeLabel) == 0;
+    const bool modeTimeEq = strcmp(modeTime, other.modeTime) == 0;
+    return mainValueEq && mainUnitEq && subValueEq && subUnitEq && fixStatusEq && modeLabelEq && modeTimeEq;
   }
 
   Frame(Trip &trip, Clock &clock, Mode::ID modeId, SpFixMode fixMode) {
@@ -49,18 +53,25 @@ private:
   void getModeData(Trip &trip, Clock &clock, Mode::ID modeId) {
     switch (modeId) {
     case Mode::ID::SPEED_TIME:
+
+      strcpy(modeLabel, "SPD");
+      strcpy(modeTime, "Time");
       Formatter::formatSpeed(trip.speedometer.getCur(), mainValue, sizeof(mainValue));
       strcpy(mainUnit, "km/h");
       Formatter::formatDuration(trip.stopwatch.getElapsedTimeMs(), subValue, sizeof(subValue));
       strcpy(subUnit, "");
       break;
     case Mode::ID::AVG_ODO:
+      strcpy(modeLabel, "AVG");
+      strcpy(modeTime, "Odo");
       Formatter::formatSpeed(trip.speedometer.getAvg(), mainValue, sizeof(mainValue));
       strcpy(mainUnit, "km/h");
       Formatter::formatDistance(trip.odometer.getTotalDistance(), subValue, sizeof(subValue));
       strcpy(subUnit, "km");
       break;
     case Mode::ID::MAX_CLOCK:
+      strcpy(modeLabel, "MAX");
+      strcpy(modeTime, "Clock");
       Formatter::formatSpeed(trip.speedometer.getMax(), mainValue, sizeof(mainValue));
       strcpy(mainUnit, "km/h");
       Formatter::formatTime(clock.getTime(), subValue, sizeof(subValue));

@@ -30,6 +30,10 @@ private:
     oled.setTextColor(WHITE);
     drawTextLeft(oled, 0, frame.fixStatus);
 
+    drawTextCenter(oled, 0, frame.modeLabel);
+
+    drawTextRight(oled, 0, frame.modeTime);
+
     int16_t lineY = Config::Renderer::HEADER_HEIGHT - 2;
     oled.drawLine(0, lineY, oled.getWidth(), lineY, WHITE);
   }
@@ -109,7 +113,8 @@ private:
 
   void drawTextCenter(OLED &oled, int16_t y, const char *text) {
     OLED::Rect rect = oled.getTextBounds(text);
-    oled.setCursor((oled.getWidth() - rect.w) / 2, y - rect.h / 2);
+    // oled.setCursor((oled.getWidth() - rect.w) / 2, y - rect.h / 2);
+    oled.setCursor((oled.getWidth() - rect.w) / 2, y );
     oled.print(text);
   }
 };
