@@ -8,15 +8,21 @@ private:
   };
 
   Duration duration;
+  bool     isPaused = false;
 
 public:
   void update(bool isMoving, unsigned long dt) {
     if (isMoving) duration.movingTimeMs += dt;
-    duration.totalTimeMs += dt;
+    if (!isPaused) duration.totalTimeMs += dt;
   }
 
   void reset() {
-    duration = {};
+    duration.totalTimeMs = 0;
+  }
+
+  void pause() {
+    if (isPaused) isPaused = false;
+    else isPaused = true;
   }
 
   unsigned long getMovingTimeMs() const {

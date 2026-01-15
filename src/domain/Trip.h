@@ -43,10 +43,12 @@ public:
   }
 
   void reset() {
-    speedometer.reset();
-    odometer.reset();
     stopwatch.reset();
     lastMillis    = 0;
     hasLastMillis = false;
+  }
+
+  void pause() {
+    stopwatch.pause();
   }
 };

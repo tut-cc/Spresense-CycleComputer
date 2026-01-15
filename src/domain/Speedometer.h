@@ -17,10 +17,6 @@ public:
     if (0 < movingTimeMs) speed.avgKmh = totalKm / (movingTimeMs / (60.0f * 60.0f * 1000.0f));
   }
 
-  void reset() {
-    speed = {};
-  }
-
   float getCur() const {
     return speed.curKmh;
   }
