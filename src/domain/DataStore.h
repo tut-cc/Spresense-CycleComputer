@@ -8,18 +8,26 @@ struct AppData {
   float         totalDistance;
   float         tripDistance;
   unsigned long movingTimeMs;
+  float         maxSpeed;
   float         batteryVoltage;
+
+  bool operator==(const AppData &other) const {
+    return totalDistance == other.totalDistance && tripDistance == other.tripDistance &&
+           movingTimeMs == other.movingTimeMs && maxSpeed == other.maxSpeed &&
+           batteryVoltage == other.batteryVoltage;
+  }
+
+  bool operator!=(const AppData &other) const {
+    return !(*this == other);
+  }
 };
 
 class DataStore {
 private:
   struct SaveData {
-    float         totalDistance;
-    float         tripDistance;
-    unsigned long movingTimeMs;
-    float         batteryVoltage;
-    uint32_t      magic;
-    uint32_t      crc;
+    uint32_t magic;
+    AppData  data;
+    uint32_t crc;
   };
 
   SaveData lastSavedData;
@@ -53,9 +61,9 @@ private:
   bool isValid(const SaveData &data, uint32_t calculatedCrc) const {
     if (calculatedCrc != data.crc) return false;
     if (data.magic != MAGIC_NUMBER) return false;
-    if (isnan(data.totalDistance)) return false;
-    if (data.totalDistance < 0.0f) return false;
-    if (data.totalDistance > MAX_VALID_KM) return false;
+    if (isnan(data.data.totalDistance)) return false;
+    if (data.data.totalDistance < 0.0f) return false;
+    if (data.data.totalDistance > MAX_VALID_KM) return false;
     return true;
   }
 
@@ -66,47 +74,47 @@ public:
 
     const uint32_t calculatedCrc = calculateDataCRC(savedData);
 
-    if (!isValid(savedData, calculatedCrc)) {
-      savedData     = {0.0f, 0.0f, 0, 0.0f, MAGIC_NUMBER, 0};
-      savedData.crc = calculateDataCRC(savedData);
+    if (isValid(savedData, calculatedCrc)) {
+      lastSavedData = savedData;
+      return savedData.data;
+    } else {
+      AppData defaultData = {0.0f, 0.0f, 0, 0.0f, 0.0f};
+
+      lastSavedData.magic = MAGIC_NUMBER;
+      lastSavedData.data  = defaultData;
+      lastSavedData.crc   = calculateDataCRC(lastSavedData);
+
+      return defaultData;
     }
-
-    lastSavedData = savedData;
-
-    return {savedData.totalDistance, savedData.tripDistance, savedData.movingTimeMs,
-            savedData.batteryVoltage};
   }
 
   void save(const AppData &currentAppData) {
+    if (lastSavedData.magic == MAGIC_NUMBER && lastSavedData.data == currentAppData) { return; }
+
     SaveData currentData;
-    currentData.totalDistance  = currentAppData.totalDistance;
-    currentData.tripDistance   = currentAppData.tripDistance;
-    currentData.movingTimeMs   = currentAppData.movingTimeMs;
-    currentData.batteryVoltage = currentAppData.batteryVoltage;
-    currentData.magic          = MAGIC_NUMBER;
-    currentData.crc            = calculateDataCRC(currentData);
+    currentData.magic = MAGIC_NUMBER;
+    currentData.data  = currentAppData;
+    currentData.crc   = calculateDataCRC(currentData);
 
-    if (currentData.totalDistance != lastSavedData.totalDistance ||
-        currentData.tripDistance != lastSavedData.tripDistance ||
-        currentData.movingTimeMs != lastSavedData.movingTimeMs ||
-        currentData.batteryVoltage != lastSavedData.batteryVoltage) {
+    uint32_t  invalidMagic = 0;
+    const int magicAddr    = EEPROM_ADDR + offsetof(SaveData, magic);
+    EEPROM.put(magicAddr, invalidMagic);
 
-      uint32_t  invalidMagic = 0;
-      const int magicAddr    = EEPROM_ADDR + offsetof(SaveData, magic);
-      EEPROM.put(magicAddr, invalidMagic);
+    EEPROM.put(EEPROM_ADDR, currentData);
 
-      EEPROM.put(EEPROM_ADDR, currentData);
-
-      lastSavedData = currentData;
-    }
+    lastSavedData = currentData;
   }
 
   void clear() {
     const int magicAddr = EEPROM_ADDR + offsetof(SaveData, magic);
     EEPROM.put(magicAddr, (uint32_t)0);
 
-    SaveData cleanData = {0.0f, 0.0f, 0, 0.0f, MAGIC_NUMBER, 0};
-    cleanData.crc      = calculateDataCRC(cleanData);
+    AppData  cleanAppData = {0.0f, 0.0f, 0, 0.0f, 0.0f};
+    SaveData cleanData;
+    cleanData.magic = MAGIC_NUMBER;
+    cleanData.data  = cleanAppData;
+    cleanData.crc   = calculateDataCRC(cleanData);
+
     EEPROM.put(EEPROM_ADDR, cleanData);
 
     lastSavedData = cleanData;

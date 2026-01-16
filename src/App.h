@@ -14,86 +14,79 @@
 #include "ui/Mode.h"
 #include "ui/Renderer.h"
 
-class App {
+class VoltageMonitor {
 private:
-  OLED          oled;
-  Input         input;
-  Gnss          gnss;
-  Mode          mode;
-  Trip          trip;
-  Clock         clock;
-  Renderer      renderer;
-  DataStore     dataStore;
   VoltageSensor voltageSensor;
-  unsigned long lastSaveMillis = 0;
 
 public:
-  App()
-      : oled(OLED::WIDTH, OLED::HEIGHT), input(Pin::BTN_A, Pin::BTN_B),
-        voltageSensor(Pin::VOLTAGE_PIN) {}
+  VoltageMonitor() : voltageSensor(Pin::VOLTAGE_PIN) {}
 
   void begin() {
-    oled.begin(OLED::ADDRESS);
-    input.begin();
-    gnss.begin();
-    trip.begin();
     voltageSensor.begin();
     pinMode(Pin::WARN_LED, OUTPUT);
-
-    AppData savedData = dataStore.load();
-
-    trip.restore(savedData.totalDistance, savedData.tripDistance, savedData.movingTimeMs);
-
-    lastSaveMillis = millis();
   }
 
-  void update() {
-    handleInput();
-
-    gnss.update();
-    const NavData navData = gnss.getNavData();
-
-    trip.update(navData, millis());
-    clock.update(navData);
-
+  float update() {
     const float currentVoltage = voltageSensor.readVoltage();
     if (currentVoltage <= Battery::LOW_VOLTAGE_THRESHOLD) {
       digitalWrite(Pin::WARN_LED, HIGH);
     } else {
       digitalWrite(Pin::WARN_LED, LOW);
     }
+    return currentVoltage;
+  }
+};
 
-    if (millis() - lastSaveMillis > DataStore::SAVE_INTERVAL_MS) {
+class DataPersistence {
+private:
+  DataStore    &dataStore;
+  Trip         &trip;
+  unsigned long lastSaveMillis = 0;
+
+public:
+  DataPersistence(DataStore &ds, Trip &t) : dataStore(ds), trip(t) {}
+
+  void load() {
+    AppData savedData = dataStore.load();
+    trip.restore(savedData.totalDistance, savedData.tripDistance, savedData.movingTimeMs,
+                 savedData.maxSpeed);
+    lastSaveMillis = millis();
+  }
+
+  void update(bool isGnssUpdated, float currentVoltage) {
+    if ((millis() - lastSaveMillis > DataStore::SAVE_INTERVAL_MS) && !isGnssUpdated) {
       AppData currentData;
       currentData.totalDistance  = trip.getTotalDistance();
       currentData.tripDistance   = trip.getTripDistance();
-      currentData.movingTimeMs   = trip.getMovingTimeMs();
+      currentData.movingTimeMs   = trip.getTotalMovingTimeMs();
+      currentData.maxSpeed       = trip.getMaxSpeed();
       currentData.batteryVoltage = currentVoltage;
 
       dataStore.save(currentData);
       lastSaveMillis = millis();
     }
-
-    Frame frame = createFrame(navData);
-    renderer.render(oled, frame);
   }
+};
 
+class UserInterface {
 private:
-  Frame createFrame(const NavData &navData) const {
+  OLED     oled;
+  Input    input;
+  Mode     mode;
+  Renderer renderer;
+
+  Frame createFrame(const SpNavData &navData, const Trip &trip, const Clock &clock) const {
     Frame frame;
 
-    switch (navData.fixType) {
-    case FixType::NoFix:
-      strcpy(frame.header.fixStatus, "WAIT");
-      break;
-    case FixType::Fix2D:
+    switch (navData.posFixMode) {
+    case Fix2D:
       strcpy(frame.header.fixStatus, "2D");
       break;
-    case FixType::Fix3D:
+    case Fix3D:
       strcpy(frame.header.fixStatus, "3D");
       break;
     default:
-      strcpy(frame.header.fixStatus, "");
+      strcpy(frame.header.fixStatus, "WAIT");
       break;
     }
 
@@ -102,8 +95,60 @@ private:
     return frame;
   }
 
-  void handleInput() {
+public:
+  UserInterface() : oled(OLED::WIDTH, OLED::HEIGHT), input(Pin::BTN_A, Pin::BTN_B) {}
+
+  void begin() {
+    oled.begin(OLED::ADDRESS);
+    input.begin();
+  }
+
+  void update(Trip &trip, DataStore &dataStore, const Clock &clock, const SpNavData &navData) {
     Input::ID id = input.update();
+
+    if (id == Input::ID::RESET_LONG) {
+      oled.restart();
+      renderer.reset();
+    }
+
     if (id != Input::ID::NONE) { mode.handleInput(id, trip, dataStore); }
+
+    Frame frame = createFrame(navData, trip, clock);
+    renderer.render(oled, frame);
+  }
+};
+
+class App {
+private:
+  Gnss      gnss;
+  Trip      trip;
+  Clock     clock;
+  DataStore dataStore;
+
+  VoltageMonitor  batteryMonitor;
+  DataPersistence dataPersistence;
+  UserInterface   userInterface;
+
+public:
+  App() : dataPersistence(dataStore, trip) {}
+
+  void begin() {
+    gnss.begin();
+    trip.begin();
+    batteryMonitor.begin();
+    dataPersistence.load();
+    userInterface.begin();
+  }
+
+  void update() {
+    const bool      isGnssUpdated = gnss.update();
+    const SpNavData navData       = gnss.getNavData();
+
+    trip.update(navData, millis());
+    clock.update(navData);
+
+    float currentVoltage = batteryMonitor.update();
+    dataPersistence.update(isGnssUpdated, currentVoltage);
+    userInterface.update(trip, dataStore, clock, navData);
   }
 };

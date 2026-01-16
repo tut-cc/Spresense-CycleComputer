@@ -1,67 +1,159 @@
 #pragma once
 
-#include "NavData.h"
 #include <Arduino.h>
+#include <GNSS.h>
 #include <math.h>
 
 // ==========================================
-// Speedometer
+// Trip
 // ==========================================
-class Speedometer {
+class Trip {
 private:
-  float curKmh = 0.0f;
-  float maxKmh = 0.0f;
-  float avgKmh = 0.0f;
+  // Speedometer members
+  float currentSpeed = 0.0f;
+  float maxSpeed     = 0.0f;
+  float avgSpeed     = 0.0f;
 
-  static constexpr float MS_PER_HOUR = 60.0f * 60.0f * 1000.0f;
-
-public:
-  void update(float curKmh, unsigned long movingTimeMs, float totalKm) {
-    this->curKmh = curKmh;
-    if (maxKmh < curKmh) maxKmh = curKmh;
-    if (0 < movingTimeMs) avgKmh = totalKm / (movingTimeMs / MS_PER_HOUR);
-  }
-
-  void reset() {
-    curKmh = 0.0f;
-    maxKmh = 0.0f;
-    avgKmh = 0.0f;
-  }
-
-  float getCur() const {
-    return curKmh;
-  }
-
-  float getMax() const {
-    return maxKmh;
-  }
-
-  float getAvg() const {
-    return avgKmh;
-  }
-};
-
-// ==========================================
-// Odometer
-// ==========================================
-class Odometer {
-private:
+  // Odometer members
   float totalKm      = 0.0f;
   float lastLat      = 0.0f;
   float lastLon      = 0.0f;
   bool  hasLastCoord = false;
 
+  // Stopwatch members
+  unsigned long totalMovingMs  = 0;
+  unsigned long totalElapsedMs = 0;
+  bool          isPaused       = false;
+
+  // Trip specific members
+  float         tripDistance  = 0.0f;
+  unsigned long lastUpdateMs  = 0;
+  bool          hasLastUpdate = false;
+
+  // Constants
+  static constexpr float MS_PER_HOUR          = 60.0f * 60.0f * 1000.0f;
+  static constexpr float MIN_ABS              = 1e-6f;
+  static constexpr float MIN_DELTA            = 0.002f;
+  static constexpr float MAX_DELTA            = 1.0f;
+  static constexpr float EARTH_RADIUS_M       = 6378137.0f; // WGS84 [m]
+  static constexpr float MS_TO_KMH            = 3.6f;
+  static constexpr float MIN_MOVING_SPEED_KMH = 0.001f;
+
+public:
+  void begin() {
+    reset();
+  }
+
+  void update(const SpNavData &navData, unsigned long currentMillis) {
+    if (!hasLastUpdate) {
+      lastUpdateMs  = currentMillis;
+      hasLastUpdate = true;
+      return;
+    }
+
+    const unsigned long dt = currentMillis - lastUpdateMs;
+    lastUpdateMs           = currentMillis;
+
+    const float rawKmh   = navData.velocity * MS_TO_KMH;
+    const bool  hasFix   = (navData.posFixMode == Fix2D || navData.posFixMode == Fix3D);
+    const bool  isMoving = hasFix && (MIN_MOVING_SPEED_KMH < rawKmh); // Anti-GPS noise
+    const float speedKmh = isMoving ? rawKmh : 0.0f;
+
+    // Update Stopwatch logic
+    if (isMoving) { totalMovingMs += dt; }
+    if (!isPaused) totalElapsedMs += dt;
+
+    // Update Odometer logic
+    float deltaKm = 0.0f;
+    if (hasFix) { deltaKm = updateOdometer(navData.latitude, navData.longitude, isMoving); }
+    tripDistance += deltaKm;
+
+    // Update Speedometer logic
+    currentSpeed = speedKmh;
+    if (maxSpeed < currentSpeed) maxSpeed = currentSpeed;
+    if (0 < totalMovingMs) avgSpeed = tripDistance / (totalMovingMs / MS_PER_HOUR);
+  }
+
+  void resetTrip() {
+    totalElapsedMs = 0;
+    tripDistance   = 0.0f;
+    lastUpdateMs   = 0;
+    hasLastUpdate  = false;
+
+    // Also reset speed stats and moving time for the trip
+    currentSpeed  = 0.0f;
+    maxSpeed      = 0.0f;
+    avgSpeed      = 0.0f;
+    totalMovingMs = 0;
+  }
+
+  void resetOdometer() {
+    // Reset Odometer
+    totalKm      = 0.0f;
+    lastLat      = 0.0f;
+    lastLon      = 0.0f;
+    hasLastCoord = false;
+  }
+
+  void reset() {
+    resetTrip();
+    resetOdometer();
+  }
+
+  void pause() {
+    isPaused = !isPaused;
+  }
+
+  void restore(float totalDist, float tripDist, unsigned long movingTime, float maxSpd) {
+    totalKm       = totalDist;
+    tripDistance  = tripDist;
+    totalMovingMs = movingTime;
+    maxSpeed      = maxSpd;
+  }
+
+  // Getters
+  float getTripDistance() const {
+    return tripDistance;
+  }
+  float getTotalDistance() const {
+    return totalKm;
+  }
+  unsigned long getTotalMovingTimeMs() const {
+    return totalMovingMs;
+  }
+  unsigned long getElapsedTimeMs() const {
+    return totalElapsedMs;
+  }
+  float getSpeed() const {
+    return currentSpeed;
+  }
+  float getAvgSpeed() const {
+    return avgSpeed;
+  }
+  float getMaxSpeed() const {
+    return maxSpeed;
+  }
+
+private:
+  // Odometer helper methods
   static bool isValidCoordinate(float lat, float lon) {
     return !(fabsf(lat) < MIN_ABS && fabsf(lon) < MIN_ABS);
   }
 
-private:
-  static constexpr float MIN_ABS   = 1e-6f;
-  static constexpr float MIN_DELTA = 0.002f;
-  static constexpr float MAX_DELTA = 1.0f;
+  static constexpr float toRad(float degrees) {
+    return degrees * PI / 180.0f;
+  }
 
-public:
-  float update(float lat, float lon, bool isMoving) {
+  static float planarDistanceKm(float lat1, float lon1, float lat2, float lon2) {
+    const float latRad = toRad((lat1 + lat2) / 2.0f);
+    const float dLat   = toRad(lat2 - lat1);
+    const float dLon   = toRad(lon2 - lon1);
+    const float x      = dLon * cosf(latRad) * EARTH_RADIUS_M;
+    const float y      = dLat * EARTH_RADIUS_M;
+    return sqrtf(x * x + y * y) / 1000.0f; // km
+  }
+
+  float updateOdometer(float lat, float lon, bool isMoving) {
     if (!isValidCoordinate(lat, lon)) {
       return 0.0f; // Avoid invalid values
     }
@@ -75,198 +167,22 @@ public:
 
     float deltaKm = 0.0f;
     if (isMoving) {
-      const float dist         = planarDistanceKm(lastLat, lastLon, lat, lon);
-      const bool  isDeltaValid = MIN_DELTA < dist && dist < MAX_DELTA;
-      if (isDeltaValid) {
-        deltaKm = dist;
-        totalKm += deltaKm; // Anti-GPS noise
-      }
-    }
+      const float dist = planarDistanceKm(lastLat, lastLon, lat, lon);
 
-    lastLat = lat;
-    lastLon = lon;
+      if (dist >= MAX_DELTA) {
+        // Too far jump, just update position to reset baseline
+        lastLat = lat;
+        lastLon = lon;
+      } else if (dist > MIN_DELTA) {
+        // Valid movement
+        deltaKm = dist;
+        totalKm += deltaKm;
+        lastLat = lat;
+        lastLon = lon;
+      }
+      // If dist <= MIN_DELTA, keep old lastLat/lastLon to accumulate distance
+    }
 
     return deltaKm;
-  }
-
-  void reset() {
-    totalKm      = 0.0f;
-    lastLat      = 0.0f;
-    lastLon      = 0.0f;
-    hasLastCoord = false;
-  }
-
-  float getTotalDistance() const {
-    return totalKm;
-  }
-
-  void setTotalDistance(float dist) {
-    totalKm = dist;
-  }
-
-private:
-  static constexpr float toRad(float degrees) {
-    return degrees * PI / 180.0f;
-  }
-
-  static constexpr float EARTH_RADIUS_M = 6378137.0f; // WGS84 [m]
-  static float           planarDistanceKm(float lat1, float lon1, float lat2, float lon2) {
-    const float latRad = toRad((lat1 + lat2) / 2.0f);
-    const float dLat   = toRad(lat2 - lat1);
-    const float dLon   = toRad(lon2 - lon1);
-    const float x      = dLon * cosf(latRad) * EARTH_RADIUS_M;
-    const float y      = dLat * EARTH_RADIUS_M;
-    return sqrtf(x * x + y * y) / 1000.0f; // km
-  }
-};
-
-// ==========================================
-// Stopwatch
-// ==========================================
-class Stopwatch {
-private:
-  unsigned long movingTimeMs = 0;
-  unsigned long totalTimeMs  = 0;
-  bool          isPaused     = false;
-
-public:
-  void update(bool isMoving, unsigned long dt) {
-    if (isMoving) movingTimeMs += dt;
-    if (!isPaused) totalTimeMs += dt;
-  }
-
-  void resetTotalTime() {
-    totalTimeMs = 0;
-  }
-
-  void resetMovingTime() {
-    movingTimeMs = 0;
-  }
-
-  void setMovingTime(unsigned long ms) {
-    movingTimeMs = ms;
-  }
-
-  void reset() {
-    resetTotalTime();
-    resetMovingTime();
-  }
-
-  void togglePause() {
-    isPaused = !isPaused;
-  }
-
-  unsigned long getMovingTimeMs() const {
-    return movingTimeMs;
-  }
-
-  unsigned long getElapsedTimeMs() const {
-    return totalTimeMs;
-  }
-};
-
-// ==========================================
-// Trip
-// ==========================================
-class Trip {
-public:
-private:
-  Speedometer speedometer;
-  Odometer    odometer;
-  Stopwatch   stopwatch;
-
-public:
-  float getTripDistance() const {
-    return tripDistance;
-  }
-
-  float getTotalDistance() const {
-    return odometer.getTotalDistance();
-  }
-
-  unsigned long getMovingTimeMs() const {
-    return stopwatch.getMovingTimeMs();
-  }
-
-  unsigned long getElapsedTimeMs() const {
-    return stopwatch.getElapsedTimeMs();
-  }
-
-  float getSpeed() const {
-    return speedometer.getCur();
-  }
-
-  float getAvgSpeed() const {
-    return speedometer.getAvg();
-  }
-
-  float getMaxSpeed() const {
-    return speedometer.getMax();
-  }
-
-  void restore(float totalDist, float tripDist, unsigned long movingTime) {
-    odometer.setTotalDistance(totalDist);
-    tripDistance = tripDist;
-    stopwatch.setMovingTime(movingTime);
-  }
-
-private:
-  float         tripDistance = 0.0f;
-  unsigned long lastMillis;
-
-  bool hasLastMillis;
-
-  static constexpr float MS_TO_KMH            = 3.6f;
-  static constexpr float MIN_MOVING_SPEED_KMH = 0.001f;
-
-public:
-  void begin() {
-    reset();
-  }
-
-  void update(const NavData &navData, unsigned long currentMillis) {
-    if (!hasLastMillis) {
-      lastMillis    = currentMillis;
-      hasLastMillis = true;
-      return;
-    }
-
-    const unsigned long dt = currentMillis - lastMillis;
-    lastMillis             = currentMillis;
-
-    const float rawKmh   = navData.velocity * MS_TO_KMH;
-    const bool  hasFix   = navData.fixType != FixType::NoFix;
-    const bool  isMoving = hasFix && (MIN_MOVING_SPEED_KMH < rawKmh); // Anti-GPS noise
-    const float speedKmh = isMoving ? rawKmh : 0.0f;
-
-    stopwatch.update(isMoving, dt);
-
-    float deltaKm = 0.0f;
-    if (hasFix) { deltaKm = odometer.update(navData.latitude, navData.longitude, isMoving); }
-    tripDistance += deltaKm;
-
-    speedometer.update(speedKmh, stopwatch.getMovingTimeMs(), tripDistance);
-  }
-
-  void resetTrip() {
-    stopwatch.resetTotalTime();
-    tripDistance  = 0.0f;
-    lastMillis    = 0;
-    hasLastMillis = false;
-  }
-
-  void resetOdometerAndMovingTime() {
-    odometer.reset();
-    tripDistance = 0.0f;
-    stopwatch.resetMovingTime();
-  }
-
-  void reset() {
-    resetTrip();
-    resetOdometerAndMovingTime();
-  }
-
-  void pause() {
-    stopwatch.togglePause();
   }
 };

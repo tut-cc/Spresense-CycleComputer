@@ -9,16 +9,20 @@ public:
     SELECT,
     PAUSE,
     RESET,
+    RESET_LONG,
   };
 
   static constexpr unsigned long SIMULTANEOUS_DELAY_MS = 50;
+  static constexpr unsigned long LONG_PRESS_MS         = 3000;
 
 private:
   Button btnSelect;
   Button btnPause;
 
-  ID            pendingEvent = ID::NONE;
-  unsigned long pendingTime  = 0;
+  ID            pendingEvent                   = ID::NONE;
+  unsigned long pendingTime                    = 0;
+  unsigned long simultaneousStartTime          = 0;
+  bool          simultaneousLongPressTriggered = false;
 
 public:
   Input(int pinSelect, int pinPause) : btnSelect(pinSelect), btnPause(pinPause) {}
@@ -35,6 +39,19 @@ public:
     const bool          selectPressed = btnSelect.wasPressed();
     const bool          pausePressed  = btnPause.wasPressed();
     const unsigned long now           = millis();
+
+    // Long press detection
+    if (btnSelect.isHeld() && btnPause.isHeld()) {
+      if (simultaneousStartTime == 0) {
+        simultaneousStartTime = now;
+      } else if ((now - simultaneousStartTime > LONG_PRESS_MS) && !simultaneousLongPressTriggered) {
+        simultaneousLongPressTriggered = true;
+        return ID::RESET_LONG;
+      }
+    } else {
+      simultaneousStartTime          = 0;
+      simultaneousLongPressTriggered = false;
+    }
 
     if (isSimultaneous(selectPressed, pausePressed)) {
       pendingEvent = ID::NONE;

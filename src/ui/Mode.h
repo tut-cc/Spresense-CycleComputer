@@ -4,11 +4,8 @@
 #include "../domain/DataStore.h"
 #include "../domain/Trip.h"
 #include "Input.h"
-#include "Renderer.h" // Contains Frame and Formatter
+#include "Renderer.h"
 
-// ==========================================
-// ModeState
-// ==========================================
 class ModeState {
 public:
   virtual ~ModeState() = default;
@@ -17,9 +14,6 @@ public:
   virtual void fillFrame(Frame &frame, const Trip &trip, const Clock &clock) const = 0;
 };
 
-// ==========================================
-// State Implementations
-// ==========================================
 class SpdTimeState : public ModeState {
 public:
   void onInput(Input::ID id, Trip &trip, DataStore & /*dataStore*/) override {
@@ -81,9 +75,6 @@ public:
   }
 };
 
-// ==========================================
-// Mode
-// ==========================================
 class Mode {
 private:
   SpdTimeState  spdTimeState;
@@ -113,6 +104,12 @@ public:
   }
 
   void handleInput(Input::ID id, Trip &trip, DataStore &dataStore) {
+    if (id == Input::ID::RESET_LONG) {
+      trip.reset();
+      dataStore.clear();
+      return;
+    }
+
     if (id == Input::ID::SELECT) {
       next();
       return;

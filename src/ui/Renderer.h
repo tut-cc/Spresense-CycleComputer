@@ -77,49 +77,22 @@ inline void formatDuration(unsigned long millis, char *buffer, size_t size) {
 // Renderer
 // ==========================================
 class Renderer {
-public:
-  struct Layout {
-    int16_t headerHeight;
-    int16_t headerTextSize;
-    int16_t headerLineYOffset;
-    int16_t mainAreaYOffset;
-    int16_t mainValSize;
-    int16_t mainUnitSize;
-    int16_t subValSize;
-    int16_t subUnitSize;
-    int16_t unitSpacing;
-  };
-
-  static constexpr int16_t DEFAULT_HEADER_HEIGHT        = 12;
-  static constexpr int16_t DEFAULT_HEADER_TEXT_SIZE     = 1;
-  static constexpr int16_t DEFAULT_HEADER_LINE_Y_OFFSET = 2;
-  static constexpr int16_t DEFAULT_MAIN_AREA_Y_OFFSET   = 14;
-  static constexpr int16_t DEFAULT_MAIN_VAL_SIZE        = 3;
-  static constexpr int16_t DEFAULT_MAIN_UNIT_SIZE       = 1;
-  static constexpr int16_t DEFAULT_SUB_VAL_SIZE         = 2;
-  static constexpr int16_t DEFAULT_SUB_UNIT_SIZE        = 1;
-  static constexpr int16_t DEFAULT_UNIT_SPACING         = 4;
+  static constexpr int16_t HEADER_HEIGHT        = 12;
+  static constexpr int16_t HEADER_TEXT_SIZE     = 1;
+  static constexpr int16_t HEADER_LINE_Y_OFFSET = 2;
+  static constexpr int16_t MAIN_AREA_Y_OFFSET   = 14;
+  static constexpr int16_t MAIN_VAL_SIZE        = 3;
+  static constexpr int16_t MAIN_UNIT_SIZE       = 1;
+  static constexpr int16_t SUB_VAL_SIZE         = 2;
+  static constexpr int16_t SUB_UNIT_SIZE        = 1;
+  static constexpr int16_t UNIT_SPACING         = 4;
 
 private:
-  const Layout layout;
-  Frame        lastFrame;
-  bool         firstRender = true;
+  Frame lastFrame;
+  bool  firstRender = true;
 
 public:
-  Renderer()
-      : layout({
-            .headerHeight      = DEFAULT_HEADER_HEIGHT,
-            .headerTextSize    = DEFAULT_HEADER_TEXT_SIZE,
-            .headerLineYOffset = DEFAULT_HEADER_LINE_Y_OFFSET,
-            .mainAreaYOffset   = DEFAULT_MAIN_AREA_Y_OFFSET,
-            .mainValSize       = DEFAULT_MAIN_VAL_SIZE,
-            .mainUnitSize      = DEFAULT_MAIN_UNIT_SIZE,
-            .subValSize        = DEFAULT_SUB_VAL_SIZE,
-            .subUnitSize       = DEFAULT_SUB_UNIT_SIZE,
-            .unitSpacing       = DEFAULT_UNIT_SPACING,
-        }) {}
-
-  Renderer(const Layout &layoutConfig) : layout(layoutConfig) {}
+  Renderer() {}
 
   void render(OLED &oled, Frame &frame) {
     if (!firstRender && frame == lastFrame) return;
@@ -133,31 +106,34 @@ public:
     oled.display();
   }
 
+  void reset() {
+    firstRender = true;
+  }
+
 private:
   void drawHeader(OLED &oled, const Frame &frame) {
-    oled.setTextSize(layout.headerTextSize);
+    oled.setTextSize(HEADER_TEXT_SIZE);
     oled.setTextColor(WHITE);
 
     drawTextLeft(oled, 0, frame.header.fixStatus);
     drawTextCenter(oled, 0, frame.header.modeSpeed);
     drawTextRight(oled, 0, frame.header.modeTime);
 
-    int16_t lineY = layout.headerHeight - layout.headerLineYOffset;
+    int16_t lineY = HEADER_HEIGHT - HEADER_LINE_Y_OFFSET;
     oled.drawLine(0, lineY, oled.getWidth(), lineY, WHITE);
   }
 
   void drawMainArea(OLED &oled, const Frame &frame) {
-    const int16_t headerH = layout.headerHeight;
+    const int16_t headerH = HEADER_HEIGHT;
     const int16_t screenH = oled.getHeight();
 
-    drawItem(oled, frame.main, headerH + layout.mainAreaYOffset, layout.mainValSize,
-             layout.mainUnitSize, false);
-    drawItem(oled, frame.sub, screenH, layout.subValSize, layout.subUnitSize, true);
+    drawItem(oled, frame.main, headerH + MAIN_AREA_Y_OFFSET, MAIN_VAL_SIZE, MAIN_UNIT_SIZE, false);
+    drawItem(oled, frame.sub, screenH, SUB_VAL_SIZE, SUB_UNIT_SIZE, true);
   }
 
   void drawItem(OLED &oled, const Frame::Item &item, int16_t y, uint8_t valSize, uint8_t unitSize,
                 bool alignBottom) {
-    const int16_t spacing = layout.unitSpacing;
+    const int16_t spacing = UNIT_SPACING;
 
     oled.setTextSize(valSize);
     OLED::Rect valRect = oled.getTextBounds(item.value);

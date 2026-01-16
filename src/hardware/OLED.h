@@ -32,6 +32,10 @@ public:
     return true;
   }
 
+  void restart() {
+    begin(ADDRESS);
+  }
+
   void clear() {
     ssd1306.clearDisplay();
   }
