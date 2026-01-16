@@ -12,13 +12,21 @@ struct AppData {
   float         batteryVoltage;
 
   bool operator==(const AppData &other) const {
-    return totalDistance == other.totalDistance && tripDistance == other.tripDistance &&
-           movingTimeMs == other.movingTimeMs && maxSpeed == other.maxSpeed &&
-           batteryVoltage == other.batteryVoltage;
+    const bool isMainDataEqual = isDataEqual(other);
+    const bool isVoltageEqual  = (batteryVoltage == other.batteryVoltage);
+    return isMainDataEqual && isVoltageEqual;
   }
 
   bool operator!=(const AppData &other) const {
     return !(*this == other);
+  }
+
+  bool isDataEqual(const AppData &other) const {
+    const bool isDistancesEqual =
+        (totalDistance == other.totalDistance) && (tripDistance == other.tripDistance);
+    const bool isMovingTimeEqual = (movingTimeMs == other.movingTimeMs);
+    const bool isMaxSpeedEqual   = (maxSpeed == other.maxSpeed);
+    return isDistancesEqual && isMovingTimeEqual && isMaxSpeedEqual;
   }
 };
 
@@ -77,19 +85,21 @@ public:
     if (isValid(savedData, calculatedCrc)) {
       lastSavedData = savedData;
       return savedData.data;
-    } else {
-      AppData defaultData = {0.0f, 0.0f, 0, 0.0f, 0.0f};
-
-      lastSavedData.magic = MAGIC_NUMBER;
-      lastSavedData.data  = defaultData;
-      lastSavedData.crc   = calculateDataCRC(lastSavedData);
-
-      return defaultData;
     }
+
+    AppData defaultData = {0.0, 0.0, 0, 0.0, 0.0};
+    lastSavedData.magic = MAGIC_NUMBER;
+    lastSavedData.data  = defaultData;
+    lastSavedData.crc   = calculateDataCRC(lastSavedData);
+
+    return defaultData;
   }
 
   void save(const AppData &currentAppData) {
-    if (lastSavedData.magic == MAGIC_NUMBER && lastSavedData.data == currentAppData) { return; }
+    const bool isMagicValid = (lastSavedData.magic == MAGIC_NUMBER);
+    const bool isDataEqual  = lastSavedData.data.isDataEqual(currentAppData);
+
+    if (isMagicValid && isDataEqual) { return; }
 
     SaveData currentData;
     currentData.magic = MAGIC_NUMBER;

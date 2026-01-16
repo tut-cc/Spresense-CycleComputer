@@ -1,47 +1,38 @@
 #include <Arduino.h>
 #include <stddef.h>
 
-namespace Pin {
-constexpr int BTN_A       = PIN_D09;
-constexpr int BTN_B       = PIN_D04;
-constexpr int WARN_LED    = PIN_D00;
-constexpr int VOLTAGE_PIN = PIN_A5;
-} // namespace Pin
-
-namespace Battery {
-constexpr float LOW_VOLTAGE_THRESHOLD = 4.5f;
-} // namespace Battery
-
 #include "domain/Clock.h"
 #include "domain/DataStore.h"
 #include "domain/Trip.h"
 #include "hardware/Gnss.h"
 #include "hardware/OLED.h"
 #include "hardware/VoltageSensor.h"
-
 #include "ui/Input.h"
 #include "ui/Mode.h"
 #include "ui/Renderer.h"
+
+constexpr int   BTN_A                 = PIN_D09;
+constexpr int   BTN_B                 = PIN_D04;
+constexpr int   WARN_LED              = PIN_D00;
+constexpr int   VOLTAGE_PIN           = PIN_A5;
+constexpr float LOW_VOLTAGE_THRESHOLD = 4.5f;
 
 class VoltageMonitor {
 private:
   VoltageSensor voltageSensor;
 
 public:
-  VoltageMonitor() : voltageSensor(Pin::VOLTAGE_PIN) {}
+  VoltageMonitor() : voltageSensor(VOLTAGE_PIN) {}
 
   void begin() {
     voltageSensor.begin();
-    pinMode(Pin::WARN_LED, OUTPUT);
+    pinMode(WARN_LED, OUTPUT);
   }
 
   float update() {
     const float currentVoltage = voltageSensor.readVoltage();
-    if (currentVoltage <= Battery::LOW_VOLTAGE_THRESHOLD) {
-      digitalWrite(Pin::WARN_LED, HIGH);
-    } else {
-      digitalWrite(Pin::WARN_LED, LOW);
-    }
+    if (currentVoltage <= LOW_VOLTAGE_THRESHOLD) digitalWrite(WARN_LED, HIGH);
+    else digitalWrite(WARN_LED, LOW);
     return currentVoltage;
   }
 };
@@ -64,11 +55,12 @@ public:
 
   void update(bool isGnssUpdated, float currentVoltage) {
     if ((millis() - lastSaveMillis > DataStore::SAVE_INTERVAL_MS) && !isGnssUpdated) {
-      AppData currentData;
-      currentData.totalDistance  = trip.getTotalDistance();
-      currentData.tripDistance   = trip.getTripDistance();
-      currentData.movingTimeMs   = trip.getTotalMovingTimeMs();
-      currentData.maxSpeed       = trip.getMaxSpeed();
+      AppData            currentData;
+      const Trip::State &state   = trip.getState();
+      currentData.totalDistance  = state.totalKm;
+      currentData.tripDistance   = state.tripDistance;
+      currentData.movingTimeMs   = state.totalMovingMs;
+      currentData.maxSpeed       = state.maxSpeed;
       currentData.batteryVoltage = currentVoltage;
 
       dataStore.save(currentData);
@@ -99,13 +91,13 @@ private:
       break;
     }
 
-    mode.getCurrentState()->fillFrame(frame, trip, clock);
+    mode.fillFrame(frame, trip, clock);
 
     return frame;
   }
 
 public:
-  UserInterface() : oled(OLED::WIDTH, OLED::HEIGHT), input(Pin::BTN_A, Pin::BTN_B) {}
+  UserInterface() : oled(OLED::WIDTH, OLED::HEIGHT), input(BTN_A, BTN_B) {}
 
   void begin() {
     oled.begin(OLED::ADDRESS);
@@ -116,6 +108,16 @@ public:
     Input::ID id = input.update();
 
     if (id == Input::ID::RESET_LONG) {
+      oled.clear();
+      oled.setTextSize(1);
+      oled.setTextColor(WHITE);
+      const char *msg  = "RESETTING...";
+      OLED::Rect  rect = oled.getTextBounds(msg);
+      oled.setCursor((oled.getWidth() - rect.w) / 2, (oled.getHeight() - rect.h) / 2);
+      oled.print(msg);
+      oled.display();
+      delay(500); // Visual feedback
+
       oled.restart();
       renderer.reset();
     }
@@ -153,7 +155,7 @@ public:
     const bool      isGnssUpdated = gnss.update();
     const SpNavData navData       = gnss.getNavData();
 
-    trip.update(navData, millis());
+    trip.update(navData, millis(), isGnssUpdated);
     clock.update(navData);
 
     float currentVoltage = batteryMonitor.update();

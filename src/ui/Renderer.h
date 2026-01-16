@@ -7,9 +7,6 @@
 #include "../domain/Clock.h"
 #include "../hardware/OLED.h"
 
-// ==========================================
-// Frame
-// ==========================================
 struct Frame {
   struct Item {
     char value[16] = "";
@@ -44,9 +41,6 @@ struct Frame {
   }
 };
 
-// ==========================================
-// Formatter
-// ==========================================
 namespace Formatter {
 
 inline void formatSpeed(float speedKmh, char *buffer, size_t size) {
@@ -67,8 +61,12 @@ inline void formatDuration(unsigned long millis, char *buffer, size_t size) {
   const unsigned long m       = (seconds % 3600) / 60;
   const unsigned long s       = seconds % 60;
 
-  if (0 < h) snprintf(buffer, size, "%lu:%02lu:%02lu", h, m, s);
-  else snprintf(buffer, size, "%02lu:%02lu", m, s);
+  if (h > 0) {
+    snprintf(buffer, size, "%lu:%02lu:%02lu", h, m, s);
+    return;
+  }
+
+  snprintf(buffer, size, "%02lu:%02lu", m, s);
 }
 
 } // namespace Formatter
@@ -130,38 +128,33 @@ private:
 
   void drawItem(OLED &oled, const Frame::Item &item, int16_t y, uint8_t valSize, uint8_t unitSize,
                 bool alignBottom) {
-    const int16_t spacing = UNIT_SPACING;
-
     oled.setTextSize(valSize);
     OLED::Rect valRect = oled.getTextBounds(item.value);
-    oled.setTextSize(unitSize);
-    OLED::Rect unitRect = oled.getTextBounds(item.unit);
 
-    int16_t totalW = valRect.w;
-    if (0 < strlen(item.unit)) totalW += spacing + unitRect.w;
+    const bool hasUnit  = (strlen(item.unit) > 0);
+    int16_t    totalW   = valRect.w;
+    OLED::Rect unitRect = {0, 0, 0, 0};
 
-    int16_t startX = (oled.getWidth() - totalW) / 2;
-
-    int16_t valY;
-    int16_t unitY;
-
-    if (alignBottom) {
-      valY  = y - valRect.h;
-      unitY = y - unitRect.h;
-    } else {
-      valY  = y - valRect.h / 2;
-      unitY = (y + valRect.h / 2) - unitRect.h;
+    if (hasUnit) {
+      oled.setTextSize(unitSize);
+      unitRect = oled.getTextBounds(item.unit);
+      totalW += UNIT_SPACING + unitRect.w;
     }
+
+    const int16_t startX = (oled.getWidth() - totalW) / 2;
+
+    const int16_t valY  = alignBottom ? (y - valRect.h) : (y - valRect.h / 2);
+    const int16_t unitY = alignBottom ? (y - unitRect.h) : (y + valRect.h / 2 - unitRect.h);
 
     oled.setTextSize(valSize);
     oled.setCursor(startX, valY);
     oled.print(item.value);
 
-    if (0 < strlen(item.unit)) {
-      oled.setTextSize(unitSize);
-      oled.setCursor(startX + valRect.w + spacing, unitY);
-      oled.print(item.unit);
-    }
+    if (!hasUnit) return;
+
+    oled.setTextSize(unitSize);
+    oled.setCursor(startX + valRect.w + UNIT_SPACING, unitY);
+    oled.print(item.unit);
   }
 
   void drawTextLeft(OLED &oled, int16_t y, const char *text) {

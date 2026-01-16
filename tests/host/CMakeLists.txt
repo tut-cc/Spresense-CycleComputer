@@ -12,6 +12,8 @@ FetchContent_MakeAvailable(googletest)
 set(TEST_SOURCES
     mocks/MockGlobals.cpp
     mocks/MockLibs.cpp
+    LogicTest.cpp
+    InputTest.cpp
 )
 
 add_executable(run_tests

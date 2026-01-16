@@ -31,7 +31,7 @@ public:
     if (hasDebounceTimePassed()) {
       if (stablePinLevel != rawPinLevel) {
         stablePinLevel = rawPinLevel;
-        if (stablePinLevel == LOW) { pressed = true; }
+        if (stablePinLevel == LOW) pressed = true;
       }
     }
 

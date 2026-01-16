@@ -5,85 +5,107 @@
 #include <math.h>
 
 class Trip {
-private:
-  float currentSpeed = 0.0f;
-  float maxSpeed     = 0.0f;
-  float avgSpeed     = 0.0f;
+public:
+  struct State {
+    float         currentSpeed   = 0.0f;
+    float         maxSpeed       = 0.0f;
+    float         avgSpeed       = 0.0f;
+    float         totalKm        = 0.0f;
+    float         tripDistance   = 0.0f;
+    unsigned long totalMovingMs  = 0;
+    unsigned long totalElapsedMs = 0;
+    bool          isPaused       = false;
+  };
 
-  float totalKm      = 0.0f;
+private:
+  State state;
+
   float lastLat      = 0.0f;
   float lastLon      = 0.0f;
   bool  hasLastCoord = false;
 
-  unsigned long totalMovingMs  = 0;
-  unsigned long totalElapsedMs = 0;
-  bool          isPaused       = false;
+  unsigned long lastUpdateMs     = 0;
+  unsigned long lastGnssUpdateMs = 0;
+  bool          hasLastUpdate    = false;
 
-  float         tripDistance  = 0.0f;
-  unsigned long lastUpdateMs  = 0;
-  bool          hasLastUpdate = false;
-
-  static constexpr float MS_PER_HOUR          = 60.0f * 60.0f * 1000.0f;
-  static constexpr float MIN_ABS              = 1e-6f;
-  static constexpr float MIN_DELTA            = 0.002f;
-  static constexpr float MAX_DELTA            = 1.0f;
-  static constexpr float EARTH_RADIUS_M       = 6378137.0f; // WGS84 [m]
-  static constexpr float MS_TO_KMH            = 3.6f;
-  static constexpr float MIN_MOVING_SPEED_KMH = 0.001f;
+  static constexpr float         MS_PER_HOUR          = 60.0f * 60.0f * 1000.0f;
+  static constexpr float         MIN_ABS              = 1e-6f;
+  static constexpr float         MIN_DELTA            = 0.002f;
+  static constexpr float         MAX_DELTA            = 1.0f;
+  static constexpr float         EARTH_RADIUS_M       = 6378137.0f; // WGS84 [m]
+  static constexpr float         MS_TO_KMH            = 3.6f;
+  static constexpr float         MIN_MOVING_SPEED_KMH = 0.001f;
+  static constexpr unsigned long SIGNAL_TIMEOUT_MS    = 2000;
 
 public:
   void begin() {
     reset();
   }
 
-  void update(const SpNavData &navData, unsigned long currentMillis) {
+  void update(const SpNavData &navData, unsigned long currentMillis, bool isGnssUpdated) {
     if (!hasLastUpdate) {
-      lastUpdateMs  = currentMillis;
-      hasLastUpdate = true;
+      lastUpdateMs     = currentMillis;
+      lastGnssUpdateMs = currentMillis;
+      hasLastUpdate    = true;
       return;
     }
 
     const unsigned long dt = currentMillis - lastUpdateMs;
     lastUpdateMs           = currentMillis;
 
-    const float rawKmh   = navData.velocity * MS_TO_KMH;
-    const bool  hasFix   = (navData.posFixMode == Fix2D || navData.posFixMode == Fix3D);
-    const bool  isMoving = hasFix && (MIN_MOVING_SPEED_KMH < rawKmh); // Anti-GPS noise
-    const float speedKmh = isMoving ? rawKmh : 0.0f;
+    // 1. Update time-based state (always runs)
+    if (state.currentSpeed > 0 && !state.isPaused) { state.totalMovingMs += dt; }
+    if (!state.isPaused) { state.totalElapsedMs += dt; }
 
-    if (isMoving) { totalMovingMs += dt; }
-    if (!isPaused) totalElapsedMs += dt;
+    // 2. Process GNSS data only if updated
+    if (isGnssUpdated) {
+      lastGnssUpdateMs = currentMillis;
 
-    float deltaKm = 0.0f;
-    if (hasFix) { deltaKm = updateOdometer(navData.latitude, navData.longitude, isMoving); }
-    tripDistance += deltaKm;
+      const float rawKmh   = navData.velocity * MS_TO_KMH;
+      const bool  hasFix   = (navData.posFixMode == Fix2D || navData.posFixMode == Fix3D);
+      const bool  isMoving = hasFix && (MIN_MOVING_SPEED_KMH < rawKmh);
 
-    currentSpeed = speedKmh;
-    if (maxSpeed < currentSpeed) maxSpeed = currentSpeed;
-    if (0 < totalMovingMs) avgSpeed = tripDistance / (totalMovingMs / MS_PER_HOUR);
+      state.currentSpeed = isMoving ? rawKmh : 0.0f;
+
+      float deltaKm = 0.0f;
+      if (hasFix) { deltaKm = updateOdometer(navData.latitude, navData.longitude, isMoving); }
+      state.tripDistance += deltaKm;
+
+      if (state.maxSpeed < state.currentSpeed) { state.maxSpeed = state.currentSpeed; }
+    } else {
+      // 3. Signal Timeout Check
+      // If no valid GNSS data for a while, assume we stopped or lost signal
+      if (currentMillis - lastGnssUpdateMs > SIGNAL_TIMEOUT_MS) { state.currentSpeed = 0.0f; }
+    }
+
+    // 4. Update Average Speed
+    if (state.totalMovingMs > 0) {
+      state.avgSpeed = state.tripDistance / (state.totalMovingMs / MS_PER_HOUR);
+    }
   }
 
   void resetTrip() {
-    totalElapsedMs = 0;
-    tripDistance   = 0.0f;
-    lastUpdateMs   = 0;
-    hasLastUpdate  = false;
+    state.totalElapsedMs = 0;
+    state.tripDistance   = 0.0f;
+    lastUpdateMs         = 0;
+    lastGnssUpdateMs     = 0;
+    hasLastUpdate        = false;
 
-    currentSpeed  = 0.0f;
-    maxSpeed      = 0.0f;
-    avgSpeed      = 0.0f;
-    totalMovingMs = 0;
+    state.currentSpeed  = 0.0f;
+    state.maxSpeed      = 0.0f;
+    state.avgSpeed      = 0.0f;
+    state.totalMovingMs = 0;
   }
 
   void resetOdometer() {
-    totalKm      = 0.0f;
-    lastLat      = 0.0f;
-    lastLon      = 0.0f;
-    hasLastCoord = false;
+    state.totalKm = 0.0f;
+    lastLat       = 0.0f;
+    lastLon       = 0.0f;
+    hasLastCoord  = false;
   }
 
   void resetMaxSpeed() {
-    maxSpeed = 0.0f;
+    state.maxSpeed = 0.0f;
   }
 
   void reset() {
@@ -92,36 +114,18 @@ public:
   }
 
   void pause() {
-    isPaused = !isPaused;
+    state.isPaused = !state.isPaused;
   }
 
   void restore(float totalDist, float tripDist, unsigned long movingTime, float maxSpd) {
-    totalKm       = totalDist;
-    tripDistance  = tripDist;
-    totalMovingMs = movingTime;
-    maxSpeed      = maxSpd;
+    state.totalKm       = totalDist;
+    state.tripDistance  = tripDist;
+    state.totalMovingMs = movingTime;
+    state.maxSpeed      = maxSpd;
   }
 
-  float getTripDistance() const {
-    return tripDistance;
-  }
-  float getTotalDistance() const {
-    return totalKm;
-  }
-  unsigned long getTotalMovingTimeMs() const {
-    return totalMovingMs;
-  }
-  unsigned long getElapsedTimeMs() const {
-    return totalElapsedMs;
-  }
-  float getSpeed() const {
-    return currentSpeed;
-  }
-  float getAvgSpeed() const {
-    return avgSpeed;
-  }
-  float getMaxSpeed() const {
-    return maxSpeed;
+  const State &getState() const {
+    return state;
   }
 
 private:
@@ -163,7 +167,7 @@ private:
         lastLon = lon;
       } else if (dist > MIN_DELTA) {
         deltaKm = dist;
-        totalKm += deltaKm;
+        state.totalKm += deltaKm;
         lastLat = lat;
         lastLon = lon;
       }
