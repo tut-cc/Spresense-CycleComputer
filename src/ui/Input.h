@@ -2,144 +2,97 @@
 
 #include "../hardware/Button.h"
 
+constexpr unsigned long SINGLE_PRESS_MS = 50;
+constexpr unsigned long LONG_PRESS_MS   = 3000;
+
 class Input {
 public:
-  enum class ID {
-    NONE,
-    SELECT,
-    PAUSE,
-    RESET,
-    RESET_LONG,
-  };
-
-  static constexpr unsigned long SIMULTANEOUS_DELAY_MS = 50;
-  static constexpr unsigned long LONG_PRESS_MS         = 3000;
+  enum class Event { NONE, SELECT, PAUSE, RESET, RESET_LONG };
 
 private:
-  Button btnSelect;
-  Button btnPause;
+  enum class State { Idle, MayBeSingle, MayBeDoubleShort, MustBeDoubleLong };
 
-  ID            pendingEvent                   = ID::NONE;
-  unsigned long pendingTime                    = 0;
-  unsigned long simultaneousStartTime          = 0;
-  bool          simultaneousLongPressTriggered = false;
+  Button selectButton;
+  Button pauseButton;
+
+  State state             = State::Idle;
+  Event potentialSingleID = Event::NONE;
+
+  unsigned long stateEnterTime = 0;
 
 public:
-  Input(int pinSelect, int pinPause) : btnSelect(pinSelect), btnPause(pinPause) {}
+  Input(int selectButtonPin, int pauseButtonPin)
+      : selectButton(selectButtonPin), pauseButton(pauseButtonPin) {}
 
   void begin() {
-    btnSelect.begin();
-    btnPause.begin();
+    selectButton.begin();
+    pauseButton.begin();
   }
 
-  ID update() {
-    btnSelect.update();
-    btnPause.update();
+  Event update() {
+    selectButton.update();
+    pauseButton.update();
 
-    const bool          selectPressed = btnSelect.wasPressed();
-    const bool          pausePressed  = btnPause.wasPressed();
+    const bool          selectPressed = selectButton.wasPressed();
+    const bool          selectHeld    = selectButton.isHeld();
+    const bool          pausePressed  = pauseButton.wasPressed();
+    const bool          pauseHeld     = pauseButton.isHeld();
     const unsigned long now           = millis();
 
-    ID event = processLongPress(now);
-    if (event != ID::NONE) return event;
+    switch (state) {
+    case State::Idle:
+      if (selectPressed && pausePressed) {
+        changeState(State::MayBeDoubleShort, now);
+        return Event::NONE;
+      }
+      if (selectPressed) {
+        potentialSingleID = Event::SELECT;
+        changeState(State::MayBeSingle, now);
+        return Event::NONE;
+      }
+      if (pausePressed) {
+        potentialSingleID = Event::PAUSE;
+        changeState(State::MayBeSingle, now);
+        return Event::NONE;
+      }
+      break;
 
-    if (processSimultaneousPress(selectPressed, pausePressed)) { return ID::NONE; }
+    case State::MayBeSingle:
+      if ((potentialSingleID == Event::SELECT && pausePressed) ||
+          (potentialSingleID == Event::PAUSE && selectPressed)) {
+        changeState(State::MayBeDoubleShort, now);
+        return Event::NONE;
+      }
 
-    event = processPendingEvent(selectPressed, pausePressed, now);
-    if (event != ID::NONE || pendingEvent != ID::NONE) return event;
+      if (now - stateEnterTime > SINGLE_PRESS_MS) {
+        changeState(State::Idle, now);
+        return potentialSingleID; // 1ボタン短押しはモードごとの操作
+      }
+      break;
 
-    return handleNewPress(selectPressed, pausePressed, now);
+    case State::MayBeDoubleShort:
+      if (!selectHeld || !pauseHeld) {
+        changeState(State::Idle, now);
+        return Event::RESET; // 2ボタン短押しはリセット
+      }
+
+      if (now - stateEnterTime > LONG_PRESS_MS) {
+        changeState(State::MustBeDoubleLong, now);
+        return Event::RESET_LONG; // 2ボタン長押しは全データリセット
+      }
+      break;
+
+    case State::MustBeDoubleLong:
+      if (!selectHeld && !pauseHeld) changeState(State::Idle, now);
+      break;
+    }
+
+    return Event::NONE;
   }
 
 private:
-  ID processLongPress(unsigned long now) {
-    // If not holding both, check if we just released after a short hold
-    if (!btnSelect.isHeld() || !btnPause.isHeld()) {
-      if (simultaneousStartTime != 0) {
-        // Released
-        bool wasLong = simultaneousLongPressTriggered;
-
-        // Reset state
-        simultaneousStartTime          = 0;
-        simultaneousLongPressTriggered = false;
-
-        // If it wasn't a long press, it's a normal simultaneous press (RESET)
-        if (!wasLong) { return ID::RESET; }
-      }
-      return ID::NONE;
-    }
-
-    // Both held
-    if (simultaneousStartTime == 0) {
-      simultaneousStartTime = now;
-      return ID::NONE;
-    }
-
-    if (now - simultaneousStartTime > LONG_PRESS_MS && !simultaneousLongPressTriggered) {
-      simultaneousLongPressTriggered = true;
-      return ID::RESET_LONG;
-    }
-
-    return ID::NONE;
-  }
-
-  bool processSimultaneousPress(bool selectPressed, bool pausePressed) {
-    // Just consume pending events if we interpret this as a simultaneous action
-    if (isSimultaneous(selectPressed, pausePressed)) {
-      pendingEvent = ID::NONE;
-      // Do NOT return ID::RESET here. Wait for release in processLongPress.
-      return true;
-    }
-    return false;
-  }
-
-  ID processPendingEvent(bool selectPressed, bool pausePressed, unsigned long now) {
-    if (pendingEvent == ID::NONE) return ID::NONE;
-
-    if (resolvePendingEvent(selectPressed, pausePressed)) {
-      pendingEvent = ID::NONE;
-      return ID::RESET;
-    }
-
-    if (now - pendingTime >= SIMULTANEOUS_DELAY_MS) {
-      ID confirmed = pendingEvent;
-      pendingEvent = ID::NONE;
-      return confirmed;
-    }
-
-    return ID::NONE;
-  }
-
-  ID handleNewPress(bool selectPressed, bool pausePressed, unsigned long now) {
-    if (selectPressed) {
-      pendingEvent = ID::SELECT;
-      pendingTime  = now;
-      return ID::NONE;
-    }
-
-    if (pausePressed) {
-      pendingEvent = ID::PAUSE;
-      pendingTime  = now;
-      return ID::NONE;
-    }
-
-    return ID::NONE;
-  }
-
-  bool isSimultaneous(bool selectPressed, bool pausePressed) const {
-    const bool selectWithPause = selectPressed && (pausePressed || btnPause.isHeld());
-    const bool pauseWithSelect = pausePressed && (selectPressed || btnSelect.isHeld());
-    return selectWithPause || pauseWithSelect;
-  }
-
-  bool resolvePendingEvent(bool selectPressed, bool pausePressed) const {
-    switch (pendingEvent) {
-    case ID::SELECT:
-      return pausePressed;
-    case ID::PAUSE:
-      return selectPressed;
-    default:
-      return false;
-    }
+  void changeState(State newState, unsigned long now) {
+    state          = newState;
+    stateEnterTime = now;
   }
 };

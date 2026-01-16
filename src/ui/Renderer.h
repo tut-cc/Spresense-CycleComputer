@@ -51,7 +51,7 @@ inline void formatDistance(float distanceKm, char *buffer, size_t size) {
   snprintf(buffer, size, "%5.2f", distanceKm);
 }
 
-inline void formatTime(const Clock::Time time, char *buffer, size_t size) {
+inline void formatTime(const Clock &time, char *buffer, size_t size) {
   snprintf(buffer, size, "%02d:%02d", time.hour, time.minute);
 }
 

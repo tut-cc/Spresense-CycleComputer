@@ -105,9 +105,9 @@ public:
   }
 
   void update(Trip &trip, DataStore &dataStore, const Clock &clock, const SpNavData &navData) {
-    Input::ID id = input.update();
+    Input::EVENT id = input.update();
 
-    if (id == Input::ID::RESET_LONG) {
+    if (id == Input::EVENT::RESET_LONG) {
       oled.clear();
       oled.setTextSize(1);
       oled.setTextColor(WHITE);
@@ -122,7 +122,7 @@ public:
       renderer.reset();
     }
 
-    if (id != Input::ID::NONE) { mode.handleInput(id, trip, dataStore); }
+    if (id != Input::EVENT::NONE) { mode.handleInput(id, trip, dataStore); }
 
     Frame frame = createFrame(navData, trip, clock);
     renderer.render(oled, frame);
@@ -131,9 +131,9 @@ public:
 
 class App {
 private:
-  Gnss      gnss;
-  Trip      trip;
-  Clock     clock;
+  Gnss gnss;
+  Trip trip;
+
   DataStore dataStore;
 
   VoltageMonitor  batteryMonitor;
@@ -156,7 +156,7 @@ public:
     const SpNavData navData       = gnss.getNavData();
 
     trip.update(navData, millis(), isGnssUpdated);
-    clock.update(navData);
+    Clock clock(navData);
 
     float currentVoltage = batteryMonitor.update();
     dataPersistence.update(isGnssUpdated, currentVoltage);

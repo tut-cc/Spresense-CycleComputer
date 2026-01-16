@@ -4,8 +4,19 @@
 #include <GNSS.h>
 #include <math.h>
 
+constexpr float         MS_PER_HOUR          = 60.0f * 60.0f * 1000.0f;
+constexpr float         MIN_ABS              = 1e-6f;
+constexpr float         MIN_DELTA            = 0.002f;
+constexpr float         MAX_DELTA            = 1.0f;
+constexpr float         EARTH_RADIUS_M       = 6378137.0f; // WGS84 [m]
+constexpr float         MS_TO_KMH            = 3.6f;
+constexpr float         MIN_MOVING_SPEED_KMH = 0.001f;
+constexpr unsigned long SIGNAL_TIMEOUT_MS    = 2000;
+
 class Trip {
 public:
+  enum class Status { Stopped, Moving, Paused };
+
   struct State {
     float         currentSpeed   = 0.0f;
     float         maxSpeed       = 0.0f;
@@ -14,7 +25,7 @@ public:
     float         tripDistance   = 0.0f;
     unsigned long totalMovingMs  = 0;
     unsigned long totalElapsedMs = 0;
-    bool          isPaused       = false;
+    Status        status         = Status::Stopped;
   };
 
 private:
@@ -27,15 +38,6 @@ private:
   unsigned long lastUpdateMs     = 0;
   unsigned long lastGnssUpdateMs = 0;
   bool          hasLastUpdate    = false;
-
-  static constexpr float         MS_PER_HOUR          = 60.0f * 60.0f * 1000.0f;
-  static constexpr float         MIN_ABS              = 1e-6f;
-  static constexpr float         MIN_DELTA            = 0.002f;
-  static constexpr float         MAX_DELTA            = 1.0f;
-  static constexpr float         EARTH_RADIUS_M       = 6378137.0f; // WGS84 [m]
-  static constexpr float         MS_TO_KMH            = 3.6f;
-  static constexpr float         MIN_MOVING_SPEED_KMH = 0.001f;
-  static constexpr unsigned long SIGNAL_TIMEOUT_MS    = 2000;
 
 public:
   void begin() {
@@ -53,11 +55,9 @@ public:
     const unsigned long dt = currentMillis - lastUpdateMs;
     lastUpdateMs           = currentMillis;
 
-    // 1. Update time-based state (always runs)
-    if (state.currentSpeed > 0 && !state.isPaused) { state.totalMovingMs += dt; }
-    if (!state.isPaused) { state.totalElapsedMs += dt; }
+    if (state.status == Status::Moving) { state.totalMovingMs += dt; }
+    if (state.status != Status::Paused) { state.totalElapsedMs += dt; }
 
-    // 2. Process GNSS data only if updated
     if (isGnssUpdated) {
       lastGnssUpdateMs = currentMillis;
 
@@ -65,23 +65,27 @@ public:
       const bool  hasFix   = (navData.posFixMode == Fix2D || navData.posFixMode == Fix3D);
       const bool  isMoving = hasFix && (MIN_MOVING_SPEED_KMH < rawKmh);
 
-      state.currentSpeed = isMoving ? rawKmh : 0.0f;
+      if (state.status != Status::Paused) {
+        state.status = isMoving ? Status::Moving : Status::Stopped;
+      }
+
+      state.currentSpeed = (state.status == Status::Moving) ? rawKmh : 0.0f;
 
       float deltaKm = 0.0f;
       if (hasFix) { deltaKm = updateOdometer(navData.latitude, navData.longitude, isMoving); }
-      state.tripDistance += deltaKm;
 
-      if (state.maxSpeed < state.currentSpeed) { state.maxSpeed = state.currentSpeed; }
+      if (state.status != Status::Paused) state.tripDistance += deltaKm;
+
+      if (state.maxSpeed < state.currentSpeed) state.maxSpeed = state.currentSpeed;
     } else {
-      // 3. Signal Timeout Check
-      // If no valid GNSS data for a while, assume we stopped or lost signal
-      if (currentMillis - lastGnssUpdateMs > SIGNAL_TIMEOUT_MS) { state.currentSpeed = 0.0f; }
+      if (currentMillis - lastGnssUpdateMs > SIGNAL_TIMEOUT_MS) {
+        if (state.status != Status::Paused) state.status = Status::Stopped;
+        state.currentSpeed = 0.0f;
+      }
     }
 
-    // 4. Update Average Speed
-    if (state.totalMovingMs > 0) {
+    if (state.totalMovingMs > 0)
       state.avgSpeed = state.tripDistance / (state.totalMovingMs / MS_PER_HOUR);
-    }
   }
 
   void resetTrip() {
@@ -95,6 +99,7 @@ public:
     state.maxSpeed      = 0.0f;
     state.avgSpeed      = 0.0f;
     state.totalMovingMs = 0;
+    state.status        = Status::Stopped;
   }
 
   void resetOdometer() {
@@ -114,7 +119,8 @@ public:
   }
 
   void pause() {
-    state.isPaused = !state.isPaused;
+    if (state.status == Status::Paused) state.status = Status::Stopped;
+    else state.status = Status::Paused;
   }
 
   void restore(float totalDist, float tripDist, unsigned long movingTime, float maxSpd) {
@@ -122,6 +128,7 @@ public:
     state.tripDistance  = tripDist;
     state.totalMovingMs = movingTime;
     state.maxSpeed      = maxSpd;
+    state.status        = Status::Stopped;
   }
 
   const State &getState() const {

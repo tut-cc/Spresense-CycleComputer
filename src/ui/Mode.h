@@ -9,60 +9,63 @@
 
 class Mode {
 public:
-  enum class ID { SPD_TIME, AVG_ODO, MAX_CLOCK };
+  enum class ID { SPD_TIM, AVG_ODO, MAX_CLK };
 
 private:
-  ID currentMode = ID::SPD_TIME;
+  ID currentMode = ID::SPD_TIM;
 
 public:
-  void handleInput(Input::ID id, Trip &trip, DataStore &dataStore) {
-    if (id == Input::ID::RESET_LONG) {
+  void handleInput(Input::Event id, Trip &trip, DataStore &dataStore) {
+    switch (id) {
+    case Input::Event::RESET_LONG:
       trip.reset();
       dataStore.clear();
-      return;
-    }
+      break;
 
-    if (id == Input::ID::SELECT) {
+    case Input::Event::SELECT:
       currentMode = static_cast<ID>((static_cast<int>(currentMode) + 1) % 3);
-      return;
-    }
+      break;
 
-    if (id == Input::ID::PAUSE) {
+    case Input::Event::PAUSE:
       trip.pause();
-      return;
-    }
+      break;
 
-    if (id == Input::ID::RESET) {
+    case Input::Event::RESET:
       switch (currentMode) {
-      case ID::SPD_TIME:
+      case ID::SPD_TIM:
         trip.resetTrip();
-        return;
+        break;
       case ID::AVG_ODO:
         trip.reset();
-        return;
-      case ID::MAX_CLOCK:
+        break;
+      case ID::MAX_CLK:
         trip.resetMaxSpeed();
-        return;
+        break;
       }
+      break;
+
+    case Input::Event::NONE:
+      break;
     }
   }
 
   void fillFrame(Frame &frame, const Trip &trip, const Clock &clock) const {
     const Trip::State &state = trip.getState();
 
-    // Default units
     strcpy(frame.main.unit, "km/h");
     strcpy(frame.sub.unit, "");
 
     switch (currentMode) {
-    case ID::SPD_TIME:
+    case ID::SPD_TIM:
       strcpy(frame.header.modeSpeed, "SPD");
       Formatter::formatSpeed(state.currentSpeed, frame.main.value, sizeof(frame.main.value));
 
       strcpy(frame.header.modeTime, "Time");
-      if (state.isPaused && (millis() / 500) % 2 == 0) strcpy(frame.sub.value, "");
-      else
+      if (state.status == Trip::Status::Paused && (millis() / 500) % 2 == 0) {
+        strcpy(frame.sub.value, "");
+      } else {
         Formatter::formatDuration(state.totalElapsedMs, frame.sub.value, sizeof(frame.sub.value));
+      }
       break;
 
     case ID::AVG_ODO:
@@ -73,11 +76,11 @@ public:
       strcpy(frame.sub.unit, "km");
       break;
 
-    case ID::MAX_CLOCK:
+    case ID::MAX_CLK:
       strcpy(frame.header.modeSpeed, "MAX");
       strcpy(frame.header.modeTime, "Clock");
       Formatter::formatSpeed(state.maxSpeed, frame.main.value, sizeof(frame.main.value));
-      Formatter::formatTime(clock.getTime(), frame.sub.value, sizeof(frame.sub.value));
+      Formatter::formatTime(clock, frame.sub.value, sizeof(frame.sub.value));
       break;
     }
   }
