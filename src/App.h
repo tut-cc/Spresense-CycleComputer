@@ -97,10 +97,10 @@ private:
   }
 
 public:
-  UserInterface() : oled(OLED::WIDTH, OLED::HEIGHT), input(BTN_A, BTN_B) {}
+  UserInterface() : input(BTN_A, BTN_B) {}
 
   void begin() {
-    oled.begin(OLED::ADDRESS);
+    oled.begin();
     input.begin();
   }
 

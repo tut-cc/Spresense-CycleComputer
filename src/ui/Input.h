@@ -15,8 +15,8 @@ private:
   Button selectButton;
   Button pauseButton;
 
-  State state             = State::Idle;
-  Event potentialSingleID = Event::NONE;
+  State state                = State::Idle;
+  Event potentialSingleEvent = Event::NONE;
 
   unsigned long stateEnterTime = 0;
 
@@ -46,27 +46,27 @@ public:
         return Event::NONE;
       }
       if (selectPressed) {
-        potentialSingleID = Event::SELECT;
+        potentialSingleEvent = Event::SELECT;
         changeState(State::MayBeSingle, now);
         return Event::NONE;
       }
       if (pausePressed) {
-        potentialSingleID = Event::PAUSE;
+        potentialSingleEvent = Event::PAUSE;
         changeState(State::MayBeSingle, now);
         return Event::NONE;
       }
       break;
 
     case State::MayBeSingle: // たぶんボタン1つ押しの状態
-      if ((potentialSingleID == Event::SELECT && pausePressed) ||
-          (potentialSingleID == Event::PAUSE && selectPressed)) {
+      if ((potentialSingleEvent == Event::SELECT && pausePressed) ||
+          (potentialSingleEvent == Event::PAUSE && selectPressed)) {
         changeState(State::MayBeDoubleShort, now);
         return Event::NONE;
       }
 
       if (now - stateEnterTime > SINGLE_PRESS_MS) {
         changeState(State::Idle, now);
-        return potentialSingleID; // 1ボタン短押しならモードごとの操作
+        return potentialSingleEvent; // 1ボタン短押しならモードごとの操作
       }
       break;
 

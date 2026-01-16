@@ -23,15 +23,15 @@ private:
 public:
   OLED() : ssd1306(WIDTH, HEIGHT, &Wire, -1) {}
 
-  bool begin(uint8_t address) {
-    if (!ssd1306.begin(SSD1306_SWITCHCAPVCC, address)) return false;
+  bool begin() {
+    if (!ssd1306.begin(SSD1306_SWITCHCAPVCC, ADDRESS)) return false;
     ssd1306.clearDisplay();
     ssd1306.display();
     return true;
   }
 
   void restart() {
-    begin(ADDRESS);
+    begin();
   }
 
   void clear() {
