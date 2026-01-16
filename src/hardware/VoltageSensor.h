@@ -5,7 +5,7 @@
 class VoltageSensor {
 private:
   const int              pin;
-  static constexpr float REFERENCE_VOLTAGE = 5.0f;
+  static constexpr float REFERENCE_VOLTAGE = 3.3f;
   static constexpr float ADC_MAX_VALUE     = 1023.0f;
 
 public:

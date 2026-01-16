@@ -33,14 +33,14 @@ public:
     selectButton.update();
     pauseButton.update();
 
-    const bool          selectPressed = selectButton.wasPressed();
+    const bool          selectPressed = selectButton.isPressed();
     const bool          selectHeld    = selectButton.isHeld();
-    const bool          pausePressed  = pauseButton.wasPressed();
+    const bool          pausePressed  = pauseButton.isPressed();
     const bool          pauseHeld     = pauseButton.isHeld();
     const unsigned long now           = millis();
 
     switch (state) {
-    case State::Idle:
+    case State::Idle: // ボタンが2つとも押されていない状態
       if (selectPressed && pausePressed) {
         changeState(State::MayBeDoubleShort, now);
         return Event::NONE;
@@ -57,7 +57,7 @@ public:
       }
       break;
 
-    case State::MayBeSingle:
+    case State::MayBeSingle: // たぶんボタン1つ押しの状態
       if ((potentialSingleID == Event::SELECT && pausePressed) ||
           (potentialSingleID == Event::PAUSE && selectPressed)) {
         changeState(State::MayBeDoubleShort, now);
@@ -66,23 +66,23 @@ public:
 
       if (now - stateEnterTime > SINGLE_PRESS_MS) {
         changeState(State::Idle, now);
-        return potentialSingleID; // 1ボタン短押しはモードごとの操作
+        return potentialSingleID; // 1ボタン短押しならモードごとの操作
       }
       break;
 
-    case State::MayBeDoubleShort:
+    case State::MayBeDoubleShort: // たぶんボタン2つ押しの状態
       if (!selectHeld || !pauseHeld) {
         changeState(State::Idle, now);
-        return Event::RESET; // 2ボタン短押しはリセット
+        return Event::RESET; // 2ボタン短押しならリセット
       }
 
       if (now - stateEnterTime > LONG_PRESS_MS) {
         changeState(State::MustBeDoubleLong, now);
-        return Event::RESET_LONG; // 2ボタン長押しは全データリセット
+        return Event::RESET_LONG; // 2ボタン長押しなら全データリセット
       }
       break;
 
-    case State::MustBeDoubleLong:
+    case State::MustBeDoubleLong: // ボタン2つ押しの状態
       if (!selectHeld && !pauseHeld) changeState(State::Idle, now);
       break;
     }

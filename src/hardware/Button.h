@@ -2,56 +2,67 @@
 
 #include <Arduino.h>
 
+constexpr unsigned long DEBOUNCE_DELAY_MS = 50;
+
 class Button {
+public:
+  enum class State { High, WaitStablizeHigh, Low, WaitStablizeLow };
+
 private:
-  const int                      pinNumber;
-  bool                           stablePinLevel;
-  bool                           lastPinLevel;
-  unsigned long                  lastDebounceTime;
-  bool                           pressed;
-  static constexpr unsigned long DEBOUNCE_DELAY_MS = 50;
+  const int     pinNumber;
+  State         state;
+  unsigned long lastStateChangeTime;
+  bool          pressEdge;
 
 public:
-  Button(int pin) : pinNumber(pin), pressed(false) {}
+  Button(int pin) : pinNumber(pin), state(State::High), pressEdge(false) {}
 
   void begin() {
     pinMode(pinNumber, INPUT_PULLUP);
-    stablePinLevel   = digitalRead(pinNumber);
-    lastPinLevel     = stablePinLevel;
-    lastDebounceTime = millis();
-    pressed          = false;
+    state     = (digitalRead(pinNumber) == LOW) ? State::Low : State::High;
+    pressEdge = false;
   }
 
   void update() {
-    pressed                = false;
-    const bool rawPinLevel = digitalRead(pinNumber);
+    pressEdge                       = false;
+    const bool          rawPinLevel = digitalRead(pinNumber);
+    const unsigned long now         = millis();
 
-    if (rawPinLevel != lastPinLevel) resetDebounceTimer();
+    switch (state) {
+    case State::High: // 押されていない状態
+      if (rawPinLevel == LOW) changeState(State::WaitStablizeLow, now);
+      break;
 
-    if (hasDebounceTimePassed()) {
-      if (stablePinLevel != rawPinLevel) {
-        stablePinLevel = rawPinLevel;
-        if (stablePinLevel == LOW) pressed = true;
+    case State::WaitStablizeLow: // 押されていない->押されている？
+      if (rawPinLevel == HIGH) changeState(State::High, now);
+      else if (now - lastStateChangeTime > DEBOUNCE_DELAY_MS) {
+        changeState(State::Low, now);
+        pressEdge = true;
       }
-    }
+      break;
 
-    lastPinLevel = rawPinLevel;
+    case State::Low: // 押されている状態
+      if (rawPinLevel == HIGH) changeState(State::WaitStablizeHigh, now);
+      break;
+
+    case State::WaitStablizeHigh: // 押されている->押されていない？
+      if (rawPinLevel == LOW) changeState(State::Low, now);
+      else if (now - lastStateChangeTime > DEBOUNCE_DELAY_MS) changeState(State::High, now);
+      break;
+    }
   }
 
-  bool wasPressed() const {
-    return pressed;
+  bool isPressed() const {
+    return pressEdge;
   }
 
   bool isHeld() const {
-    return stablePinLevel == LOW;
+    return (state == State::Low || state == State::WaitStablizeHigh);
   }
 
 private:
-  void resetDebounceTimer() {
-    lastDebounceTime = millis();
-  }
-
-  bool hasDebounceTimePassed() const {
-    return DEBOUNCE_DELAY_MS < (millis() - lastDebounceTime);
+  void changeState(State newState, unsigned long now) {
+    state               = newState;
+    lastStateChangeTime = now;
   }
 };

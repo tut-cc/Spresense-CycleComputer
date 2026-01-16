@@ -105,9 +105,9 @@ public:
   }
 
   void update(Trip &trip, DataStore &dataStore, const Clock &clock, const SpNavData &navData) {
-    Input::EVENT id = input.update();
+    Input::Event id = input.update();
 
-    if (id == Input::EVENT::RESET_LONG) {
+    if (id == Input::Event::RESET_LONG) {
       oled.clear();
       oled.setTextSize(1);
       oled.setTextColor(WHITE);
@@ -122,7 +122,7 @@ public:
       renderer.reset();
     }
 
-    if (id != Input::EVENT::NONE) { mode.handleInput(id, trip, dataStore); }
+    if (id != Input::Event::NONE) { mode.handleInput(id, trip, dataStore); }
 
     Frame frame = createFrame(navData, trip, clock);
     renderer.render(oled, frame);
