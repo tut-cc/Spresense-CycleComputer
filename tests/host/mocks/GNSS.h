@@ -10,6 +10,7 @@
 #define QZ_L1S 4
 #define COLD_START 0
 #define HOT_START 1
+typedef int SpStartMode;
 
 enum SpGnssFixType { FixInvalid = 0, Fix2D = 1, Fix3D = 2 };
 typedef SpGnssFixType SpFixMode;

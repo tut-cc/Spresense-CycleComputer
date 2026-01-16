@@ -8,6 +8,7 @@ struct AppData {
   float         totalDistance;
   float         tripDistance;
   unsigned long movingTimeMs;
+  float         batteryVoltage;
 };
 
 class DataStore {
@@ -16,6 +17,7 @@ private:
     float         totalDistance;
     float         tripDistance;
     unsigned long movingTimeMs;
+    float         batteryVoltage;
     uint32_t      magic;
     uint32_t      crc;
   };
@@ -65,34 +67,34 @@ public:
     const uint32_t calculatedCrc = calculateDataCRC(savedData);
 
     if (!isValid(savedData, calculatedCrc)) {
-      // Invalid data, reset to default
-      savedData     = {0.0f, 0.0f, 0, MAGIC_NUMBER, 0};
+      savedData     = {0.0f, 0.0f, 0, 0.0f, MAGIC_NUMBER, 0};
       savedData.crc = calculateDataCRC(savedData);
     }
 
     lastSavedData = savedData;
 
-    return {savedData.totalDistance, savedData.tripDistance, savedData.movingTimeMs};
+    return {savedData.totalDistance, savedData.tripDistance, savedData.movingTimeMs,
+            savedData.batteryVoltage};
   }
 
   void save(const AppData &currentAppData) {
     SaveData currentData;
-    currentData.totalDistance = currentAppData.totalDistance;
-    currentData.tripDistance  = currentAppData.tripDistance;
-    currentData.movingTimeMs  = currentAppData.movingTimeMs;
-    currentData.magic         = MAGIC_NUMBER;
-    currentData.crc           = calculateDataCRC(currentData);
+    currentData.totalDistance  = currentAppData.totalDistance;
+    currentData.tripDistance   = currentAppData.tripDistance;
+    currentData.movingTimeMs   = currentAppData.movingTimeMs;
+    currentData.batteryVoltage = currentAppData.batteryVoltage;
+    currentData.magic          = MAGIC_NUMBER;
+    currentData.crc            = calculateDataCRC(currentData);
 
     if (currentData.totalDistance != lastSavedData.totalDistance ||
         currentData.tripDistance != lastSavedData.tripDistance ||
-        currentData.movingTimeMs != lastSavedData.movingTimeMs) {
+        currentData.movingTimeMs != lastSavedData.movingTimeMs ||
+        currentData.batteryVoltage != lastSavedData.batteryVoltage) {
 
-      // 1. Invalidate signature
       uint32_t  invalidMagic = 0;
       const int magicAddr    = EEPROM_ADDR + offsetof(SaveData, magic);
       EEPROM.put(magicAddr, invalidMagic);
 
-      // 2. Write new data
       EEPROM.put(EEPROM_ADDR, currentData);
 
       lastSavedData = currentData;
@@ -100,12 +102,10 @@ public:
   }
 
   void clear() {
-    // 1. Invalidate first
     const int magicAddr = EEPROM_ADDR + offsetof(SaveData, magic);
     EEPROM.put(magicAddr, (uint32_t)0);
 
-    // 2. Write clean data
-    SaveData cleanData = {0.0f, 0.0f, 0, MAGIC_NUMBER, 0};
+    SaveData cleanData = {0.0f, 0.0f, 0, 0.0f, MAGIC_NUMBER, 0};
     cleanData.crc      = calculateDataCRC(cleanData);
     EEPROM.put(EEPROM_ADDR, cleanData);
 

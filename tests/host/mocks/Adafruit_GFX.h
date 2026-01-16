@@ -5,6 +5,8 @@
 
 #include "Arduino.h"
 
+#define WHITE 1
+
 class Adafruit_GFX {
 public:
   Adafruit_GFX(int16_t w, int16_t h);

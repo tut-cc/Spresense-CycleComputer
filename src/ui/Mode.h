@@ -1,10 +1,89 @@
 #pragma once
 
+#include "../domain/Clock.h"
 #include "../domain/DataStore.h"
 #include "../domain/Trip.h"
+#include "Input.h"
+#include "Renderer.h" // Contains Frame and Formatter
 
-#include "ConcreteModes.h"
+// ==========================================
+// ModeState
+// ==========================================
+class ModeState {
+public:
+  virtual ~ModeState() = default;
 
+  virtual void onInput(Input::ID id, Trip &trip, DataStore &dataStore)             = 0;
+  virtual void fillFrame(Frame &frame, const Trip &trip, const Clock &clock) const = 0;
+};
+
+// ==========================================
+// State Implementations
+// ==========================================
+class SpdTimeState : public ModeState {
+public:
+  void onInput(Input::ID id, Trip &trip, DataStore & /*dataStore*/) override {
+    if (id == Input::ID::RESET) {
+      trip.resetTrip();
+    } else if (id == Input::ID::PAUSE) {
+      trip.pause();
+    }
+  }
+
+  void fillFrame(Frame &frame, const Trip &trip, const Clock & /*clock*/) const override {
+    strcpy(frame.header.modeSpeed, "SPD");
+    strcpy(frame.header.modeTime, "Time");
+    Formatter::formatSpeed(trip.getSpeed(), frame.main.value, sizeof(frame.main.value));
+    strcpy(frame.main.unit, "km/h");
+    Formatter::formatDuration(trip.getElapsedTimeMs(), frame.sub.value, sizeof(frame.sub.value));
+    strcpy(frame.sub.unit, "");
+  }
+};
+
+class AvgOdoState : public ModeState {
+public:
+  void onInput(Input::ID id, Trip &trip, DataStore &dataStore) override {
+    if (id == Input::ID::RESET) {
+      trip.reset();
+      dataStore.clear();
+    } else if (id == Input::ID::PAUSE) {
+      trip.pause();
+    }
+  }
+
+  void fillFrame(Frame &frame, const Trip &trip, const Clock & /*clock*/) const override {
+    strcpy(frame.header.modeSpeed, "AVG");
+    strcpy(frame.header.modeTime, "Odo");
+    Formatter::formatSpeed(trip.getAvgSpeed(), frame.main.value, sizeof(frame.main.value));
+    strcpy(frame.main.unit, "km/h");
+    Formatter::formatDistance(trip.getTotalDistance(), frame.sub.value, sizeof(frame.sub.value));
+    strcpy(frame.sub.unit, "km");
+  }
+};
+
+class MaxClockState : public ModeState {
+public:
+  void onInput(Input::ID id, Trip &trip, DataStore & /*dataStore*/) override {
+    if (id == Input::ID::RESET) {
+      // Do nothing
+    } else if (id == Input::ID::PAUSE) {
+      trip.pause();
+    }
+  }
+
+  void fillFrame(Frame &frame, const Trip &trip, const Clock &clock) const override {
+    strcpy(frame.header.modeSpeed, "MAX");
+    strcpy(frame.header.modeTime, "Clock");
+    Formatter::formatSpeed(trip.getMaxSpeed(), frame.main.value, sizeof(frame.main.value));
+    strcpy(frame.main.unit, "km/h");
+    Formatter::formatTime(clock.getTime(), frame.sub.value, sizeof(frame.sub.value));
+    strcpy(frame.sub.unit, "");
+  }
+};
+
+// ==========================================
+// Mode
+// ==========================================
 class Mode {
 private:
   SpdTimeState  spdTimeState;
@@ -13,8 +92,6 @@ private:
 
   ModeState *currentState;
 
-  // We use an internal index just for next() logic simplicity, or a circular linked list approach.
-  // Simple approach: Array of pointers
   ModeState *states[3];
   int        currentIndex = 0;
 
@@ -35,7 +112,11 @@ public:
     return currentState;
   }
 
-  void reset(Trip &trip, DataStore &dataStore) {
-    currentState->reset(trip, dataStore);
+  void handleInput(Input::ID id, Trip &trip, DataStore &dataStore) {
+    if (id == Input::ID::SELECT) {
+      next();
+      return;
+    }
+    currentState->onInput(id, trip, dataStore);
   }
 };

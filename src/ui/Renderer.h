@@ -1,11 +1,81 @@
 #pragma once
 
 #include <GNSS.h>
+#include <cstdio>
 #include <cstring>
 
+#include "../domain/Clock.h"
 #include "../hardware/OLED.h"
-#include "Frame.h"
 
+// ==========================================
+// Frame
+// ==========================================
+struct Frame {
+  struct Item {
+    char value[16] = "";
+    char unit[16]  = "";
+
+    bool operator==(const Item &other) const {
+      return strcmp(value, other.value) == 0 && strcmp(unit, other.unit) == 0;
+    }
+  };
+
+  struct Header {
+    char fixStatus[8] = "";
+    char modeSpeed[8] = "";
+    char modeTime[8]  = "";
+
+    bool operator==(const Header &other) const {
+      const bool fixStatusEq = strcmp(fixStatus, other.fixStatus) == 0;
+      const bool modeSpeedEq = strcmp(modeSpeed, other.modeSpeed) == 0;
+      const bool modeTimeEq  = strcmp(modeTime, other.modeTime) == 0;
+      return fixStatusEq && modeSpeedEq && modeTimeEq;
+    }
+  };
+
+  Header header;
+  Item   main;
+  Item   sub;
+
+  Frame() = default;
+
+  bool operator==(const Frame &other) const {
+    return header == other.header && main == other.main && sub == other.sub;
+  }
+};
+
+// ==========================================
+// Formatter
+// ==========================================
+namespace Formatter {
+
+inline void formatSpeed(float speedKmh, char *buffer, size_t size) {
+  snprintf(buffer, size, "%4.1f", speedKmh);
+}
+
+inline void formatDistance(float distanceKm, char *buffer, size_t size) {
+  snprintf(buffer, size, "%5.2f", distanceKm);
+}
+
+inline void formatTime(const Clock::Time time, char *buffer, size_t size) {
+  snprintf(buffer, size, "%02d:%02d", time.hour, time.minute);
+}
+
+inline void formatDuration(unsigned long millis, char *buffer, size_t size) {
+  const unsigned long seconds = millis / 1000;
+  const unsigned long h       = seconds / 3600;
+  const unsigned long m       = (seconds % 3600) / 60;
+  const unsigned long s       = seconds % 60;
+
+  if (0 < h) snprintf(buffer, size, "%lu:%02lu:%02lu", h, m, s);
+  else snprintf(buffer, size, "%02lu:%02lu", m, s);
+}
+
+} // namespace Formatter
+
+// ==========================================
+// Renderer
+// ==========================================
 class Renderer {
 public:
   struct Layout {
@@ -36,6 +106,19 @@ private:
   bool         firstRender = true;
 
 public:
+  Renderer()
+      : layout({
+            .headerHeight      = DEFAULT_HEADER_HEIGHT,
+            .headerTextSize    = DEFAULT_HEADER_TEXT_SIZE,
+            .headerLineYOffset = DEFAULT_HEADER_LINE_Y_OFFSET,
+            .mainAreaYOffset   = DEFAULT_MAIN_AREA_Y_OFFSET,
+            .mainValSize       = DEFAULT_MAIN_VAL_SIZE,
+            .mainUnitSize      = DEFAULT_MAIN_UNIT_SIZE,
+            .subValSize        = DEFAULT_SUB_VAL_SIZE,
+            .subUnitSize       = DEFAULT_SUB_UNIT_SIZE,
+            .unitSpacing       = DEFAULT_UNIT_SPACING,
+        }) {}
+
   Renderer(const Layout &layoutConfig) : layout(layoutConfig) {}
 
   void render(OLED &oled, Frame &frame) {

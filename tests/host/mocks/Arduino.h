@@ -10,6 +10,8 @@
 #include <cstring>
 #include <iostream>
 
+#define PI 3.1415926535897932384626433832795
+
 // Mock basic types
 using std::abs;
 using std::max;
