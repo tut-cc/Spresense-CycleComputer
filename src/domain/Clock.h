@@ -19,7 +19,7 @@ private:
 
 public:
   void update(const SpNavData &navData) {
-    time.isValid = (navData.time.year >= VALID_YEAR_START);
+    time.isValid = (VALID_YEAR_START <= navData.time.year);
     time.hour    = adjustHour(navData.time.hour, JST_OFFSET);
     time.minute  = navData.time.minute;
     time.second  = navData.time.sec;

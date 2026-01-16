@@ -40,7 +40,20 @@ public:
     const bool          pausePressed  = btnPause.wasPressed();
     const unsigned long now           = millis();
 
-    // Long press detection
+    ID event = processLongPress(now);
+    if (event != ID::NONE) return event;
+
+    event = processSimultaneousPress(selectPressed, pausePressed);
+    if (event != ID::NONE) return event;
+
+    event = processPendingEvent(selectPressed, pausePressed, now);
+    if (event != ID::NONE || pendingEvent != ID::NONE) return event;
+
+    return handleNewPress(selectPressed, pausePressed, now);
+  }
+
+private:
+  ID processLongPress(unsigned long now) {
     if (btnSelect.isHeld() && btnPause.isHeld()) {
       if (simultaneousStartTime == 0) {
         simultaneousStartTime = now;
@@ -52,43 +65,45 @@ public:
       simultaneousStartTime          = 0;
       simultaneousLongPressTriggered = false;
     }
+    return ID::NONE;
+  }
 
+  ID processSimultaneousPress(bool selectPressed, bool pausePressed) {
     if (isSimultaneous(selectPressed, pausePressed)) {
       pendingEvent = ID::NONE;
       return ID::RESET;
     }
+    return ID::NONE;
+  }
 
-    if (pendingEvent != ID::NONE) {
-      if (resolvePendingEvent(selectPressed, pausePressed)) {
-        pendingEvent = ID::NONE;
-        return ID::RESET;
-      }
+  ID processPendingEvent(bool selectPressed, bool pausePressed, unsigned long now) {
+    if (pendingEvent == ID::NONE) return ID::NONE;
 
-      if (SIMULTANEOUS_DELAY_MS <= now - pendingTime) {
-        ID confirmed = pendingEvent;
-        pendingEvent = ID::NONE;
-        return confirmed;
-      }
-
-      return ID::NONE;
+    if (resolvePendingEvent(selectPressed, pausePressed)) {
+      pendingEvent = ID::NONE;
+      return ID::RESET;
     }
 
-    if (selectPressed) {
-      pendingEvent = ID::SELECT;
-      pendingTime  = now;
-      return ID::NONE;
-    }
-
-    if (pausePressed) {
-      pendingEvent = ID::PAUSE;
-      pendingTime  = now;
-      return ID::NONE;
+    if (now - pendingTime >= SIMULTANEOUS_DELAY_MS) {
+      ID confirmed = pendingEvent;
+      pendingEvent = ID::NONE;
+      return confirmed;
     }
 
     return ID::NONE;
   }
 
-private:
+  ID handleNewPress(bool selectPressed, bool pausePressed, unsigned long now) {
+    if (selectPressed) {
+      pendingEvent = ID::SELECT;
+      pendingTime  = now;
+    } else if (pausePressed) {
+      pendingEvent = ID::PAUSE;
+      pendingTime  = now;
+    }
+    return ID::NONE;
+  }
+
   bool isSimultaneous(bool selectPressed, bool pausePressed) const {
     return (selectPressed && (pausePressed || btnPause.isHeld())) ||
            (pausePressed && (selectPressed || btnSelect.isHeld()));

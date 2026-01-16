@@ -8,18 +8,12 @@ private:
   SpNavData navData{};
 
 public:
-  enum class StartMode { COLD, HOT };
-
   Gnss() {}
 
-  bool begin(StartMode mode = StartMode::COLD) {
+  bool begin() {
     if (gnss.begin() != 0) return false;
-
     selectSatellites();
-
-    const SpStartMode startType = (mode == StartMode::COLD) ? COLD_START : HOT_START;
-    if (gnss.start(startType) != 0) return false;
-
+    if (gnss.start(COLD_START) != 0) return false;
     return true;
   }
 

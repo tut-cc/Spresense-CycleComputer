@@ -16,15 +16,12 @@ public:
 
 class SpdTimeState : public ModeState {
 public:
-  void onInput(Input::ID id, Trip &trip, DataStore & /*dataStore*/) override {
-    if (id == Input::ID::RESET) {
-      trip.resetTrip();
-    } else if (id == Input::ID::PAUSE) {
-      trip.pause();
-    }
+  void onInput(Input::ID id, Trip &trip, DataStore &) override {
+    if (id == Input::ID::RESET) trip.resetTrip();
+    else if (id == Input::ID::PAUSE) trip.pause();
   }
 
-  void fillFrame(Frame &frame, const Trip &trip, const Clock & /*clock*/) const override {
+  void fillFrame(Frame &frame, const Trip &trip, const Clock &) const override {
     strcpy(frame.header.modeSpeed, "SPD");
     strcpy(frame.header.modeTime, "Time");
     Formatter::formatSpeed(trip.getSpeed(), frame.main.value, sizeof(frame.main.value));
@@ -36,16 +33,12 @@ public:
 
 class AvgOdoState : public ModeState {
 public:
-  void onInput(Input::ID id, Trip &trip, DataStore &dataStore) override {
-    if (id == Input::ID::RESET) {
-      trip.reset();
-      dataStore.clear();
-    } else if (id == Input::ID::PAUSE) {
-      trip.pause();
-    }
+  void onInput(Input::ID id, Trip &trip, DataStore &) override {
+    if (id == Input::ID::RESET) trip.reset();
+    else if (id == Input::ID::PAUSE) trip.pause();
   }
 
-  void fillFrame(Frame &frame, const Trip &trip, const Clock & /*clock*/) const override {
+  void fillFrame(Frame &frame, const Trip &trip, const Clock &) const override {
     strcpy(frame.header.modeSpeed, "AVG");
     strcpy(frame.header.modeTime, "Odo");
     Formatter::formatSpeed(trip.getAvgSpeed(), frame.main.value, sizeof(frame.main.value));
@@ -57,12 +50,9 @@ public:
 
 class MaxClockState : public ModeState {
 public:
-  void onInput(Input::ID id, Trip &trip, DataStore & /*dataStore*/) override {
-    if (id == Input::ID::RESET) {
-      // Do nothing
-    } else if (id == Input::ID::PAUSE) {
-      trip.pause();
-    }
+  void onInput(Input::ID id, Trip &trip, DataStore &) override {
+    if (id == Input::ID::RESET) trip.resetMaxSpeed();
+    else if (id == Input::ID::PAUSE) trip.pause();
   }
 
   void fillFrame(Frame &frame, const Trip &trip, const Clock &clock) const override {

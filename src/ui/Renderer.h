@@ -73,9 +73,6 @@ inline void formatDuration(unsigned long millis, char *buffer, size_t size) {
 
 } // namespace Formatter
 
-// ==========================================
-// Renderer
-// ==========================================
 class Renderer {
   static constexpr int16_t HEADER_HEIGHT        = 12;
   static constexpr int16_t HEADER_TEXT_SIZE     = 1;

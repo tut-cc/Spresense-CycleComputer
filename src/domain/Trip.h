@@ -4,33 +4,25 @@
 #include <GNSS.h>
 #include <math.h>
 
-// ==========================================
-// Trip
-// ==========================================
 class Trip {
 private:
-  // Speedometer members
   float currentSpeed = 0.0f;
   float maxSpeed     = 0.0f;
   float avgSpeed     = 0.0f;
 
-  // Odometer members
   float totalKm      = 0.0f;
   float lastLat      = 0.0f;
   float lastLon      = 0.0f;
   bool  hasLastCoord = false;
 
-  // Stopwatch members
   unsigned long totalMovingMs  = 0;
   unsigned long totalElapsedMs = 0;
   bool          isPaused       = false;
 
-  // Trip specific members
   float         tripDistance  = 0.0f;
   unsigned long lastUpdateMs  = 0;
   bool          hasLastUpdate = false;
 
-  // Constants
   static constexpr float MS_PER_HOUR          = 60.0f * 60.0f * 1000.0f;
   static constexpr float MIN_ABS              = 1e-6f;
   static constexpr float MIN_DELTA            = 0.002f;
@@ -59,16 +51,13 @@ public:
     const bool  isMoving = hasFix && (MIN_MOVING_SPEED_KMH < rawKmh); // Anti-GPS noise
     const float speedKmh = isMoving ? rawKmh : 0.0f;
 
-    // Update Stopwatch logic
     if (isMoving) { totalMovingMs += dt; }
     if (!isPaused) totalElapsedMs += dt;
 
-    // Update Odometer logic
     float deltaKm = 0.0f;
     if (hasFix) { deltaKm = updateOdometer(navData.latitude, navData.longitude, isMoving); }
     tripDistance += deltaKm;
 
-    // Update Speedometer logic
     currentSpeed = speedKmh;
     if (maxSpeed < currentSpeed) maxSpeed = currentSpeed;
     if (0 < totalMovingMs) avgSpeed = tripDistance / (totalMovingMs / MS_PER_HOUR);
@@ -80,7 +69,6 @@ public:
     lastUpdateMs   = 0;
     hasLastUpdate  = false;
 
-    // Also reset speed stats and moving time for the trip
     currentSpeed  = 0.0f;
     maxSpeed      = 0.0f;
     avgSpeed      = 0.0f;
@@ -88,11 +76,14 @@ public:
   }
 
   void resetOdometer() {
-    // Reset Odometer
     totalKm      = 0.0f;
     lastLat      = 0.0f;
     lastLon      = 0.0f;
     hasLastCoord = false;
+  }
+
+  void resetMaxSpeed() {
+    maxSpeed = 0.0f;
   }
 
   void reset() {
@@ -111,7 +102,6 @@ public:
     maxSpeed      = maxSpd;
   }
 
-  // Getters
   float getTripDistance() const {
     return tripDistance;
   }
@@ -135,7 +125,6 @@ public:
   }
 
 private:
-  // Odometer helper methods
   static bool isValidCoordinate(float lat, float lon) {
     return !(fabsf(lat) < MIN_ABS && fabsf(lon) < MIN_ABS);
   }
@@ -170,17 +159,14 @@ private:
       const float dist = planarDistanceKm(lastLat, lastLon, lat, lon);
 
       if (dist >= MAX_DELTA) {
-        // Too far jump, just update position to reset baseline
         lastLat = lat;
         lastLon = lon;
       } else if (dist > MIN_DELTA) {
-        // Valid movement
         deltaKm = dist;
         totalKm += deltaKm;
         lastLat = lat;
         lastLon = lon;
       }
-      // If dist <= MIN_DELTA, keep old lastLat/lastLon to accumulate distance
     }
 
     return deltaKm;
