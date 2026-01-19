@@ -1,39 +1,17 @@
+#ifndef APP_H
+#define APP_H
+
 #include <Arduino.h>
 #include <stddef.h>
 
+#include "common/Formatter.h"
+#include "domain/DataStore.h"
+#include "domain/MvuPipeline.h"
+#include "domain/PowerManager.h"
+#include "domain/TripCompute.h"
 #include "hardware/Clock.h"
 #include "hardware/Gnss.h"
-#include "logic/DataStore.h"
-#include "logic/Pipeline.h"
-#include "logic/TripCompute.h"
-#include "logic/VoltageMonitor.h"
 #include "ui/UI.h"
-
-namespace Formatter {
-
-inline void formatSpeed(float speedKmh, char *buffer, size_t size) {
-  snprintf(buffer, size, "%4.1f", speedKmh);
-}
-
-inline void formatDistance(float distanceKm, char *buffer, size_t size) {
-  snprintf(buffer, size, "%5.2f", distanceKm);
-}
-
-inline void formatDuration(unsigned long millis, char *buffer, size_t size) {
-  const unsigned long seconds = millis / 1000;
-  const unsigned long h       = seconds / 3600;
-  const unsigned long m       = (seconds % 3600) / 60;
-  const unsigned long s       = seconds % 60;
-
-  if (h > 0) {
-    snprintf(buffer, size, "%lu:%02lu:%02lu", h, m, s);
-    return;
-  }
-
-  snprintf(buffer, size, "%02lu:%02lu", m, s);
-}
-
-} // namespace Formatter
 
 class App {
 private:
@@ -106,7 +84,6 @@ public:
 
         TripStateDataEx emptyState;
         emptyState.resetAll();
-        // voltage is not reset, but here we can use 0 or current
         SaveData emptySave = Pipeline::createSaveData(emptyState, 0.0f);
         saveBuffers[0]     = emptySave;
         saveBuffers[1]     = emptySave;
@@ -161,25 +138,25 @@ private:
 
     switch (data.fixMode) {
     case Fix2D:
-      strcpy(frame.header.fixStatus, "2D");
+      frame.header.fixStatus = "2D";
       break;
     case Fix3D:
-      strcpy(frame.header.fixStatus, "3D");
+      frame.header.fixStatus = "3D";
       break;
     default:
-      strcpy(frame.header.fixStatus, "WAIT");
+      frame.header.fixStatus = "WAIT";
       break;
     }
 
-    if (data.modeSpeedLabel) strcpy(frame.header.modeSpeed, data.modeSpeedLabel);
-    if (data.modeTimeLabel) strcpy(frame.header.modeTime, data.modeTimeLabel);
+    if (data.modeSpeedLabel) frame.header.modeSpeed = data.modeSpeedLabel;
+    if (data.modeTimeLabel) frame.header.modeTime = data.modeTimeLabel;
 
     Formatter::formatSpeed(data.mainValue, frame.main.value, sizeof(frame.main.value));
-    if (data.mainUnit) strcpy(frame.main.unit, data.mainUnit);
+    if (data.mainUnit) frame.main.unit = data.mainUnit;
 
     if (data.shouldBlink) {
       strcpy(frame.sub.value, "");
-      strcpy(frame.sub.unit, "");
+      frame.sub.unit = "";
     } else {
       switch (data.subType) {
       case DisplayData::SubType::Duration:
@@ -191,12 +168,13 @@ private:
                                   sizeof(frame.sub.value));
         break;
       case DisplayData::SubType::Clock:
-        snprintf(frame.sub.value, sizeof(frame.sub.value), "%02d:%02d",
-                 data.subValue.clockTime.hour, data.subValue.clockTime.minute);
+        Formatter::formatClock(data.subValue.clockTime.hour, data.subValue.clockTime.minute,
+                               frame.sub.value);
         break;
       }
-      if (data.subUnit) strcpy(frame.sub.unit, data.subUnit);
+      if (data.subUnit) frame.sub.unit = data.subUnit;
     }
     return frame;
   }
 };
+#endif // APP_H

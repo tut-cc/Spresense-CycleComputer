@@ -141,19 +141,15 @@ struct SaveData {
 
 struct DisplayFrame {
   struct Header {
-    char fixStatus[8];
-    char modeSpeed[8];
-    char modeTime[8];
+    const char *fixStatus;
+    const char *modeSpeed;
+    const char *modeTime;
 
-    Header() {
-      memset(fixStatus, 0, sizeof(fixStatus));
-      memset(modeSpeed, 0, sizeof(modeSpeed));
-      memset(modeTime, 0, sizeof(modeTime));
-    }
+    Header() : fixStatus(""), modeSpeed(""), modeTime("") {}
 
     bool operator==(const Header &other) const {
-      return strcmp(fixStatus, other.fixStatus) == 0 && strcmp(modeSpeed, other.modeSpeed) == 0 &&
-             strcmp(modeTime, other.modeTime) == 0;
+      return fixStatus == other.fixStatus && modeSpeed == other.modeSpeed &&
+             modeTime == other.modeTime;
     }
 
     bool operator!=(const Header &other) const {
@@ -162,16 +158,15 @@ struct DisplayFrame {
   };
 
   struct Item {
-    char value[16];
-    char unit[16];
+    char        value[16];
+    const char *unit;
 
-    Item() {
+    Item() : unit("") {
       memset(value, 0, sizeof(value));
-      memset(unit, 0, sizeof(unit));
     }
 
     bool operator==(const Item &other) const {
-      return strcmp(value, other.value) == 0 && strcmp(unit, other.unit) == 0;
+      return strcmp(value, other.value) == 0 && unit == other.unit;
     }
 
     bool operator!=(const Item &other) const {
@@ -188,6 +183,7 @@ struct DisplayFrame {
   bool operator==(const DisplayFrame &other) const {
     return header == other.header && main == other.main && sub == other.sub;
   }
+
   bool operator!=(const DisplayFrame &other) const {
     return !(*this == other);
   }

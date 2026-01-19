@@ -19,7 +19,7 @@ public:
 
     const uint32_t calculatedCrc = calculateDataCRC(savedData);
 
-    if (isValid(savedData, calculatedCrc)) { return savedData; }
+    if (isValid(savedData, calculatedCrc)) return savedData;
 
     SaveData defaultData;
     defaultData.magicNumber   = SAVE_DATA_MAGIC_NUMBER;
