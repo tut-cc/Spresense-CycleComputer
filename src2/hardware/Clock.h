@@ -9,10 +9,8 @@ public:
     RTC.begin();
   }
 
-  // GNSS時刻（UTC）でRTCを同期
   void sync(const SpGnssTime &gpsTime) {
-    // 異常値チェック
-    if (gpsTime.year < 2024) return;
+    if (gpsTime.year < 2026) return;
 
     RtcTime rtcTime;
     rtcTime.year(gpsTime.year);
@@ -25,7 +23,6 @@ public:
     RTC.setTime(rtcTime);
   }
 
-  // 現在時刻（UTC）を取得
   SpGnssTime now() {
     RtcTime    rtcTime = RTC.getTime();
     SpGnssTime t;

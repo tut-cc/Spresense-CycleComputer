@@ -2,15 +2,9 @@
 
 #include "../common/DataStructures.h"
 #include "../hardware/Gnss.h"
-
 #include "../ui/Input.h"
-#include "../ui/Mode.h"
 
 namespace Pipeline {
-
-// ========================================
-// Stage 1: GNSS Capture
-// ========================================
 
 inline GnssData collectGnss(Gnss &gnss) {
   GnssData data;
@@ -20,25 +14,19 @@ inline GnssData collectGnss(Gnss &gnss) {
   return data;
 }
 
-// Stage 2: Trip Logic (Refer to TripCompute.h)
-
-// ========================================
-// Stage 3: User Interaction
-// ========================================
-
 enum class ResetType { None, Trip, MaxSpeed, All, AllWithStorage };
 
-inline ResetType determineResetType(Input::Event event, Mode::ID currentMode) {
+inline ResetType determineResetType(Input::Event event, Mode currentMode) {
   switch (event) {
   case Input::Event::RESET_LONG:
     return ResetType::AllWithStorage;
   case Input::Event::RESET:
     switch (currentMode) {
-    case Mode::ID::SPD_TIM:
+    case Mode::SPD_TIM:
       return ResetType::Trip;
-    case Mode::ID::AVG_ODO:
+    case Mode::AVG_ODO:
       return ResetType::All;
-    case Mode::ID::MAX_CLK:
+    case Mode::MAX_CLK:
       return ResetType::MaxSpeed;
     }
     break;
@@ -71,28 +59,26 @@ inline void applyPause(TripStateData &state) {
   state.forceUpdate();
 }
 
-inline Mode::ID switchMode(Mode::ID currentMode, Input::Event event) {
+inline Mode switchMode(Mode currentMode, Input::Event event) {
   if (event == Input::Event::SELECT) {
-    return static_cast<Mode::ID>((static_cast<int>(currentMode) + 1) % 3);
+    return static_cast<Mode>((static_cast<int>(currentMode) + 1) % 3);
   }
   return currentMode;
 }
 
 struct UserInputResult {
-  Mode::ID newMode;
-  bool     shouldClearStorage;
+  Mode newMode;
+  bool shouldClearStorage;
 };
 
 template <typename T>
-inline UserInputResult handleUserInput(T &state, Mode::ID currentMode, Input::Event event) {
+inline UserInputResult handleUserInput(T &state, Mode currentMode, Input::Event event) {
   UserInputResult result = {currentMode, false};
   if (event == Input::Event::NONE) return result;
 
-  // Mode switching
   result.newMode = switchMode(currentMode, event);
-  if (result.newMode != currentMode) { state.forceUpdate(); }
+  if (result.newMode != currentMode) state.forceUpdate();
 
-  // Logic for specific events
   switch (event) {
   case Input::Event::PAUSE:
     applyPause(state);
@@ -112,19 +98,16 @@ inline UserInputResult handleUserInput(T &state, Mode::ID currentMode, Input::Ev
   return result;
 }
 
-// ========================================
-// Stage 4: View Model Generation
-// ========================================
-
 inline DisplayData createDisplayData(const TripStateData &state, const GnssData &gnss,
-                                     const SpGnssTime &currentTime, Mode::ID mode) {
+                                     const SpGnssTime &currentTime, Mode mode) {
   DisplayData data;
-  data.fixMode      = (SpFixMode)gnss.navData.posFixMode;
-  data.shouldBlink  = state.isPaused() && ((millis() / 500) % 2 == 0);
-  data.updateStatus = state.updateStatus;
+  data.fixMode            = (SpFixMode)gnss.navData.posFixMode;
+  const bool isBlinkPhase = state.isPaused() && ((millis() / 500) % 2 == 0);
+  data.shouldBlink        = (mode == Mode::SPD_TIM) && isBlinkPhase;
+  data.updateStatus       = state.updateStatus;
 
   switch (mode) {
-  case Mode::ID::SPD_TIM:
+  case Mode::SPD_TIM:
     data.modeSpeedLabel      = "SPD";
     data.modeTimeLabel       = "Time";
     data.mainValue           = state.currentSpeed;
@@ -134,7 +117,7 @@ inline DisplayData createDisplayData(const TripStateData &state, const GnssData 
     data.subUnit             = "";
     break;
 
-  case Mode::ID::AVG_ODO:
+  case Mode::AVG_ODO:
     data.modeSpeedLabel      = "AVG";
     data.modeTimeLabel       = "Odo";
     data.mainValue           = state.avgSpeed;
@@ -144,7 +127,7 @@ inline DisplayData createDisplayData(const TripStateData &state, const GnssData 
     data.subUnit             = "km";
     break;
 
-  case Mode::ID::MAX_CLK:
+  case Mode::MAX_CLK:
     data.modeSpeedLabel = "MAX";
     data.modeTimeLabel  = "Clock";
     data.mainValue      = state.maxSpeed;
@@ -162,8 +145,6 @@ inline DisplayData createDisplayData(const TripStateData &state, const GnssData 
   return data;
 }
 
-// Stage 5
-// Stage 5
 inline SaveData createSaveData(const TripStateData &state, float voltage) {
   SaveData data;
   data.magicNumber   = 0; // Filled by DataStore

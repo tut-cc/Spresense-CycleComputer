@@ -35,6 +35,8 @@ private:
   float lastLon      = 0.0f;
   bool  hasLastCoord = false;
 
+  float distanceResidue = 0.0f;
+
   unsigned long lastUpdateMs     = 0;
   unsigned long lastGnssUpdateMs = 0;
   bool          hasLastUpdate    = false;
@@ -55,6 +57,18 @@ public:
 
     updateElapsedTimes(dt);
 
+    // Integrate speed for distance (Speed * Time)
+    if (state.status == Status::Moving) {
+      float dDist = state.currentSpeed * (static_cast<float>(dt) / MS_PER_HOUR);
+
+      distanceResidue += dDist;
+      if (distanceResidue >= 0.001f) {
+        state.tripDistance += distanceResidue;
+        state.totalKm += distanceResidue;
+        distanceResidue = 0.0f;
+      }
+    }
+
     if (isGnssUpdated) {
       processGnssUpdate(navData, currentMillis);
       // GNSS更新時は常に平均速度を再計算
@@ -74,6 +88,7 @@ public:
     lastUpdateMs         = 0;
     lastGnssUpdateMs     = 0;
     hasLastUpdate        = false;
+    distanceResidue      = 0.0f;
 
     state.currentSpeed  = 0.0f;
     state.maxSpeed      = 0.0f;
@@ -83,10 +98,11 @@ public:
   }
 
   void resetOdometer() {
-    state.totalKm = 0.0f;
-    lastLat       = 0.0f;
-    lastLon       = 0.0f;
-    hasLastCoord  = false;
+    state.totalKm   = 0.0f;
+    lastLat         = 0.0f;
+    lastLon         = 0.0f;
+    hasLastCoord    = false;
+    distanceResidue = 0.0f;
   }
 
   void resetMaxSpeed() {
@@ -137,8 +153,10 @@ private:
     state.currentSpeed = calculateCurrentSpeed(state.status, rawKmh);
 
     if (fix && isValidCoordinate(navData.latitude, navData.longitude)) {
-      float deltaKm = updateOdometer(navData.latitude, navData.longitude, moving);
-      if (state.status != Status::Paused) { state.tripDistance += deltaKm; }
+      updateOdometer(navData.latitude, navData.longitude, moving);
+      // Coordinate based distance calculation is disabled in favor of speed integration
+      // float deltaKm = updateOdometer(navData.latitude, navData.longitude, moving);
+      // if (state.status != Status::Paused) { state.tripDistance += deltaKm; }
     }
 
     state.maxSpeed = fmaxf(state.maxSpeed, state.currentSpeed);
@@ -159,15 +177,16 @@ private:
     }
 
     // If not moving, no distance is accumulated for the odometer
-    if (!moving) return 0.0f;
+    // if (!moving) return 0.0f;
 
-    const float dist  = planarDistanceKm(lastLat, lastLon, lat, lon);
-    const float delta = calculateEffectiveDistance(dist);
+    // Keep updating coordinates for reference, but don't add distance
+    const float dist = planarDistanceKm(lastLat, lastLon, lat, lon);
+    // const float delta = calculateEffectiveDistance(dist);
 
     if (shouldUpdateLastCoordinate(dist)) { updateLastCoordinate(lat, lon); }
 
-    state.totalKm += delta;
-    return delta;
+    // state.totalKm += delta; // Disabled
+    return 0.0f; // delta;
   }
 
   void updateLastCoordinate(float lat, float lon) {

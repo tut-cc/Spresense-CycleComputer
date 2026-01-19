@@ -93,9 +93,14 @@ TEST_F(TripTest, InvalidCoordinate) {
 
   trip.update(navData, 1000, true);
   trip.update(navData, 2000, true);
+
+  // Stop first
+  navData.velocity = 0.0f;
+  trip.update(navData, 2001, true); // Decelerate/Stop state update
+
   float initialDist = trip.getState().totalKm;
 
-  // Update with (0,0)
+  // Update with (0,0) with 0 velocity
   navData.latitude  = 0.0;
   navData.longitude = 0.0;
   trip.update(navData, 3000, true);
@@ -111,6 +116,11 @@ TEST_F(TripTest, ExtremeDistanceJump) {
 
   trip.update(navData, 1000, true);
   trip.update(navData, 2000, true);
+
+  // Stop first
+  navData.velocity = 0.0f;
+  trip.update(navData, 2001, true);
+
   float initialDist = trip.getState().totalKm;
 
   // Jump to another country (too far)
@@ -145,11 +155,17 @@ TEST_F(TripTest, GnssJitter) {
 
   trip.update(navData, 1000, true);
   trip.update(navData, 2000, true);
+
+  // Stop first
+  navData.velocity = 0.0f;
+  trip.update(navData, 2001, true);
+
   float initialDist = trip.getState().totalKm;
 
   // Tiny movement (below MIN_DELTA = 2m)
-  // 1 meter is approx 0.000009 degrees
+  // Distance should NOT increase because velocity is 0
   navData.latitude += 0.000005; // ~0.5 meters
+
   trip.update(navData, 3000, true);
   EXPECT_FLOAT_EQ(trip.getState().totalKm, initialDist);
 }

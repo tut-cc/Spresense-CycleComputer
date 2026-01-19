@@ -148,18 +148,40 @@ TEST_F(PipelineTest, BlinkLogic) {
 
   // Time 0: blink ON (shouldBlink = true)
   _mock_millis      = 0;
-  DisplayData data0 = Pipeline::createDisplayData(state, gnss, Mode::ID::SPD_TIM);
+  SpGnssTime  t     = {2024, 1, 1, 12, 0, 0, 0};
+  DisplayData data0 = Pipeline::createDisplayData(state, gnss, t, Mode::ID::SPD_TIM);
   EXPECT_TRUE(data0.shouldBlink);
 
   // Time 500: blink OFF
   _mock_millis      = 500;
-  DisplayData data1 = Pipeline::createDisplayData(state, gnss, Mode::ID::SPD_TIM);
+  DisplayData data1 = Pipeline::createDisplayData(state, gnss, t, Mode::ID::SPD_TIM);
   EXPECT_FALSE(data1.shouldBlink);
 
   // Time 1000: blink ON
   _mock_millis      = 1000;
-  DisplayData data2 = Pipeline::createDisplayData(state, gnss, Mode::ID::SPD_TIM);
+  DisplayData data2 = Pipeline::createDisplayData(state, gnss, t, Mode::ID::SPD_TIM);
   EXPECT_TRUE(data2.shouldBlink);
+}
+
+TEST_F(PipelineTest, BlinkLogic_NoBlinkInOtherModes) {
+  TripStateDataEx state = createInitialState();
+  state.status          = TripStateData::Status::Paused;
+  GnssData gnss         = createGnssData(0.0f, Fix3D);
+
+  _mock_millis = 0; // Blink phase ON
+  SpGnssTime t = {2024, 1, 1, 12, 0, 0, 0};
+
+  // SPD_TIM -> should blink
+  DisplayData dataSPD = Pipeline::createDisplayData(state, gnss, t, Mode::ID::SPD_TIM);
+  EXPECT_TRUE(dataSPD.shouldBlink);
+
+  // AVG_ODO -> should NOT blink
+  DisplayData dataAVG = Pipeline::createDisplayData(state, gnss, t, Mode::ID::AVG_ODO);
+  EXPECT_FALSE(dataAVG.shouldBlink);
+
+  // MAX_CLK -> should NOT blink
+  DisplayData dataMAX = Pipeline::createDisplayData(state, gnss, t, Mode::ID::MAX_CLK);
+  EXPECT_FALSE(dataMAX.shouldBlink);
 }
 
 TEST_F(PipelineTest, SwitchMode) {
@@ -201,9 +223,10 @@ TEST_F(PipelineTest, CreateDisplayData_SpdTim) {
   state.currentSpeed   = 25.5f;
   state.totalElapsedMs = 3665000; // 1:01:05
 
-  GnssData gnss = createGnssData(25.5f, Fix3D);
+  GnssData   gnss = createGnssData(25.5f, Fix3D);
+  SpGnssTime t    = {2024, 1, 1, 12, 0, 0, 0};
 
-  DisplayData data = Pipeline::createDisplayData(state, gnss, Mode::ID::SPD_TIM);
+  DisplayData data = Pipeline::createDisplayData(state, gnss, t, Mode::ID::SPD_TIM);
 
   EXPECT_STREQ(data.modeSpeedLabel, "SPD");
   EXPECT_STREQ(data.modeTimeLabel, "Time");
@@ -218,9 +241,10 @@ TEST_F(PipelineTest, CreateDisplayData_AvgOdo) {
   state.avgSpeed      = 18.3f;
   state.totalKm       = 123.45f;
 
-  GnssData gnss = createGnssData(20.0f, Fix3D);
+  GnssData   gnss = createGnssData(20.0f, Fix3D);
+  SpGnssTime t    = {2024, 1, 1, 12, 0, 0, 0};
 
-  DisplayData data = Pipeline::createDisplayData(state, gnss, Mode::ID::AVG_ODO);
+  DisplayData data = Pipeline::createDisplayData(state, gnss, t, Mode::ID::AVG_ODO);
 
   EXPECT_STREQ(data.modeSpeedLabel, "AVG");
   EXPECT_STREQ(data.modeTimeLabel, "Odo");
@@ -240,7 +264,7 @@ TEST_F(PipelineTest, CreateDisplayData_MaxClk) {
   gnss.navData.time.hour   = 10;
   gnss.navData.time.minute = 30;
 
-  DisplayData data = Pipeline::createDisplayData(state, gnss, Mode::ID::MAX_CLK);
+  DisplayData data = Pipeline::createDisplayData(state, gnss, gnss.navData.time, Mode::ID::MAX_CLK);
 
   EXPECT_STREQ(data.modeSpeedLabel, "MAX");
   EXPECT_STREQ(data.modeTimeLabel, "Clock");
@@ -254,7 +278,7 @@ TEST_F(PipelineTest, CreateDisplayData_MaxClk) {
 // 永続化データ生成のテスト
 // ========================================
 
-TEST_F(PipelineTest, CreatePersistentData) {
+TEST_F(PipelineTest, CreateSaveData) {
   TripStateData state = createInitialState();
   state.totalKm       = 123.45f;
   state.tripDistance  = 10.5f;
@@ -262,7 +286,7 @@ TEST_F(PipelineTest, CreatePersistentData) {
   state.maxSpeed      = 45.2f;
   state.updateStatus  = UpdateStatus::Updated;
 
-  PersistentData data = Pipeline::createPersistentData(state, 4.2f);
+  SaveData data = Pipeline::createSaveData(state, 4.2f);
 
   EXPECT_FLOAT_EQ(data.totalDistance, 123.45f);
   EXPECT_FLOAT_EQ(data.tripDistance, 10.5f);

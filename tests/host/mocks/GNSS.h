@@ -24,6 +24,7 @@ struct SpNavTime {
   int sec;
   int usec;
 };
+typedef SpNavTime SpGnssTime;
 
 struct SpNavData {
   SpNavTime     time;

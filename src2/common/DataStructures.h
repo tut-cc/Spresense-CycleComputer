@@ -1,15 +1,14 @@
 #pragma once
 
 #include <GNSS.h>
+#include <cstring>
 
-// 更新状態を表すenum
 enum class UpdateStatus {
   NoChange,   // 変更なし
   Updated,    // 更新あり
   ForceUpdate // 強制更新（ユーザー入力など）
 };
 
-// 1. GNSSから更新されるデータ（入力）
 struct GnssData {
   SpNavData     navData;
   unsigned long timestamp;
@@ -20,26 +19,20 @@ struct GnssData {
   }
 };
 
-// 2. Trip状態（計算用）
 struct TripStateData {
   enum class Status { Stopped, Moving, Paused };
 
-  // リアルタイム値（保存不要）
   float         currentSpeed;
   Status        status;
   SpFixMode     fixMode;
   unsigned long totalElapsedMs;
 
-  // 累積値（保存必要）
   float         maxSpeed;
   float         totalKm;
   float         tripDistance;
   unsigned long totalMovingMs;
+  float         avgSpeed;
 
-  // 派生値（再計算可能）
-  float avgSpeed;
-
-  // メタデータ
   unsigned long lastUpdateTime;
   UpdateStatus  updateStatus;
 
@@ -59,33 +52,35 @@ struct TripStateData {
   }
 };
 
-// Internal state for coordinate history
 struct TripStateDataEx : public TripStateData {
-  float lastLat      = 0.0f;
-  float lastLon      = 0.0f;
-  bool  hasLastCoord = false;
+  float lastLat         = 0.0f;
+  float lastLon         = 0.0f;
+  bool  hasLastCoord    = false;
+  float distanceResidue = 0.0f;
 
   void resetAll() {
-    currentSpeed   = 0.0f;
-    status         = Status::Stopped;
-    totalElapsedMs = 0;
-    maxSpeed       = 0.0f;
-    totalKm        = 0.0f;
-    tripDistance   = 0.0f;
-    totalMovingMs  = 0;
-    avgSpeed       = 0.0f;
-    lastUpdateTime = 0;
-    hasLastCoord   = false;
+    currentSpeed    = 0.0f;
+    status          = Status::Stopped;
+    totalElapsedMs  = 0;
+    maxSpeed        = 0.0f;
+    totalKm         = 0.0f;
+    tripDistance    = 0.0f;
+    totalMovingMs   = 0;
+    avgSpeed        = 0.0f;
+    lastUpdateTime  = 0;
+    hasLastCoord    = false;
+    distanceResidue = 0.0f;
     forceUpdate();
   }
 
   void resetTrip() {
-    currentSpeed   = 0.0f;
-    status         = Status::Stopped;
-    totalElapsedMs = 0;
-    tripDistance   = 0.0f;
-    totalMovingMs  = 0;
-    avgSpeed       = 0.0f;
+    currentSpeed    = 0.0f;
+    status          = Status::Stopped;
+    totalElapsedMs  = 0;
+    tripDistance    = 0.0f;
+    totalMovingMs   = 0;
+    avgSpeed        = 0.0f;
+    distanceResidue = 0.0f;
     forceUpdate();
   }
 
@@ -95,20 +90,16 @@ struct TripStateDataEx : public TripStateData {
   }
 };
 
-// 3. 表示用データ（文字列化前）
 struct DisplayData {
   enum class SubType { Duration, Distance, Clock };
 
-  // ヘッダー情報
   SpFixMode   fixMode;
   const char *modeSpeedLabel; // "SPD", "AVG", "MAX"
   const char *modeTimeLabel;  // "Time", "Odo", "Clock"
 
-  // メイン表示値（数値）
   float       mainValue; // 速度値
   const char *mainUnit;  // "km/h"
 
-  // サブ表示値（型が異なる）
   SubType subType;
   union {
     unsigned long durationMs; // SPD_TIMモード用
@@ -120,38 +111,25 @@ struct DisplayData {
   } subValue;
   const char *subUnit;
 
-  // UI状態
-  bool shouldBlink; // Pausedの点滅制御
+  bool shouldBlink;
 
-  // 更新状態
   UpdateStatus updateStatus;
 };
 
-#include <cstring>
-
-// 4. 永続化データ（保存用）
-// 4. 保存用データ（SaveDataとPersistentDataを統合）
 struct SaveData {
-  // メタデータ
   uint32_t magicNumber;
 
-  // データ本体
   float         totalDistance;
   float         tripDistance;
   unsigned long movingTimeMs;
   float         maxSpeed;
   float         voltage;
 
-  // 更新状態
   UpdateStatus updateStatus;
 
-  // CRC
   uint32_t crc;
 
   bool operator==(const SaveData &other) const {
-    // 比較対象はマジックナンバーとデータ本体のみ（CRCは計算結果なので除外しても良いが、完全一致を見るなら含める）
-    // DataStoreの実装を見ると、magicとdataの比較をしていた
-    // ここではマジックナンバーとデータフィールドを比較
     return magicNumber == other.magicNumber && totalDistance == other.totalDistance &&
            tripDistance == other.tripDistance && movingTimeMs == other.movingTimeMs &&
            maxSpeed == other.maxSpeed && voltage == other.voltage;
@@ -162,7 +140,6 @@ struct SaveData {
   }
 };
 
-// 5. 表示用文字列データ（描画直前） - ダブルバッファ用
 struct DisplayFrame {
   struct Item {
     char value[16];
@@ -176,6 +153,7 @@ struct DisplayFrame {
     bool operator==(const Item &other) const {
       return strcmp(value, other.value) == 0 && strcmp(unit, other.unit) == 0;
     }
+
     bool operator!=(const Item &other) const {
       return !(*this == other);
     }
@@ -214,3 +192,5 @@ struct DisplayFrame {
     return !(*this == other);
   }
 };
+
+enum class Mode { SPD_TIM, AVG_ODO, MAX_CLK };

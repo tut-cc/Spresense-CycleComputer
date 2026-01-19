@@ -5,10 +5,9 @@
 #include <math.h>
 #include <stddef.h>
 
-// 保存用設定
 constexpr uint32_t      CRC_POLY     = 0xEDB88320;
 constexpr uint32_t      MAGIC_NUMBER = 0xDEADBEEF;
-constexpr float         MAX_VALID_KM = 1000000.0f; // 100万km
+constexpr float         MAX_VALID_KM = 1000000.0f;
 constexpr unsigned long EEPROM_ADDR  = 0;
 
 class DataStore {
@@ -31,7 +30,6 @@ public:
       return savedData;
     }
 
-    // デフォルト値
     SaveData defaultData;
     defaultData.magicNumber   = MAGIC_NUMBER;
     defaultData.totalDistance = 0.0f;
@@ -48,27 +46,19 @@ public:
   }
 
   void save(const SaveData &currentData) {
-    // 次のバッファインデックス
     const int nextIdx = 1 - currentIdx;
 
-    // 保存用データを作成（Magic/CRC付与）
     SaveData nextData    = currentData;
     nextData.magicNumber = MAGIC_NUMBER;
     nextData.crc         = calculateDataCRC(nextData);
 
-    // 変更がなければ保存しない
-    // buffer[currentIdx] は最後に保存（またはロード）された正当なデータ
     if (buffer[currentIdx] == nextData) return;
 
-    // 書き込む前に一旦Magicを無効化（書き込み失敗検知用）
     uint32_t  invalidMagic = 0;
     const int magicAddr    = EEPROM_ADDR + offsetof(SaveData, magicNumber);
     EEPROM.put(magicAddr, invalidMagic);
-
-    // データ書き込み
     EEPROM.put(EEPROM_ADDR, nextData);
 
-    // バッファ更新
     buffer[nextIdx] = nextData;
     currentIdx      = nextIdx;
   }
@@ -88,10 +78,7 @@ public:
     cleanData.crc           = calculateDataCRC(cleanData);
 
     EEPROM.put(EEPROM_ADDR, cleanData);
-
-    // バッファもリセット
-    buffer[currentIdx] = cleanData;
-    // 双方向バッファのリセットが必要なら両方セットするが、currentIdxだけで十分
+    buffer[currentIdx]     = cleanData;
     buffer[1 - currentIdx] = cleanData;
   }
 
