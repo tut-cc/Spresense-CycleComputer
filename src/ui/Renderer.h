@@ -4,8 +4,8 @@
 #include <cstdio>
 #include <cstring>
 
-#include "../domain/Clock.h"
 #include "../hardware/OLED.h"
+#include "../logic/Clock.h"
 
 struct Frame {
   struct Item {
@@ -71,17 +71,17 @@ inline void formatDuration(unsigned long millis, char *buffer, size_t size) {
 
 } // namespace Formatter
 
-class Renderer {
-  static constexpr int16_t HEADER_HEIGHT        = 12;
-  static constexpr int16_t HEADER_TEXT_SIZE     = 1;
-  static constexpr int16_t HEADER_LINE_Y_OFFSET = 2;
-  static constexpr int16_t MAIN_AREA_Y_OFFSET   = 14;
-  static constexpr int16_t MAIN_VAL_SIZE        = 3;
-  static constexpr int16_t MAIN_UNIT_SIZE       = 1;
-  static constexpr int16_t SUB_VAL_SIZE         = 2;
-  static constexpr int16_t SUB_UNIT_SIZE        = 1;
-  static constexpr int16_t UNIT_SPACING         = 4;
+constexpr int16_t HEADER_HEIGHT        = 12;
+constexpr int16_t HEADER_TEXT_SIZE     = 1;
+constexpr int16_t HEADER_LINE_Y_OFFSET = 2;
+constexpr int16_t MAIN_AREA_Y_OFFSET   = 14;
+constexpr int16_t MAIN_VAL_SIZE        = 3;
+constexpr int16_t MAIN_UNIT_SIZE       = 1;
+constexpr int16_t SUB_VAL_SIZE         = 2;
+constexpr int16_t SUB_UNIT_SIZE        = 1;
+constexpr int16_t UNIT_SPACING         = 4;
 
+class Renderer {
 private:
   Frame lastFrame;
   bool  firstRender = true;

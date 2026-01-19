@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../domain/Clock.h"
-#include "../domain/DataStore.h"
-#include "../domain/Trip.h"
+#include "../logic/Clock.h"
+#include "../logic/DataStore.h"
+#include "../logic/Trip.h"
 #include "Input.h"
 #include "Renderer.h"
 #include <Arduino.h>
@@ -16,71 +16,95 @@ private:
 
 public:
   void handleInput(Input::Event id, Trip &trip, DataStore &dataStore) {
+    currentMode = calculateNextMode(currentMode, id);
+
     switch (id) {
     case Input::Event::RESET_LONG:
       trip.reset();
       dataStore.clear();
       break;
-
-    case Input::Event::SELECT:
-      currentMode = static_cast<ID>((static_cast<int>(currentMode) + 1) % 3);
-      break;
-
     case Input::Event::PAUSE:
       trip.pause();
       break;
-
     case Input::Event::RESET:
-      switch (currentMode) {
-      case ID::SPD_TIM:
-        trip.resetTrip();
-        break;
-      case ID::AVG_ODO:
-        trip.reset();
-        break;
-      case ID::MAX_CLK:
-        trip.resetMaxSpeed();
-        break;
-      }
+      handleReset(trip);
       break;
-
-    case Input::Event::NONE:
+    default:
       break;
     }
   }
 
   void fillFrame(Frame &frame, const Trip &trip, const Clock &clock) const {
-    const Trip::State &state = trip.getState();
+    const bool blinkVisible = (millis() / 500) % 2 == 0;
+    updateFrame(frame, currentMode, trip.getState(), clock, blinkVisible);
+  }
+
+private:
+  static ID calculateNextMode(ID current, Input::Event event) {
+    if (event == Input::Event::SELECT) {
+      return static_cast<ID>((static_cast<int>(current) + 1) % 3);
+    }
+    return current;
+  }
+
+  void handleReset(Trip &trip) {
+    switch (currentMode) {
+    case ID::SPD_TIM:
+      trip.resetTrip();
+      break;
+    case ID::AVG_ODO:
+      trip.reset();
+      break;
+    case ID::MAX_CLK:
+      trip.resetMaxSpeed();
+      break;
+    }
+  }
+
+  static void renderSpdTim(Frame &frame, const Trip::State &state, bool blinkVisible) {
+    strcpy(frame.header.modeSpeed, "SPD");
+    strcpy(frame.header.modeTime, "Time");
+    Formatter::formatSpeed(state.currentSpeed, frame.main.value, sizeof(frame.main.value));
+
+    if (state.status == Trip::Status::Paused && !blinkVisible) {
+      strcpy(frame.sub.value, "");
+    } else {
+      Formatter::formatDuration(state.totalElapsedMs, frame.sub.value, sizeof(frame.sub.value));
+    }
 
     strcpy(frame.main.unit, "km/h");
     strcpy(frame.sub.unit, "");
+  }
 
-    switch (currentMode) {
+  static void renderAvgOdo(Frame &frame, const Trip::State &state) {
+    strcpy(frame.header.modeSpeed, "AVG");
+    strcpy(frame.header.modeTime, "Odo");
+    Formatter::formatSpeed(state.avgSpeed, frame.main.value, sizeof(frame.main.value));
+    Formatter::formatDistance(state.totalKm, frame.sub.value, sizeof(frame.sub.value));
+    strcpy(frame.main.unit, "km/h");
+    strcpy(frame.sub.unit, "km");
+  }
+
+  static void renderMaxClk(Frame &frame, const Trip::State &state, const Clock &clock) {
+    strcpy(frame.header.modeSpeed, "MAX");
+    strcpy(frame.header.modeTime, "Clock");
+    Formatter::formatSpeed(state.maxSpeed, frame.main.value, sizeof(frame.main.value));
+    Formatter::formatTime(clock, frame.sub.value, sizeof(frame.sub.value));
+    strcpy(frame.main.unit, "km/h");
+    strcpy(frame.sub.unit, "");
+  }
+
+  static void updateFrame(Frame &frame, ID mode, const Trip::State &state, const Clock &clock,
+                          bool blinkVisible) {
+    switch (mode) {
     case ID::SPD_TIM:
-      strcpy(frame.header.modeSpeed, "SPD");
-      Formatter::formatSpeed(state.currentSpeed, frame.main.value, sizeof(frame.main.value));
-
-      strcpy(frame.header.modeTime, "Time");
-      if (state.status == Trip::Status::Paused && (millis() / 500) % 2 == 0) {
-        strcpy(frame.sub.value, "");
-      } else {
-        Formatter::formatDuration(state.totalElapsedMs, frame.sub.value, sizeof(frame.sub.value));
-      }
+      renderSpdTim(frame, state, blinkVisible);
       break;
-
     case ID::AVG_ODO:
-      strcpy(frame.header.modeSpeed, "AVG");
-      strcpy(frame.header.modeTime, "Odo");
-      Formatter::formatSpeed(state.avgSpeed, frame.main.value, sizeof(frame.main.value));
-      Formatter::formatDistance(state.totalKm, frame.sub.value, sizeof(frame.sub.value));
-      strcpy(frame.sub.unit, "km");
+      renderAvgOdo(frame, state);
       break;
-
     case ID::MAX_CLK:
-      strcpy(frame.header.modeSpeed, "MAX");
-      strcpy(frame.header.modeTime, "Clock");
-      Formatter::formatSpeed(state.maxSpeed, frame.main.value, sizeof(frame.main.value));
-      Formatter::formatTime(clock, frame.sub.value, sizeof(frame.sub.value));
+      renderMaxClk(frame, state, clock);
       break;
     }
   }
