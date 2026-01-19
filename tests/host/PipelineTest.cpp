@@ -1,5 +1,5 @@
-#include "../../src2/logic/Pipeline.h"
-#include "../../src2/logic/TripCompute.h"
+#include "../../src2/domain/MvuPipeline.h"
+#include "../../src2/domain/TripCompute.h"
 #include "mocks/Arduino.h"
 #include "mocks/GNSS.h"
 #include <gtest/gtest.h>
@@ -47,23 +47,23 @@ protected:
 
 TEST_F(PipelineTest, ResetType_Determination) {
   // RESET_LONG -> AllWithStorage
-  EXPECT_EQ(Pipeline::determineResetType(Input::Event::RESET_LONG, Mode::ID::SPD_TIM),
+  EXPECT_EQ(Pipeline::determineResetType(Input::Event::RESET_LONG, Mode::SPD_TIM),
             Pipeline::ResetType::AllWithStorage);
 
   // RESET + SPD_TIM -> Trip
-  EXPECT_EQ(Pipeline::determineResetType(Input::Event::RESET, Mode::ID::SPD_TIM),
+  EXPECT_EQ(Pipeline::determineResetType(Input::Event::RESET, Mode::SPD_TIM),
             Pipeline::ResetType::Trip);
 
   // RESET + AVG_ODO -> All
-  EXPECT_EQ(Pipeline::determineResetType(Input::Event::RESET, Mode::ID::AVG_ODO),
+  EXPECT_EQ(Pipeline::determineResetType(Input::Event::RESET, Mode::AVG_ODO),
             Pipeline::ResetType::All);
 
   // RESET + MAX_CLK -> MaxSpeed
-  EXPECT_EQ(Pipeline::determineResetType(Input::Event::RESET, Mode::ID::MAX_CLK),
+  EXPECT_EQ(Pipeline::determineResetType(Input::Event::RESET, Mode::MAX_CLK),
             Pipeline::ResetType::MaxSpeed);
 
   // その他 -> None
-  EXPECT_EQ(Pipeline::determineResetType(Input::Event::NONE, Mode::ID::SPD_TIM),
+  EXPECT_EQ(Pipeline::determineResetType(Input::Event::NONE, Mode::SPD_TIM),
             Pipeline::ResetType::None);
 }
 
@@ -149,17 +149,17 @@ TEST_F(PipelineTest, BlinkLogic) {
   // Time 0: blink ON (shouldBlink = true)
   _mock_millis      = 0;
   SpGnssTime  t     = {2024, 1, 1, 12, 0, 0, 0};
-  DisplayData data0 = Pipeline::createDisplayData(state, gnss, t, Mode::ID::SPD_TIM);
+  DisplayData data0 = Pipeline::createDisplayData(state, gnss, t, Mode::SPD_TIM);
   EXPECT_TRUE(data0.shouldBlink);
 
   // Time 500: blink OFF
   _mock_millis      = 500;
-  DisplayData data1 = Pipeline::createDisplayData(state, gnss, t, Mode::ID::SPD_TIM);
+  DisplayData data1 = Pipeline::createDisplayData(state, gnss, t, Mode::SPD_TIM);
   EXPECT_FALSE(data1.shouldBlink);
 
   // Time 1000: blink ON
   _mock_millis      = 1000;
-  DisplayData data2 = Pipeline::createDisplayData(state, gnss, t, Mode::ID::SPD_TIM);
+  DisplayData data2 = Pipeline::createDisplayData(state, gnss, t, Mode::SPD_TIM);
   EXPECT_TRUE(data2.shouldBlink);
 }
 
@@ -172,35 +172,35 @@ TEST_F(PipelineTest, BlinkLogic_NoBlinkInOtherModes) {
   SpGnssTime t = {2024, 1, 1, 12, 0, 0, 0};
 
   // SPD_TIM -> should blink
-  DisplayData dataSPD = Pipeline::createDisplayData(state, gnss, t, Mode::ID::SPD_TIM);
+  DisplayData dataSPD = Pipeline::createDisplayData(state, gnss, t, Mode::SPD_TIM);
   EXPECT_TRUE(dataSPD.shouldBlink);
 
   // AVG_ODO -> should NOT blink
-  DisplayData dataAVG = Pipeline::createDisplayData(state, gnss, t, Mode::ID::AVG_ODO);
+  DisplayData dataAVG = Pipeline::createDisplayData(state, gnss, t, Mode::AVG_ODO);
   EXPECT_FALSE(dataAVG.shouldBlink);
 
   // MAX_CLK -> should NOT blink
-  DisplayData dataMAX = Pipeline::createDisplayData(state, gnss, t, Mode::ID::MAX_CLK);
+  DisplayData dataMAX = Pipeline::createDisplayData(state, gnss, t, Mode::MAX_CLK);
   EXPECT_FALSE(dataMAX.shouldBlink);
 }
 
 TEST_F(PipelineTest, SwitchMode) {
   // SELECT -> 次のモード
-  EXPECT_EQ(Pipeline::switchMode(Mode::ID::SPD_TIM, Input::Event::SELECT), Mode::ID::AVG_ODO);
-  EXPECT_EQ(Pipeline::switchMode(Mode::ID::AVG_ODO, Input::Event::SELECT), Mode::ID::MAX_CLK);
-  EXPECT_EQ(Pipeline::switchMode(Mode::ID::MAX_CLK, Input::Event::SELECT), Mode::ID::SPD_TIM);
+  EXPECT_EQ(Pipeline::switchMode(Mode::SPD_TIM, Input::Event::SELECT), Mode::AVG_ODO);
+  EXPECT_EQ(Pipeline::switchMode(Mode::AVG_ODO, Input::Event::SELECT), Mode::MAX_CLK);
+  EXPECT_EQ(Pipeline::switchMode(Mode::MAX_CLK, Input::Event::SELECT), Mode::SPD_TIM);
 
   // その他 -> 変更なし
-  EXPECT_EQ(Pipeline::switchMode(Mode::ID::SPD_TIM, Input::Event::NONE), Mode::ID::SPD_TIM);
+  EXPECT_EQ(Pipeline::switchMode(Mode::SPD_TIM, Input::Event::NONE), Mode::SPD_TIM);
 }
 
 TEST_F(PipelineTest, HandleUserInput_Pause) {
   TripStateDataEx state = createInitialState();
 
-  auto result = Pipeline::handleUserInput(state, Mode::ID::SPD_TIM, Input::Event::PAUSE);
+  auto result = Pipeline::handleUserInput(state, Mode::SPD_TIM, Input::Event::PAUSE);
 
   EXPECT_EQ(state.status, TripStateData::Status::Paused);
-  EXPECT_EQ(result.newMode, Mode::ID::SPD_TIM);
+  EXPECT_EQ(result.newMode, Mode::SPD_TIM);
   EXPECT_FALSE(result.shouldClearStorage);
 }
 
@@ -208,7 +208,7 @@ TEST_F(PipelineTest, HandleUserInput_ResetLong) {
   TripStateDataEx state = createInitialState();
   state.totalKm         = 100.0f;
 
-  auto result = Pipeline::handleUserInput(state, Mode::ID::SPD_TIM, Input::Event::RESET_LONG);
+  auto result = Pipeline::handleUserInput(state, Mode::SPD_TIM, Input::Event::RESET_LONG);
 
   EXPECT_FLOAT_EQ(state.totalKm, 0.0f);
   EXPECT_TRUE(result.shouldClearStorage);
@@ -226,7 +226,7 @@ TEST_F(PipelineTest, CreateDisplayData_SpdTim) {
   GnssData   gnss = createGnssData(25.5f, Fix3D);
   SpGnssTime t    = {2024, 1, 1, 12, 0, 0, 0};
 
-  DisplayData data = Pipeline::createDisplayData(state, gnss, t, Mode::ID::SPD_TIM);
+  DisplayData data = Pipeline::createDisplayData(state, gnss, t, Mode::SPD_TIM);
 
   EXPECT_STREQ(data.modeSpeedLabel, "SPD");
   EXPECT_STREQ(data.modeTimeLabel, "Time");
@@ -244,7 +244,7 @@ TEST_F(PipelineTest, CreateDisplayData_AvgOdo) {
   GnssData   gnss = createGnssData(20.0f, Fix3D);
   SpGnssTime t    = {2024, 1, 1, 12, 0, 0, 0};
 
-  DisplayData data = Pipeline::createDisplayData(state, gnss, t, Mode::ID::AVG_ODO);
+  DisplayData data = Pipeline::createDisplayData(state, gnss, t, Mode::AVG_ODO);
 
   EXPECT_STREQ(data.modeSpeedLabel, "AVG");
   EXPECT_STREQ(data.modeTimeLabel, "Odo");
@@ -264,7 +264,7 @@ TEST_F(PipelineTest, CreateDisplayData_MaxClk) {
   gnss.navData.time.hour   = 10;
   gnss.navData.time.minute = 30;
 
-  DisplayData data = Pipeline::createDisplayData(state, gnss, gnss.navData.time, Mode::ID::MAX_CLK);
+  DisplayData data = Pipeline::createDisplayData(state, gnss, gnss.navData.time, Mode::MAX_CLK);
 
   EXPECT_STREQ(data.modeSpeedLabel, "MAX");
   EXPECT_STREQ(data.modeTimeLabel, "Clock");

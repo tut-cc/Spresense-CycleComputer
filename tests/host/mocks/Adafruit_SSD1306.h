@@ -24,11 +24,11 @@ public:
   void setTextSize(uint8_t s);
   void setTextColor(uint16_t c);
   void setCursor(int16_t x, int16_t y);
-  void print(const String &s);
+  void print(const std::string &s);
   void print(const char *s);
-  void println(const String &s);
+  void println(const std::string &s);
   void println(const char *s);
 
-  void getTextBounds(const String &str, int16_t x, int16_t y, int16_t *x1, int16_t *y1, uint16_t *w,
-                     uint16_t *h);
+  void getTextBounds(const std::string &str, int16_t x, int16_t y, int16_t *x1, int16_t *y1,
+                     uint16_t *w, uint16_t *h);
 };

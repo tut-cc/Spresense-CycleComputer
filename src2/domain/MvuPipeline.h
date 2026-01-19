@@ -17,21 +17,15 @@ inline GnssData collectGnss(Gnss &gnss) {
 enum class ResetType { None, Trip, MaxSpeed, All, AllWithStorage };
 
 inline ResetType determineResetType(Input::Event event, Mode currentMode) {
-  switch (event) {
-  case Input::Event::RESET_LONG:
-    return ResetType::AllWithStorage;
-  case Input::Event::RESET:
-    switch (currentMode) {
-    case Mode::SPD_TIM:
-      return ResetType::Trip;
-    case Mode::AVG_ODO:
-      return ResetType::All;
-    case Mode::MAX_CLK:
-      return ResetType::MaxSpeed;
-    }
-    break;
-  default:
-    break;
+  if (event == Input::Event::RESET_LONG) { return ResetType::AllWithStorage; }
+
+  if (event == Input::Event::RESET) {
+    static const ResetType RESET_MAP[] = {
+        ResetType::Trip,     // SPD_TIM
+        ResetType::All,      // AVG_ODO
+        ResetType::MaxSpeed, // MAX_CLK
+    };
+    return RESET_MAP[(int)currentMode];
   }
 
   return ResetType::None;
@@ -107,39 +101,46 @@ inline DisplayData createDisplayData(const TripStateData &state, const GnssData 
   data.shouldBlink        = (mode == Mode::SPD_TIM) && isBlinkPhase;
   data.updateStatus       = state.updateStatus;
 
+  struct ModeConfig {
+    const char          *speedLabel;
+    const char          *timeLabel;
+    const char          *mainUnit;
+    const char          *subUnit;
+    DisplayData::SubType subType;
+  };
+
+  static const ModeConfig CONFIGS[] = {
+      {"SPD", "Time", "km/h", "", DisplayData::SubType::Duration},  // SPD_TIM
+      {"AVG", "Odo", "km/h", "km", DisplayData::SubType::Distance}, // AVG_ODO
+      {"MAX", "Clock", "km/h", "", DisplayData::SubType::Clock}     // MAX_CLK
+  };
+
+  const ModeConfig &cfg = CONFIGS[(int)mode];
+
+  data.modeSpeedLabel = cfg.speedLabel;
+  data.modeTimeLabel  = cfg.timeLabel;
+  data.mainValue      = 0.0f; // Default init
+  data.mainUnit       = cfg.mainUnit;
+  data.subType        = cfg.subType;
+  data.subUnit        = cfg.subUnit;
+
   switch (mode) {
   case Mode::SPD_TIM:
-    data.modeSpeedLabel      = "SPD";
-    data.modeTimeLabel       = "Time";
     data.mainValue           = state.currentSpeed;
-    data.mainUnit            = "km/h";
-    data.subType             = DisplayData::SubType::Duration;
     data.subValue.durationMs = state.totalElapsedMs;
-    data.subUnit             = "";
     break;
 
   case Mode::AVG_ODO:
-    data.modeSpeedLabel      = "AVG";
-    data.modeTimeLabel       = "Odo";
     data.mainValue           = state.avgSpeed;
-    data.mainUnit            = "km/h";
-    data.subType             = DisplayData::SubType::Distance;
     data.subValue.distanceKm = state.totalKm;
-    data.subUnit             = "km";
     break;
 
   case Mode::MAX_CLK:
-    data.modeSpeedLabel = "MAX";
-    data.modeTimeLabel  = "Clock";
-    data.mainValue      = state.maxSpeed;
-    data.mainUnit       = "km/h";
-    data.subType        = DisplayData::SubType::Clock;
-
-    int hour = currentTime.hour;
+    data.mainValue = state.maxSpeed;
+    int hour       = currentTime.hour;
     if (currentTime.year >= 2026) hour = (hour + 9) % 24;
     data.subValue.clockTime.hour   = hour;
     data.subValue.clockTime.minute = currentTime.minute;
-    data.subUnit                   = "";
     break;
   }
 

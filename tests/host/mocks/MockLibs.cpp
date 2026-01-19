@@ -74,23 +74,24 @@ void Adafruit_SSD1306::setCursor(int16_t x, int16_t y) {
   DisplayLogger::log({DrawCall::Type::Cursor, x, y, 0, 0, 0, 0, 0, ""});
 }
 
-void Adafruit_SSD1306::print(const String &s) {
-  DisplayLogger::log({DrawCall::Type::Text, 0, 0, 0, 0, 0, 0, 0, s.c_str()});
+// Adafruit_SSD1306 implementation
+void Adafruit_SSD1306::print(const std::string &s) {
+  DisplayLogger::log({DrawCall::Type::Text, 0, 0, 0, 0, 0, 0, 0, s});
 }
 
 void Adafruit_SSD1306::print(const char *s) {
   if (s) DisplayLogger::log({DrawCall::Type::Text, 0, 0, 0, 0, 0, 0, 0, s});
 }
 
-void Adafruit_SSD1306::println(const String &s) {
-  DisplayLogger::log({DrawCall::Type::Text, 0, 0, 0, 0, 0, 0, 0, std::string(s.c_str()) + "\n"});
+void Adafruit_SSD1306::println(const std::string &s) {
+  DisplayLogger::log({DrawCall::Type::Text, 0, 0, 0, 0, 0, 0, 0, s + "\n"});
 }
 
 void Adafruit_SSD1306::println(const char *s) {
   if (s) DisplayLogger::log({DrawCall::Type::Text, 0, 0, 0, 0, 0, 0, 0, std::string(s) + "\n"});
 }
 
-void Adafruit_SSD1306::getTextBounds(const String &str, int16_t x, int16_t y, int16_t *x1,
+void Adafruit_SSD1306::getTextBounds(const std::string &str, int16_t x, int16_t y, int16_t *x1,
                                      int16_t *y1, uint16_t *w, uint16_t *h) {
   *x1 = x;
   *y1 = y;

@@ -23,7 +23,7 @@ inline void itoa_pad(int value, char *str, int digits) {
     v /= 10;
   } while (v > 0);
 
-  while ((p - str) < digits) { *p++ = '0'; }
+  while ((p - str) < digits) *p++ = '0';
   *p = '\0';
   reverse(str, p - 1);
 }

@@ -1,5 +1,5 @@
-#include "../../src2/logic/Pipeline.h"
-#include "../../src2/logic/TripCompute.h"
+#include "../../src2/domain/MvuPipeline.h"
+#include "../../src2/domain/TripCompute.h"
 #include "TripTestBase.h"
 
 /**

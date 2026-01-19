@@ -24,19 +24,16 @@ protected:
 };
 
 TEST_F(OLEDTruthTest, RenderSPD_TIM) {
-  DisplayData data;
-  data.fixMode             = Fix3D;
-  data.modeSpeedLabel      = "SPD";
-  data.modeTimeLabel       = "Time";
-  data.mainValue           = 25.4f;
-  data.mainUnit            = "km/h";
-  data.subType             = DisplayData::SubType::Duration;
-  data.subValue.durationMs = 3661000; // 01:01:01
-  data.subUnit             = "";
-  data.shouldBlink         = false;
-  data.updateStatus        = UpdateStatus::Updated;
+  DisplayFrame frame;
+  frame.header.fixStatus = "3D";
+  frame.header.modeSpeed = "SPD";
+  frame.header.modeTime  = "Time";
+  strcpy(frame.main.value, "25.4");
+  frame.main.unit = "km/h";
+  strcpy(frame.sub.value, "1:01:01");
+  frame.sub.unit = "";
 
-  ui.draw(data);
+  ui.draw(frame);
 
   // Verify Header
   EXPECT_TRUE(hasText("3D"));
@@ -53,19 +50,16 @@ TEST_F(OLEDTruthTest, RenderSPD_TIM) {
 }
 
 TEST_F(OLEDTruthTest, RenderAVG_ODO) {
-  DisplayData data;
-  data.fixMode             = Fix2D;
-  data.modeSpeedLabel      = "AVG";
-  data.modeTimeLabel       = "Odo";
-  data.mainValue           = 18.5f;
-  data.mainUnit            = "km/h";
-  data.subType             = DisplayData::SubType::Distance;
-  data.subValue.distanceKm = 123.45f;
-  data.subUnit             = "km";
-  data.shouldBlink         = false;
-  data.updateStatus        = UpdateStatus::Updated;
+  DisplayFrame frame;
+  frame.header.fixStatus = "2D";
+  frame.header.modeSpeed = "AVG";
+  frame.header.modeTime  = "Odo";
+  strcpy(frame.main.value, "18.5");
+  frame.main.unit = "km/h";
+  strcpy(frame.sub.value, "123.45");
+  frame.sub.unit = "km";
 
-  ui.draw(data);
+  ui.draw(frame);
 
   EXPECT_TRUE(hasText("2D"));
   EXPECT_TRUE(hasText("AVG"));
@@ -81,35 +75,37 @@ TEST_F(OLEDTruthTest, ResetMessage) {
 }
 
 TEST_F(OLEDTruthTest, BlinkRendering) {
-  DisplayData data;
-  data.fixMode             = Fix3D;
-  data.modeSpeedLabel      = "SPD";
-  data.modeTimeLabel       = "Time";
-  data.mainValue           = 0.0f;
-  data.mainUnit            = "km/h";
-  data.subType             = DisplayData::SubType::Duration;
-  data.subValue.durationMs = 12345;
-  data.subUnit             = "";
-  data.updateStatus        = UpdateStatus::NoChange; // Logic check: should render even if NoChange
-
   // 1. Blink ON (should transmit empty string for sub value)
-  data.shouldBlink = true;
+  DisplayFrame frameOn;
+  frameOn.header.fixStatus = "3D";
+  frameOn.header.modeSpeed = "SPD";
+  frameOn.header.modeTime  = "Time";
+  strcpy(frameOn.main.value, "0.0");
+  frameOn.main.unit = "km/h";
+  strcpy(frameOn.sub.value, "");
+  frameOn.sub.unit = "";
+
   DisplayLogger::clear();
-  ui.draw(data);
-  EXPECT_FALSE(hasText("12")); // Should NOT be visible (12 is part of 12345)
-  // We can't easily check for "empty string" being drawn with hasText,
-  // but we can check that the number is NOT drawn.
+  ui.draw(frameOn);
+  EXPECT_FALSE(hasText("12")); // Should NOT be visible
 
   // 2. Blink OFF (should transmit value)
-  data.shouldBlink = false;
+  DisplayFrame frameOff;
+  frameOff.header.fixStatus = "3D";
+  frameOff.header.modeSpeed = "SPD";
+  frameOff.header.modeTime  = "Time";
+  strcpy(frameOff.main.value, "0.0");
+  frameOff.main.unit = "km/h";
+  strcpy(frameOff.sub.value, "00:12");
+  frameOff.sub.unit = "";
+
   DisplayLogger::clear();
-  ui.draw(data);
-  EXPECT_TRUE(hasText("00:12")); // 12.345s -> 00:12
+  ui.draw(frameOff);
+  EXPECT_TRUE(hasText("00:12"));
 
   // 3. Blink ON again (should update frame and re-render)
-  data.shouldBlink = true;
   DisplayLogger::clear();
-  ui.draw(data);
+  ui.draw(frameOn);
   EXPECT_FALSE(hasText("00:12")); // Should disappear again
 }
 

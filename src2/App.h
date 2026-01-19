@@ -1,5 +1,4 @@
-#ifndef APP_H
-#define APP_H
+#pragma once
 
 #include <Arduino.h>
 #include <stddef.h>
@@ -108,7 +107,7 @@ private:
     saveIdx               = 1 - saveIdx;
     saveBuffers[saveIdx]  = pData;
 
-    if (saveBuffers[saveIdx] != saveBuffers[prevSaveIdx]) { dataStore.save(saveBuffers[saveIdx]); }
+    if (saveBuffers[saveIdx] != saveBuffers[prevSaveIdx]) dataStore.save(saveBuffers[saveIdx]);
     lastSaveMs = now;
   }
 
@@ -133,48 +132,41 @@ private:
     }
   }
 
+  using FormatterFunc = void (*)(const DisplayData &, char *, size_t);
+
+  static void fmtDuration(const DisplayData &d, char *b, size_t s) {
+    Formatter::formatDuration(d.subValue.durationMs, b, s);
+  }
+  static void fmtDistance(const DisplayData &d, char *b, size_t s) {
+    Formatter::formatDistance(d.subValue.distanceKm, b, s);
+  }
+  static void fmtClock(const DisplayData &d, char *b, size_t s) {
+    (void)s;
+    Formatter::formatClock(d.subValue.clockTime.hour, d.subValue.clockTime.minute, b);
+  }
+
   DisplayFrame createFrame(const DisplayData &data) const {
     DisplayFrame frame;
 
-    switch (data.fixMode) {
-    case Fix2D:
-      frame.header.fixStatus = "2D";
-      break;
-    case Fix3D:
-      frame.header.fixStatus = "3D";
-      break;
-    default:
-      frame.header.fixStatus = "WAIT";
-      break;
-    }
+    static const char *FIX_LABELS[] = {"WAIT", "2D", "3D"};
+    int                fixIdx       = (int)data.fixMode;
+    if (fixIdx < 0 || fixIdx > 2) fixIdx = 0;
+    frame.header.fixStatus = FIX_LABELS[fixIdx];
 
-    if (data.modeSpeedLabel) frame.header.modeSpeed = data.modeSpeedLabel;
-    if (data.modeTimeLabel) frame.header.modeTime = data.modeTimeLabel;
+    frame.header.modeSpeed = data.modeSpeedLabel;
+    frame.header.modeTime  = data.modeTimeLabel;
 
     Formatter::formatSpeed(data.mainValue, frame.main.value, sizeof(frame.main.value));
-    if (data.mainUnit) frame.main.unit = data.mainUnit;
+    frame.main.unit = data.mainUnit;
 
     if (data.shouldBlink) {
       strcpy(frame.sub.value, "");
       frame.sub.unit = "";
     } else {
-      switch (data.subType) {
-      case DisplayData::SubType::Duration:
-        Formatter::formatDuration(data.subValue.durationMs, frame.sub.value,
-                                  sizeof(frame.sub.value));
-        break;
-      case DisplayData::SubType::Distance:
-        Formatter::formatDistance(data.subValue.distanceKm, frame.sub.value,
-                                  sizeof(frame.sub.value));
-        break;
-      case DisplayData::SubType::Clock:
-        Formatter::formatClock(data.subValue.clockTime.hour, data.subValue.clockTime.minute,
-                               frame.sub.value);
-        break;
-      }
-      if (data.subUnit) frame.sub.unit = data.subUnit;
+      static const FormatterFunc formatters[] = {fmtDuration, fmtDistance, fmtClock};
+      formatters[(int)data.subType](data, frame.sub.value, sizeof(frame.sub.value));
+      frame.sub.unit = data.subUnit;
     }
     return frame;
   }
 };
-#endif // APP_H

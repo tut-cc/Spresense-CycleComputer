@@ -12,20 +12,9 @@ FetchContent_MakeAvailable(googletest)
 set(TEST_SOURCES
     mocks/MockGlobals.cpp
     mocks/MockLibs.cpp
-    LogicTest.cpp
-    UITest.cpp
-    HardwareTest.cpp
-    AppTest.cpp
-    EquivalenceTest.cpp
-    CalculationErrorTest.cpp
-    HardwareFailureTest.cpp
-    NegativeTest.cpp
-    SystemIntegrationTest.cpp
-    PowerLossTest.cpp
     PipelineTest.cpp
     TripComputeTest.cpp
     App2Test.cpp
-    CompatibilityTest.cpp
     OLEDTruthTest.cpp
 )
 

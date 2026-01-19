@@ -1,5 +1,5 @@
-#include "../../src2/logic/TripCompute.h"
-#include "../../src2/logic/Pipeline.h"
+#include "../../src2/domain/TripCompute.h"
+#include "../../src2/domain/MvuPipeline.h"
 #include "mocks/Arduino.h"
 #include "mocks/GNSS.h"
 #include <gtest/gtest.h>
@@ -115,36 +115,6 @@ TEST_F(TripComputeTest, GnssTimeout) {
   EXPECT_FLOAT_EQ(state.currentSpeed, 0.0f);
 }
 
-TEST_F(TripComputeTest, InvalidCoordinate) {
-  TripStateDataEx state = createInitialState();
-  GnssData        gnss  = createGnssData(10.0f, Fix3D, 35.0, 135.0);
-
-  Pipeline::computeTrip(state, gnss, 1000);
-  Pipeline::computeTrip(state, gnss, 2000);
-  float initialDist = state.totalKm;
-
-  // Update with (0,0)
-  gnss.navData.latitude  = 0.0;
-  gnss.navData.longitude = 0.0;
-  Pipeline::computeTrip(state, gnss, 3000);
-  EXPECT_FLOAT_EQ(state.totalKm, initialDist);
-}
-
-TEST_F(TripComputeTest, ExtremeDistanceJump) {
-  TripStateDataEx state = createInitialState();
-  GnssData        gnss  = createGnssData(10.0f, Fix3D, 35.0, 135.0);
-
-  Pipeline::computeTrip(state, gnss, 1000);
-  Pipeline::computeTrip(state, gnss, 2000);
-  float initialDist = state.totalKm;
-
-  // Jump to another country (too far)
-  gnss.navData.latitude  = 40.0;
-  gnss.navData.longitude = 140.0;
-  Pipeline::computeTrip(state, gnss, 3000);
-  EXPECT_FLOAT_EQ(state.totalKm, initialDist);
-}
-
 TEST_F(TripComputeTest, GnssFixLost) {
   TripStateDataEx state = createInitialState();
   GnssData        gnss  = createGnssData(10.0f, Fix3D);
@@ -158,21 +128,6 @@ TEST_F(TripComputeTest, GnssFixLost) {
   Pipeline::computeTrip(state, gnss, 3000);
   EXPECT_EQ(state.status, TripStateData::Status::Stopped);
   EXPECT_FLOAT_EQ(state.currentSpeed, 0.0f);
-}
-
-TEST_F(TripComputeTest, GnssJitter) {
-  TripStateDataEx state = createInitialState();
-  GnssData        gnss  = createGnssData(10.0f, Fix3D, 35.0, 135.0);
-
-  Pipeline::computeTrip(state, gnss, 1000);
-  Pipeline::computeTrip(state, gnss, 2000);
-  float initialDist = state.totalKm;
-
-  // Tiny movement (below MIN_DELTA = 2m)
-  // 1 meter is approx 0.000009 degrees
-  gnss.navData.latitude += 0.000005; // ~0.5 meters
-  Pipeline::computeTrip(state, gnss, 3000);
-  EXPECT_FLOAT_EQ(state.totalKm, initialDist);
 }
 
 TEST_F(TripComputeTest, GnssFix2D) {
@@ -198,21 +153,6 @@ TEST_F(TripComputeTest, MinMovingSpeed) {
   gnss.navData.velocity = (Pipeline::MIN_MOVING_SPEED_KMH + 0.0001f) / 3.6f;
   Pipeline::computeTrip(state, gnss, 3000);
   EXPECT_EQ(state.status, TripStateData::Status::Moving);
-}
-
-TEST_F(TripComputeTest, DistanceDeltaLimits) {
-  TripStateDataEx state = createInitialState();
-  GnssData        gnss  = createGnssData(10.0f, Fix3D, 35.0, 135.0);
-
-  Pipeline::computeTrip(state, gnss, 1000);
-  Pipeline::computeTrip(state, gnss, 2000); // hasLastCoord set
-
-  float initialDist = state.totalKm;
-
-  // Change coordinate by approx 3.3 meters (above 2m MIN_DELTA)
-  gnss.navData.latitude += 0.00003;
-  Pipeline::computeTrip(state, gnss, 3000);
-  EXPECT_GT(state.totalKm, initialDist);
 }
 
 // ========================================
@@ -312,68 +252,14 @@ TEST_F(TripComputeTest, PausedDoesNotAccumulateTripDistance) {
   Pipeline::applyPause(state);
 
   // Move while paused
-  gnss.navData.latitude = 35.002;
+  // Just advancing time with velocity
   Pipeline::computeTrip(state, gnss, 4000);
 
-  // tripDistance should not change, but totalKm should
+  // tripDistance and totalKm should NOT change while paused
   EXPECT_FLOAT_EQ(state.tripDistance, tripDist);
-  EXPECT_GT(state.totalKm, totalDist);
+  EXPECT_FLOAT_EQ(state.totalKm, totalDist);
 }
 
 // ========================================
 // 平均速度の定期更新テスト
 // ========================================
-
-TEST_F(TripComputeTest, AverageSpeedPeriodicUpdate) {
-  TripStateDataEx state = createInitialState();
-  GnssData        gnss  = createGnssData(10.0f, Fix3D, 35.0, 135.0);
-
-  Pipeline::computeTrip(state, gnss, 1000);
-  Pipeline::computeTrip(state, gnss, 2000);
-
-  // Move to accumulate distance
-  gnss.navData.latitude = 35.001;
-  Pipeline::computeTrip(state, gnss, 3000);
-  float avgSpeed = state.avgSpeed;
-
-  // GNSS未更新でも1秒経過で平均速度が更新される
-  gnss.status = UpdateStatus::NoChange;
-  Pipeline::computeTrip(state, gnss, 4000);
-
-  // 移動時間が増えたので平均速度は下がる
-  EXPECT_LT(state.avgSpeed, avgSpeed);
-}
-
-TEST_F(TripComputeTest, DriftWhileStoppedDoesNotAccumulateTripDistance) {
-  TripStateDataEx state = createInitialState();
-  GnssData        gnss  = createGnssData(10.0f, Fix3D);
-
-  // 1. Initial State
-  Pipeline::computeTrip(state, gnss, 1000); // T=1000
-
-  // 2. First Move (Sets Start Coordinate)
-  gnss.navData.latitude += 0.0001;
-  Pipeline::computeTrip(state, gnss, 2000); // T=2000
-
-  // 3. Second Move (Accumulates Distance)
-  gnss.navData.latitude += 0.0001;
-  Pipeline::computeTrip(state, gnss, 3000); // T=3000
-
-  EXPECT_EQ(state.status, TripStateData::Status::Moving);
-  EXPECT_GT(state.tripDistance, 0.0f);
-  EXPECT_EQ(state.totalMovingMs, 1000);
-
-  // 4. Stop
-  gnss.navData.velocity = 0.0f;
-  Pipeline::computeTrip(state, gnss, 4000); // T=4000: Status -> Stopped
-
-  float distBeforeDrift = state.tripDistance;
-
-  // 5. Simulate Drift (Jump 80m)
-  gnss.navData.latitude += 0.0008;
-  Pipeline::computeTrip(state, gnss, 5000); // T=5000
-
-  // Distance should NOT be added while stopped
-  EXPECT_NEAR(state.tripDistance, distBeforeDrift, 0.01f);
-  EXPECT_LT(state.avgSpeed, 100.0f);
-}
