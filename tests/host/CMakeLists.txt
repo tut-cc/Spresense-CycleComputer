@@ -22,6 +22,10 @@ set(TEST_SOURCES
     NegativeTest.cpp
     SystemIntegrationTest.cpp
     PowerLossTest.cpp
+    PipelineTest.cpp
+    TripComputeTest.cpp
+    App2Test.cpp
+    CompatibilityTest.cpp
 )
 
 add_executable(run_tests
@@ -31,6 +35,7 @@ add_executable(run_tests
 target_include_directories(run_tests PRIVATE
     mocks
     ../../src
+    ../../src2
     .
 )
 

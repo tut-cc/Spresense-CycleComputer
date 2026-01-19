@@ -20,8 +20,10 @@ TEST_F(SystemIntegrationTest, Persistence_SaveBlockedByActiveGnss) {
 
   // Tripのデータを変更して、前回の保存内容と異なるようにする
   navData.moveByMeters(100.0f);
-  updateTrip(100); // status -> Moving
-  updateTrip(200); // distance updated
+  updateTrip(100); // hasLastUpdate = true
+  updateTrip(200); // hasLastCoord = true, status -> Moving
+  navData.moveByMeters(100.0f);
+  updateTrip(300); // totalKm updated
 
   // 保存インターバルを超える時間を経過させる
   _mock_millis = DataStore::SAVE_INTERVAL_MS + 1000;
