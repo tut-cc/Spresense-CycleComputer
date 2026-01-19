@@ -58,45 +58,28 @@ TEST_F(AppTest, MainLoop) {
 }
 
 TEST_F(AppTest, LoopProfiling) {
-  const int iterations      = 10000;
-  long long max_ns          = 0;
-  long long total_ns        = 0;
-  int       spike_iteration = -1;
+  const int iterations = 6000; // 60 seconds (10ms steps)
+  long long total_ns   = 0;
+
+  SpGnss::mockVelocityData = 10.0f; // Simulate movement
 
   for (int i = 0; i < iterations; ++i) {
-    _mock_millis += 10; // Advance 10ms each loop
+    _mock_millis += 10;
+
+    // Periodic button presses (every 10 seconds)
+    if (i % 1000 == 500) {
+      _mock_pin_states[BTN_A] = LOW; // Press
+    } else if (i % 1000 == 510) {
+      _mock_pin_states[BTN_A] = HIGH; // Release
+    }
 
     auto start = std::chrono::high_resolution_clock::now();
     app.update();
     auto end = std::chrono::high_resolution_clock::now();
 
-    long long duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-    total_ns += duration;
-    if (duration > max_ns) {
-      max_ns          = duration;
-      spike_iteration = i;
-    }
-
-    // Reset max intermittently to catch different spikes
-    if (i == 5000) {
-      std::cout << "[ PROFILE  ] Max in first 5000: " << max_ns << " ns at i=" << spike_iteration
-                << std::endl;
-      max_ns          = 0;
-      spike_iteration = -1; // Reset spike iteration for the second half
-    }
-
-    // Periodically trigger a save (every 6000 iterations = 60s)
-    // or trigger trip start to see persistence save
-    if (i == 100) {
-      // Force a trip move to trigger first save
-      SpGnss::mockVelocityData = 10.0f;
-    }
+    total_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
   }
 
-  std::cout << "[ PROFILE  ] Average loop time: " << (total_ns / iterations) << " ns" << std::endl;
-  std::cout << "[ PROFILE  ] Max in second 5000: " << max_ns << " ns at i=" << spike_iteration
+  std::cout << "[ PROFILE  ] App (Original) Average loop time: " << (total_ns / iterations) << " ns"
             << std::endl;
-
-  // Check if max is significantly higher than average (suggesting a spike)
-  // In host environment, OS jitter might cause this, but let's see.
 }

@@ -1,10 +1,16 @@
+#include <algorithm>
+#include <chrono>
 #include <cstdio>
-#include <iostream>
+#include <thread>
 
 #include "Adafruit_GFX.h"
 #include "Adafruit_SSD1306.h"
+#include "DisplayLogger.h"
 #include "GNSS.h"
 #include "Wire.h"
+
+// --- DisplayLogger ---
+std::vector<DrawCall> DisplayLogger::calls;
 
 // --- Wire ---
 TwoWire Wire;
@@ -15,7 +21,6 @@ void TwoWire::begin() {
 
 // --- Adafruit_GFX ---
 Adafruit_GFX::Adafruit_GFX(int16_t w, int16_t h) {
-  // Mock implementation
   (void)w;
   (void)h;
 }
@@ -38,11 +43,11 @@ bool Adafruit_SSD1306::begin(uint8_t switchvcc, uint8_t i2caddr, bool reset, boo
 }
 
 void Adafruit_SSD1306::display() {
-  // implementation
+  DisplayLogger::log({DrawCall::Type::Display, 0, 0, 0, 0, 0, 0, 0, ""});
 }
 
 void Adafruit_SSD1306::clearDisplay() {
-  // implementation
+  DisplayLogger::log({DrawCall::Type::Clear, 0, 0, 0, 0, 0, 0, 0, ""});
 }
 
 void Adafruit_SSD1306::invertDisplay(bool i) {
@@ -54,44 +59,39 @@ void Adafruit_SSD1306::dim(bool dim) {
 }
 
 void Adafruit_SSD1306::drawPixel(int16_t x, int16_t y, uint16_t color) {
-  (void)x;
-  (void)y;
-  (void)color;
+  DisplayLogger::log({DrawCall::Type::Pixel, x, y, 0, 0, (int16_t)color, 0, 0, ""});
 }
 
 void Adafruit_SSD1306::setTextSize(uint8_t s) {
-  (void)s;
+  DisplayLogger::log({DrawCall::Type::TextSize, 0, 0, 0, 0, 0, (int16_t)s, 0, ""});
 }
 
 void Adafruit_SSD1306::setTextColor(uint16_t c) {
-  (void)c;
+  DisplayLogger::log({DrawCall::Type::TextColor, 0, 0, 0, 0, (int16_t)c, 0, 0, ""});
 }
 
 void Adafruit_SSD1306::setCursor(int16_t x, int16_t y) {
-  (void)x;
-  (void)y;
+  DisplayLogger::log({DrawCall::Type::Cursor, x, y, 0, 0, 0, 0, 0, ""});
 }
 
 void Adafruit_SSD1306::print(const String &s) {
-  // std::cout << "OLED print: " << s.c_str() << std::endl;
+  DisplayLogger::log({DrawCall::Type::Text, 0, 0, 0, 0, 0, 0, 0, s.c_str()});
 }
 
 void Adafruit_SSD1306::print(const char *s) {
-  // std::cout << "OLED print: " << s << std::endl;
+  if (s) DisplayLogger::log({DrawCall::Type::Text, 0, 0, 0, 0, 0, 0, 0, s});
 }
 
 void Adafruit_SSD1306::println(const String &s) {
-  // std::cout << "OLED println: " << s.c_str() << std::endl;
+  DisplayLogger::log({DrawCall::Type::Text, 0, 0, 0, 0, 0, 0, 0, std::string(s.c_str()) + "\n"});
 }
 
 void Adafruit_SSD1306::println(const char *s) {
-  // std::cout << "OLED println: " << s << std::endl;
+  if (s) DisplayLogger::log({DrawCall::Type::Text, 0, 0, 0, 0, 0, 0, 0, std::string(s) + "\n"});
 }
 
 void Adafruit_SSD1306::getTextBounds(const String &str, int16_t x, int16_t y, int16_t *x1,
                                      int16_t *y1, uint16_t *w, uint16_t *h) {
-  // Mock logic to return some reasonable bounds
-  // Assume 6x8 chars for size 1
   *x1 = x;
   *y1 = y;
   *w  = str.length() * 6;
@@ -100,35 +100,18 @@ void Adafruit_SSD1306::getTextBounds(const String &str, int16_t x, int16_t y, in
 
 // Adafruit_GFX implementations
 void Adafruit_GFX::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color) {
-  (void)x0;
-  (void)y0;
-  (void)x1;
-  (void)y1;
-  (void)color;
-  // Mock implementation
+  DisplayLogger::log({DrawCall::Type::Line, x0, y0, x1, y1, (int16_t)color, 0, 0, ""});
 }
 void Adafruit_GFX::drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
-  (void)x;
-  (void)y;
-  (void)w;
-  (void)h;
-  (void)color;
-  // Mock implementation
+  DisplayLogger::log(
+      {DrawCall::Type::Rect, x, y, (int16_t)(x + w), (int16_t)(y + h), (int16_t)color, 0, 0, ""});
 }
 void Adafruit_GFX::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
-  (void)x;
-  (void)y;
-  (void)w;
-  (void)h;
-  (void)color;
-  // Mock implementation
+  DisplayLogger::log({DrawCall::Type::FillRect, x, y, (int16_t)(x + w), (int16_t)(y + h),
+                      (int16_t)color, 0, 0, ""});
 }
 void Adafruit_GFX::drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color) {
-  (void)x0;
-  (void)y0;
-  (void)r;
-  (void)color;
-  // Mock implementation
+  DisplayLogger::log({DrawCall::Type::Circle, x0, y0, 0, 0, (int16_t)color, 0, (int16_t)r, ""});
 }
 
 // --- GNSS ---
@@ -137,6 +120,8 @@ float     SpGnss::mockVelocityData = 5.5f;
 
 int SpGnss::mockBeginResult = 0;
 int SpGnss::mockStartResult = 0;
+
+extern unsigned long _mock_millis;
 
 int SpGnss::begin() {
   return mockBeginResult;
@@ -153,7 +138,8 @@ void SpGnss::select(int satelliteSystem) {
 }
 bool SpGnss::waitUpdate(int timeout) {
   (void)timeout;
-  return true;
+  if (_mock_millis > 0 && (_mock_millis % 1000 == 0)) { return true; }
+  return false;
 }
 void SpGnss::getNavData(SpNavData *navData) {
   if (navData) {

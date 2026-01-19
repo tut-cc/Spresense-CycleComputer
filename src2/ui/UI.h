@@ -11,12 +11,14 @@ constexpr int BTN_B = PIN_D04;
 
 class UI {
 private:
-  OLED     oled;
-  Input    input;
-  Renderer renderer;
+  OLED         oled;
+  Input        input;
+  Renderer     renderer;
+  DisplayFrame frames[2];
+  int          currentIdx = 0;
 
-  Frame createFrame(const DisplayData &displayData) const {
-    Frame frame;
+  DisplayFrame createFrame(const DisplayData &displayData) const {
+    DisplayFrame frame;
 
     switch (displayData.fixMode) {
     case Fix2D:
@@ -50,13 +52,13 @@ public:
 
   // 表示を更新する
   void draw(const DisplayData &displayData) {
-    if (displayData.updateStatus == UpdateStatus::NoChange) return;
 
-    // 特殊なリセット表示（RESET_LONG時など、パイプライン側で判定してDisplayDataにフラグを持たせてもよいが、
-    // ここでは簡易的にdisplayData.updateStatusがForceUpdateなら画面クリアするなどの運用も可能）
+    const int prevIdx = currentIdx;
+    currentIdx        = 1 - currentIdx;
 
-    Frame frame = createFrame(displayData);
-    renderer.render(oled, frame);
+    frames[currentIdx] = createFrame(displayData);
+
+    if (frames[currentIdx] != frames[prevIdx]) { renderer.render(oled, frames[currentIdx]); }
   }
 
   // 演出用
@@ -71,6 +73,7 @@ public:
     oled.display();
     delay(500);
     oled.restart();
-    renderer.reset();
+    frames[0] = DisplayFrame();
+    frames[1] = DisplayFrame();
   }
 };

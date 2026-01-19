@@ -8,8 +8,8 @@ class Mode {
 public:
   enum class ID { SPD_TIM, AVG_ODO, MAX_CLK };
 
-  // DisplayDataからUI表示用のFrameを生成する
-  static void fillFrame(Frame &frame, const DisplayData &data) {
+  // DisplayDataからUI表示用のDisplayFrameを生成する
+  static void fillFrame(DisplayFrame &frame, const DisplayData &data) {
     // ヘッダー
     strcpy(frame.header.modeSpeed, data.modeSpeedLabel);
     strcpy(frame.header.modeTime, data.modeTimeLabel);

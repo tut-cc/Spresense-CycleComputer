@@ -2,6 +2,7 @@
 #include <stddef.h>
 
 #include "Pipeline.h"
+#include "TripCompute.h"
 #include "hardware/Gnss.h"
 #include "logic/DataStore.h"
 #include "logic/VoltageMonitor.h"
@@ -9,79 +10,101 @@
 
 class App {
 private:
-  // --- 既存のオブジェクト (ハードウェア制御用) ---
+  // --- Hardware Abstractions ---
   Gnss           gnss;
   DataStore      dataStore;
   VoltageMonitor voltageMonitor;
   UI             userInterface;
 
-  // --- 新システム (パイプライン) 用データ ---
+  // --- State ---
   Mode::ID        currentMode = Mode::ID::SPD_TIM;
   GnssData        gnssData;
-  TripStateDataEx tripData;
-  unsigned long   lastSaveMillis = 0;
+  TripStateDataEx tripState[2]; // Double buffer (0: Prev, 1: Curr)
+  int             currentIdx     = 0;
+  unsigned long   lastSaveMs     = 0;
+  unsigned long   lastUiUpdateMs = 0;
 
 public:
-  App() {}
+  App() = default;
 
   void begin() {
     gnss.begin();
     voltageMonitor.begin();
     userInterface.begin();
 
-    // ロード処理
-    PersistentData savedData = dataStore.load();
-    tripData.totalKm         = savedData.totalDistance;
-    tripData.tripDistance    = savedData.tripDistance;
-    tripData.totalMovingMs   = savedData.movingTimeMs;
-    tripData.maxSpeed        = savedData.maxSpeed;
-    tripData.status          = TripStateData::Status::Stopped;
-    tripData.fixMode         = FixInvalid;
-    tripData.hasLastCoord    = false;
-    tripData.lastUpdateTime  = 0;
+    // Init state from persistence
+    PersistentData saved = dataStore.load();
+    for (auto &state : tripState) {
+      state.resetAll();
+      state.totalKm       = saved.totalDistance;
+      state.tripDistance  = saved.tripDistance;
+      state.totalMovingMs = saved.movingTimeMs;
+      state.maxSpeed      = saved.maxSpeed;
+    }
 
-    lastSaveMillis = millis();
+    lastSaveMs = millis();
   }
 
   void update() {
-    const unsigned long now = millis();
+    const unsigned long now     = millis();
+    const int           prevIdx = currentIdx;
+    const int           currIdx = 1 - currentIdx;
 
-    // 更新状態をリセット
-    tripData.updateStatus = UpdateStatus::NoChange;
+    // 1. Prepare current buffer by copying from previous
+    tripState[currIdx] = tripState[prevIdx];
+    tripState[currIdx].resetMeta();
 
-    // 1. GNSS入力収集
-    gnssData = Pipeline::collectGnss(gnss);
-
-    // 2. ユーザー入力イベント (UI経由で取得)
+    // 2. Capture Inputs
+    gnssData           = Pipeline::collectGnss(gnss);
     Input::Event event = userInterface.getInputEvent();
-    if (event != Input::Event::NONE) {
-      auto inputResult = Pipeline::handleUserInput<TripStateDataEx>(tripData, currentMode, event);
-      tripData         = inputResult.newState;
-      currentMode      = inputResult.newMode;
 
-      if (inputResult.shouldClearStorage) {
+    // 3. Process User Input
+    if (event != Input::Event::NONE) {
+      auto result = Pipeline::handleUserInput(tripState[currIdx], currentMode, event);
+      currentMode = result.newMode;
+
+      if (result.shouldClearStorage) {
         dataStore.clear();
-        userInterface.showResetMessage(); // 視覚的フィードバック
+        userInterface.showResetMessage();
       }
     }
 
-    // 3. Trip計算 (パイプライン)
-    // 時間経過(dt)やGNSS更新を反映 (内部でコピーを最小限にするよう修正済み)
-    tripData = Pipeline::computeTrip(tripData, gnssData, now);
+    // 4. Compute Trip Logic
+    Pipeline::computeTrip(tripState[currIdx], gnssData, now);
 
-    // 4. 永続化処理
-    float voltage = voltageMonitor.update();
-    if ((now - lastSaveMillis > DataStore::SAVE_INTERVAL_MS) &&
-        gnssData.status == UpdateStatus::NoChange) {
-      PersistentData pData = Pipeline::createPersistentData(tripData, voltage);
+    // 5. Persistence
+    handlePersistence(tripState[currIdx], now);
+
+    // 6. UI Update
+    handleUI(tripState[prevIdx], tripState[currIdx], now);
+
+    // 7. Swap Buffers
+    currentIdx = currIdx;
+  }
+
+private:
+  void handlePersistence(const TripStateDataEx &state, unsigned long now) {
+    if (now - lastSaveMs < DataStore::SAVE_INTERVAL_MS) return;
+
+    // Only save when GNSS is stable or not updating to avoid IO jitter
+    if (gnssData.status == UpdateStatus::NoChange) {
+      float          v     = voltageMonitor.update();
+      PersistentData pData = Pipeline::createPersistentData(state, v);
       dataStore.save(pData);
-      lastSaveMillis = now;
+      lastSaveMs = now;
     }
+  }
 
-    // 5. UIの描画 (変化があった場合のみ)
-    if (tripData.updateStatus != UpdateStatus::NoChange) {
-      DisplayData displayData = Pipeline::createDisplayData(tripData, gnssData, currentMode);
-      userInterface.draw(displayData);
+  void handleUI(const TripStateDataEx &prev, const TripStateDataEx &curr, unsigned long now) {
+    bool periodic = (now - lastUiUpdateMs >= 500);
+    bool changed  = Pipeline::isChanged(prev, curr);
+    bool forced   = (curr.updateStatus == UpdateStatus::ForceUpdate);
+    bool gnssUpd  = (gnssData.status == UpdateStatus::Updated);
+
+    if (changed || forced || gnssUpd || periodic) {
+      DisplayData dData = Pipeline::createDisplayData(curr, gnssData, currentMode);
+      userInterface.draw(dData);
+      lastUiUpdateMs = now;
     }
   }
 };

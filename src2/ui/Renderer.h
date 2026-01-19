@@ -4,41 +4,8 @@
 #include <cstdio>
 #include <cstring>
 
+#include "../DataStructures.h"
 #include "../hardware/OLED.h"
-
-struct Frame {
-  struct Item {
-    char value[16] = "";
-    char unit[16]  = "";
-
-    bool operator==(const Item &other) const {
-      return strcmp(value, other.value) == 0 && strcmp(unit, other.unit) == 0;
-    }
-  };
-
-  struct Header {
-    char fixStatus[8] = "";
-    char modeSpeed[8] = "";
-    char modeTime[8]  = "";
-
-    bool operator==(const Header &other) const {
-      const bool fixStatusEq = strcmp(fixStatus, other.fixStatus) == 0;
-      const bool modeSpeedEq = strcmp(modeSpeed, other.modeSpeed) == 0;
-      const bool modeTimeEq  = strcmp(modeTime, other.modeTime) == 0;
-      return fixStatusEq && modeSpeedEq && modeTimeEq;
-    }
-  };
-
-  Header header;
-  Item   main;
-  Item   sub;
-
-  Frame() = default;
-
-  bool operator==(const Frame &other) const {
-    return header == other.header && main == other.main && sub == other.sub;
-  }
-};
 
 namespace Formatter {
 
@@ -77,31 +44,18 @@ constexpr int16_t SUB_UNIT_SIZE        = 1;
 constexpr int16_t UNIT_SPACING         = 4;
 
 class Renderer {
-private:
-  Frame lastFrame;
-  bool  firstRender = true;
-
 public:
   Renderer() {}
 
-  void render(OLED &oled, Frame &frame) {
-    if (!firstRender && frame == lastFrame) return;
-
-    firstRender = false;
-    lastFrame   = frame;
-
+  void render(OLED &oled, const DisplayFrame &frame) {
     oled.clear();
     drawHeader(oled, frame);
     drawMainArea(oled, frame);
     oled.display();
   }
 
-  void reset() {
-    firstRender = true;
-  }
-
 private:
-  void drawHeader(OLED &oled, const Frame &frame) {
+  void drawHeader(OLED &oled, const DisplayFrame &frame) {
     oled.setTextSize(HEADER_TEXT_SIZE);
     oled.setTextColor(WHITE);
 
@@ -113,7 +67,7 @@ private:
     oled.drawLine(0, lineY, oled.getWidth(), lineY, WHITE);
   }
 
-  void drawMainArea(OLED &oled, const Frame &frame) {
+  void drawMainArea(OLED &oled, const DisplayFrame &frame) {
     const int16_t headerH = HEADER_HEIGHT;
     const int16_t screenH = oled.getHeight();
 
@@ -121,8 +75,8 @@ private:
     drawItem(oled, frame.sub, screenH, SUB_VAL_SIZE, SUB_UNIT_SIZE, true);
   }
 
-  void drawItem(OLED &oled, const Frame::Item &item, int16_t y, uint8_t valSize, uint8_t unitSize,
-                bool alignBottom) {
+  void drawItem(OLED &oled, const DisplayFrame::Item &item, int16_t y, uint8_t valSize,
+                uint8_t unitSize, bool alignBottom) {
     oled.setTextSize(valSize);
     OLED::Rect valRect = oled.getTextBounds(item.value);
 

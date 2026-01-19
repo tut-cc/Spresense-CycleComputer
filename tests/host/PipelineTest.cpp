@@ -13,8 +13,8 @@ protected:
   }
 
   // ヘルパー: 初期状態を作成
-  TripStateData createInitialState() {
-    TripStateData state;
+  TripStateDataEx createInitialState() {
+    TripStateDataEx state;
     state.currentSpeed   = 0.0f;
     state.status         = TripStateData::Status::Stopped;
     state.totalElapsedMs = 0;
@@ -68,13 +68,14 @@ TEST_F(PipelineTest, ResetType_Determination) {
 }
 
 TEST_F(PipelineTest, ApplyReset_Trip) {
-  TripStateData state  = createInitialState();
-  state.totalElapsedMs = 5000;
-  state.tripDistance   = 10.5f;
-  state.totalKm        = 100.0f;
-  state.maxSpeed       = 50.0f;
+  TripStateDataEx state = createInitialState();
+  state.totalElapsedMs  = 5000;
+  state.tripDistance    = 10.5f;
+  state.totalKm         = 100.0f;
+  state.maxSpeed        = 50.0f;
 
-  TripStateData newState = Pipeline::applyReset(state, Pipeline::ResetType::Trip);
+  Pipeline::applyReset(state, Pipeline::ResetType::Trip);
+  TripStateData &newState = state;
 
   // トリップデータのみリセット
   EXPECT_EQ(newState.totalElapsedMs, 0);
@@ -89,11 +90,12 @@ TEST_F(PipelineTest, ApplyReset_Trip) {
 }
 
 TEST_F(PipelineTest, ApplyReset_MaxSpeed) {
-  TripStateData state = createInitialState();
-  state.maxSpeed      = 50.0f;
-  state.tripDistance  = 10.5f;
+  TripStateDataEx state = createInitialState();
+  state.maxSpeed        = 50.0f;
+  state.tripDistance    = 10.5f;
 
-  TripStateData newState = Pipeline::applyReset(state, Pipeline::ResetType::MaxSpeed);
+  Pipeline::applyReset(state, Pipeline::ResetType::MaxSpeed);
+  TripStateData &newState = state;
 
   // 最高速度のみリセット
   EXPECT_FLOAT_EQ(newState.maxSpeed, 0.0f);
@@ -105,13 +107,14 @@ TEST_F(PipelineTest, ApplyReset_MaxSpeed) {
 }
 
 TEST_F(PipelineTest, ApplyReset_All) {
-  TripStateData state  = createInitialState();
-  state.totalElapsedMs = 5000;
-  state.tripDistance   = 10.5f;
-  state.totalKm        = 100.0f;
-  state.maxSpeed       = 50.0f;
+  TripStateDataEx state = createInitialState();
+  state.totalElapsedMs  = 5000;
+  state.tripDistance    = 10.5f;
+  state.totalKm         = 100.0f;
+  state.maxSpeed        = 50.0f;
 
-  TripStateData newState = Pipeline::applyReset(state, Pipeline::ResetType::All);
+  Pipeline::applyReset(state, Pipeline::ResetType::All);
+  TripStateData &newState = state;
 
   // 全データリセット
   EXPECT_EQ(newState.totalElapsedMs, 0);
@@ -124,17 +127,39 @@ TEST_F(PipelineTest, ApplyReset_All) {
 }
 
 TEST_F(PipelineTest, ApplyPause) {
-  TripStateData state = createInitialState();
-  state.status        = TripStateData::Status::Stopped;
+  TripStateDataEx state = createInitialState();
+  state.status          = TripStateData::Status::Stopped;
 
   // Stopped -> Paused
-  TripStateData newState = Pipeline::applyPause(state);
+  Pipeline::applyPause(state);
+  TripStateData &newState = state;
   EXPECT_EQ(newState.status, TripStateData::Status::Paused);
   EXPECT_EQ(newState.updateStatus, UpdateStatus::ForceUpdate);
 
   // Paused -> Stopped
-  newState = Pipeline::applyPause(newState);
+  Pipeline::applyPause(newState);
   EXPECT_EQ(newState.status, TripStateData::Status::Stopped);
+}
+
+TEST_F(PipelineTest, BlinkLogic) {
+  TripStateDataEx state = createInitialState();
+  state.status          = TripStateData::Status::Paused;
+  GnssData gnss         = createGnssData(0.0f, Fix3D);
+
+  // Time 0: blink ON (shouldBlink = true)
+  _mock_millis      = 0;
+  DisplayData data0 = Pipeline::createDisplayData(state, gnss, Mode::ID::SPD_TIM);
+  EXPECT_TRUE(data0.shouldBlink);
+
+  // Time 500: blink OFF
+  _mock_millis      = 500;
+  DisplayData data1 = Pipeline::createDisplayData(state, gnss, Mode::ID::SPD_TIM);
+  EXPECT_FALSE(data1.shouldBlink);
+
+  // Time 1000: blink ON
+  _mock_millis      = 1000;
+  DisplayData data2 = Pipeline::createDisplayData(state, gnss, Mode::ID::SPD_TIM);
+  EXPECT_TRUE(data2.shouldBlink);
 }
 
 TEST_F(PipelineTest, SwitchMode) {
@@ -148,24 +173,22 @@ TEST_F(PipelineTest, SwitchMode) {
 }
 
 TEST_F(PipelineTest, HandleUserInput_Pause) {
-  TripStateData state = createInitialState();
+  TripStateDataEx state = createInitialState();
 
-  auto result =
-      Pipeline::handleUserInput<TripStateData>(state, Mode::ID::SPD_TIM, Input::Event::PAUSE);
+  auto result = Pipeline::handleUserInput(state, Mode::ID::SPD_TIM, Input::Event::PAUSE);
 
-  EXPECT_EQ(result.newState.status, TripStateData::Status::Paused);
+  EXPECT_EQ(state.status, TripStateData::Status::Paused);
   EXPECT_EQ(result.newMode, Mode::ID::SPD_TIM);
   EXPECT_FALSE(result.shouldClearStorage);
 }
 
 TEST_F(PipelineTest, HandleUserInput_ResetLong) {
-  TripStateData state = createInitialState();
-  state.totalKm       = 100.0f;
+  TripStateDataEx state = createInitialState();
+  state.totalKm         = 100.0f;
 
-  auto result =
-      Pipeline::handleUserInput<TripStateData>(state, Mode::ID::SPD_TIM, Input::Event::RESET_LONG);
+  auto result = Pipeline::handleUserInput(state, Mode::ID::SPD_TIM, Input::Event::RESET_LONG);
 
-  EXPECT_FLOAT_EQ(result.newState.totalKm, 0.0f);
+  EXPECT_FLOAT_EQ(state.totalKm, 0.0f);
   EXPECT_TRUE(result.shouldClearStorage);
 }
 

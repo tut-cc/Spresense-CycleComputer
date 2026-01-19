@@ -32,11 +32,21 @@ TEST_F(App2Test, MainLoop) {
 }
 
 TEST_F(App2Test, LoopProfiling) {
-  const int iterations = 10000;
+  const int iterations = 6000; // 60 seconds (10ms steps)
   long long total_ns   = 0;
+
+  SpGnss::mockVelocityData = 10.0f; // Simulate movement
 
   for (int i = 0; i < iterations; ++i) {
     _mock_millis += 10;
+
+    // Periodic button presses (every 10 seconds)
+    if (i % 1000 == 500) {
+      _mock_pin_states[BTN_A] = LOW; // Press
+    } else if (i % 1000 == 510) {
+      _mock_pin_states[BTN_A] = HIGH; // Release
+    }
+
     auto start = std::chrono::high_resolution_clock::now();
     app.update();
     auto end = std::chrono::high_resolution_clock::now();

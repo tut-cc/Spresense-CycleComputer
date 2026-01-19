@@ -26,6 +26,7 @@ set(TEST_SOURCES
     TripComputeTest.cpp
     App2Test.cpp
     CompatibilityTest.cpp
+    OLEDTruthTest.cpp
 )
 
 add_executable(run_tests
@@ -45,3 +46,18 @@ target_compile_definitions(run_tests PRIVATE UNIT_TEST)
 
 include(GoogleTest)
 gtest_discover_tests(run_tests)
+
+add_executable(run_benchmark
+    mocks/MockGlobals.cpp
+    mocks/MockLibs.cpp
+    Benchmark.cpp
+)
+target_include_directories(run_benchmark PRIVATE
+    mocks
+    ../../src
+    ../../src2
+    .
+)
+target_compile_definitions(run_benchmark PRIVATE UNIT_TEST)
+target_compile_options(run_benchmark PRIVATE -Wall -Wextra -O3) # Use O3 for benchmark
+

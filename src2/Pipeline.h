@@ -1,7 +1,6 @@
 #pragma once
 
 #include "DataStructures.h"
-#include "TripCompute.h"
 #include "hardware/Gnss.h"
 
 #include "ui/Input.h"
@@ -10,7 +9,7 @@
 namespace Pipeline {
 
 // ========================================
-// Stage 1: GNSS入力収集
+// Stage 1: GNSS Capture
 // ========================================
 
 inline GnssData collectGnss(Gnss &gnss) {
@@ -21,26 +20,18 @@ inline GnssData collectGnss(Gnss &gnss) {
   return data;
 }
 
-// Stage 2: Trip計算はTripCompute.hで定義
+// Stage 2: Trip Logic (Refer to TripCompute.h)
 
 // ========================================
-// Stage 3: ユーザー入力処理
+// Stage 3: User Interaction
 // ========================================
 
-enum class ResetType {
-  None,
-  Trip,          // トリップデータのみ
-  MaxSpeed,      // 最高速度のみ
-  All,           // 全データ
-  AllWithStorage // 全データ + EEPROM
-};
+enum class ResetType { None, Trip, MaxSpeed, All, AllWithStorage };
 
-// リセットタイプを決定
 inline ResetType determineResetType(Input::Event event, Mode::ID currentMode) {
   switch (event) {
   case Input::Event::RESET_LONG:
     return ResetType::AllWithStorage;
-
   case Input::Event::RESET:
     switch (currentMode) {
     case Mode::ID::SPD_TIM:
@@ -51,71 +42,35 @@ inline ResetType determineResetType(Input::Event event, Mode::ID currentMode) {
       return ResetType::MaxSpeed;
     }
     break;
-
   default:
-    return ResetType::None;
+    break;
   }
   return ResetType::None;
 }
 
-// リセット操作を適用
-template <typename T> inline T applyReset(const T &state, ResetType resetType) {
-  T newState = state;
-
+template <typename T> inline void applyReset(T &state, ResetType resetType) {
   switch (resetType) {
-  case ResetType::None:
-    return state; // 変更なし
-
   case ResetType::Trip:
-    // トリップデータのみリセット
-    newState.totalElapsedMs = 0;
-    newState.tripDistance   = 0.0f;
-    newState.currentSpeed   = 0.0f;
-    newState.avgSpeed       = 0.0f;
-    newState.totalMovingMs  = 0;
-    newState.status         = TripStateData::Status::Stopped;
-    newState.updateStatus   = UpdateStatus::ForceUpdate;
+    state.resetTrip();
     break;
-
   case ResetType::MaxSpeed:
-    // 最高速度のみリセット
-    newState.maxSpeed     = 0.0f;
-    newState.updateStatus = UpdateStatus::ForceUpdate;
+    state.resetMaxSpeed();
     break;
-
   case ResetType::All:
   case ResetType::AllWithStorage:
-    // 全データリセット
-    newState.totalElapsedMs = 0;
-    newState.tripDistance   = 0.0f;
-    newState.currentSpeed   = 0.0f;
-    newState.maxSpeed       = 0.0f;
-    newState.avgSpeed       = 0.0f;
-    newState.totalMovingMs  = 0;
-    newState.totalKm        = 0.0f;
-    newState.status         = TripStateData::Status::Stopped;
-    newState.updateStatus   = UpdateStatus::ForceUpdate;
+    state.resetAll();
+    break;
+  default:
     break;
   }
-
-  return newState;
 }
 
-// Pause操作を適用
-template <typename T> inline T applyPause(const T &state) {
-  T newState = state;
-
-  if (newState.status == TripStateData::Status::Paused) {
-    newState.status = TripStateData::Status::Stopped;
-  } else {
-    newState.status = TripStateData::Status::Paused;
-  }
-
-  newState.updateStatus = UpdateStatus::ForceUpdate;
-  return newState;
+inline void applyPause(TripStateData &state) {
+  state.status = (state.status == TripStateData::Status::Paused) ? TripStateData::Status::Stopped
+                                                                 : TripStateData::Status::Paused;
+  state.forceUpdate();
 }
 
-// モード切り替え
 inline Mode::ID switchMode(Mode::ID currentMode, Input::Event event) {
   if (event == Input::Event::SELECT) {
     return static_cast<Mode::ID>((static_cast<int>(currentMode) + 1) % 3);
@@ -123,50 +78,49 @@ inline Mode::ID switchMode(Mode::ID currentMode, Input::Event event) {
   return currentMode;
 }
 
-// ユーザー入力処理の統合
-template <typename T> struct UserInputResult {
-  T        newState;
+struct UserInputResult {
   Mode::ID newMode;
-  bool     shouldClearStorage; // EEPROM消去が必要か
+  bool     shouldClearStorage;
 };
 
 template <typename T>
-inline UserInputResult<T> handleUserInput(const T &state, Mode::ID currentMode,
-                                          Input::Event event) {
-  UserInputResult<T> result;
-  result.newState           = state;
-  result.newMode            = currentMode;
-  result.shouldClearStorage = false;
-
+inline UserInputResult handleUserInput(T &state, Mode::ID currentMode, Input::Event event) {
+  UserInputResult result = {currentMode, false};
   if (event == Input::Event::NONE) return result;
 
-  // モード切り替え
+  // Mode switching
   result.newMode = switchMode(currentMode, event);
-  if (result.newMode != currentMode) { result.newState.updateStatus = UpdateStatus::ForceUpdate; }
+  if (result.newMode != currentMode) { state.forceUpdate(); }
 
-  // Pause処理
-  if (event == Input::Event::PAUSE) {
-    result.newState = applyPause(state);
-    return result;
+  // Logic for specific events
+  switch (event) {
+  case Input::Event::PAUSE:
+    applyPause(state);
+    break;
+
+  case Input::Event::RESET:
+  case Input::Event::RESET_LONG: {
+    ResetType r = determineResetType(event, currentMode);
+    applyReset(state, r);
+    result.shouldClearStorage = (r == ResetType::AllWithStorage);
+    break;
   }
-
-  // リセット処理
-  ResetType resetType       = determineResetType(event, currentMode);
-  result.newState           = applyReset(state, resetType);
-  result.shouldClearStorage = (resetType == ResetType::AllWithStorage);
+  default:
+    break;
+  }
 
   return result;
 }
 
 // ========================================
-// Stage 4: 表示データ生成
+// Stage 4: View Model Generation
 // ========================================
 
 inline DisplayData createDisplayData(const TripStateData &state, const GnssData &gnss,
                                      Mode::ID mode) {
   DisplayData data;
-  data.fixMode     = (SpFixMode)gnss.navData.posFixMode;
-  data.shouldBlink = (state.status == TripStateData::Status::Paused) && ((millis() / 500) % 2 == 0);
+  data.fixMode      = (SpFixMode)gnss.navData.posFixMode;
+  data.shouldBlink  = state.isPaused() && ((millis() / 500) % 2 == 0);
   data.updateStatus = state.updateStatus;
 
   switch (mode) {
@@ -197,11 +151,8 @@ inline DisplayData createDisplayData(const TripStateData &state, const GnssData 
     data.mainUnit       = "km/h";
     data.subType        = DisplayData::SubType::Clock;
 
-    // JSTへの時間変換 (もともとClock.hにあったロジックを統合)
     int hour = gnss.navData.time.hour;
-    if (gnss.navData.time.year >= 2026) {
-      hour = (hour + 9) % 24; // JST Offset +9
-    }
+    if (gnss.navData.time.year >= 2026) { hour = (hour + 9) % 24; }
     data.subValue.clockTime.hour   = hour;
     data.subValue.clockTime.minute = gnss.navData.time.minute;
     data.subUnit                   = "";
@@ -211,19 +162,10 @@ inline DisplayData createDisplayData(const TripStateData &state, const GnssData 
   return data;
 }
 
-// ========================================
-// Stage 5: 永続化データ生成
-// ========================================
-
+// Stage 5
 inline PersistentData createPersistentData(const TripStateData &state, float voltage) {
-  PersistentData data;
-  data.totalDistance = state.totalKm;
-  data.tripDistance  = state.tripDistance;
-  data.movingTimeMs  = state.totalMovingMs;
-  data.maxSpeed      = state.maxSpeed;
-  data.voltage       = voltage;
-  data.updateStatus  = state.updateStatus;
-  return data;
+  return {state.totalKm, state.tripDistance, state.totalMovingMs, state.maxSpeed,
+          voltage,       state.updateStatus};
 }
 
 } // namespace Pipeline

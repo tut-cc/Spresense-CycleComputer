@@ -7,12 +7,13 @@
  */
 class CompatibilityTest : public TripTestBase {
 protected:
+  unsigned long   lastGnssTimestamp = 0;
   TripStateDataEx state2;
 
   void SetUp() override {
     TripTestBase::SetUp();
-
-    // src2の初期状態をセットアップ
+    lastGnssTimestamp = 0;
+    // ... rest of setup
     state2.totalKm        = 0.0f;
     state2.tripDistance   = 0.0f;
     state2.totalMovingMs  = 0;
@@ -34,12 +35,14 @@ protected:
     trip.update(navData, ms, updated);
 
     // 2. src2 (New Pipeline) を更新
+    if (updated) { lastGnssTimestamp = ms; }
+
     GnssData gnss;
     gnss.navData   = navData;
     gnss.status    = updated ? UpdateStatus::Updated : UpdateStatus::NoChange;
-    gnss.timestamp = ms;
+    gnss.timestamp = lastGnssTimestamp;
 
-    state2 = Pipeline::computeTrip(state2, gnss, ms);
+    Pipeline::computeTrip(state2, gnss, ms);
   }
 
   void compareStates() {
@@ -94,8 +97,8 @@ TEST_F(CompatibilityTest, PauseMatch) {
 
   // Pause
   trip.pause();
-  state2.status = TripStateData::Status::
-      Paused; // 手動で同期（本来はPipeline経由で呼ぶが、ロジック単体の互換性確認のため）
+  Pipeline::applyPause(state2);
+  EXPECT_EQ(state2.status, TripStateData::Status::Paused);
 
   updateBoth(3000);
   compareStates();
