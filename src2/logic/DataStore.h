@@ -6,7 +6,6 @@
 #include <stddef.h>
 
 constexpr uint32_t      CRC_POLY     = 0xEDB88320;
-constexpr uint32_t      MAGIC_NUMBER = 0xDEADBEEF;
 constexpr float         MAX_VALID_KM = 1000000.0f;
 constexpr unsigned long EEPROM_ADDR  = 0;
 
@@ -14,24 +13,16 @@ class DataStore {
 public:
   static constexpr float SAVE_INTERVAL_MS = 30000.0f;
 
-private:
-  SaveData buffer[2];
-  int      currentIdx = 0;
-
-public:
   SaveData load() {
     SaveData savedData;
     EEPROM.get(EEPROM_ADDR, savedData);
 
     const uint32_t calculatedCrc = calculateDataCRC(savedData);
 
-    if (isValid(savedData, calculatedCrc)) {
-      buffer[currentIdx] = savedData;
-      return savedData;
-    }
+    if (isValid(savedData, calculatedCrc)) { return savedData; }
 
     SaveData defaultData;
-    defaultData.magicNumber   = MAGIC_NUMBER;
+    defaultData.magicNumber   = SAVE_DATA_MAGIC_NUMBER;
     defaultData.totalDistance = 0.0f;
     defaultData.tripDistance  = 0.0f;
     defaultData.movingTimeMs  = 0;
@@ -40,27 +31,18 @@ public:
     defaultData.updateStatus  = UpdateStatus::NoChange;
     defaultData.crc           = calculateDataCRC(defaultData);
 
-    buffer[currentIdx] = defaultData;
-
     return defaultData;
   }
 
   void save(const SaveData &currentData) {
-    const int nextIdx = 1 - currentIdx;
-
     SaveData nextData    = currentData;
-    nextData.magicNumber = MAGIC_NUMBER;
+    nextData.magicNumber = SAVE_DATA_MAGIC_NUMBER;
     nextData.crc         = calculateDataCRC(nextData);
-
-    if (buffer[currentIdx] == nextData) return;
 
     uint32_t  invalidMagic = 0;
     const int magicAddr    = EEPROM_ADDR + offsetof(SaveData, magicNumber);
     EEPROM.put(magicAddr, invalidMagic);
     EEPROM.put(EEPROM_ADDR, nextData);
-
-    buffer[nextIdx] = nextData;
-    currentIdx      = nextIdx;
   }
 
   void clear() {
@@ -68,7 +50,7 @@ public:
     EEPROM.put(magicAddr, (uint32_t)0);
 
     SaveData cleanData;
-    cleanData.magicNumber   = MAGIC_NUMBER;
+    cleanData.magicNumber   = SAVE_DATA_MAGIC_NUMBER;
     cleanData.totalDistance = 0.0f;
     cleanData.tripDistance  = 0.0f;
     cleanData.movingTimeMs  = 0;
@@ -78,8 +60,6 @@ public:
     cleanData.crc           = calculateDataCRC(cleanData);
 
     EEPROM.put(EEPROM_ADDR, cleanData);
-    buffer[currentIdx]     = cleanData;
-    buffer[1 - currentIdx] = cleanData;
   }
 
 private:
@@ -101,7 +81,7 @@ private:
 
   static bool isValid(const SaveData &data, uint32_t calculatedCrc) {
     if (calculatedCrc != data.crc) return false;
-    if (data.magicNumber != MAGIC_NUMBER) return false;
+    if (data.magicNumber != SAVE_DATA_MAGIC_NUMBER) return false;
     if (isnan(data.totalDistance)) return false;
     if (data.totalDistance < 0.0f) return false;
     if (MAX_VALID_KM < data.totalDistance) return false;

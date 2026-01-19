@@ -33,6 +33,7 @@ inline ResetType determineResetType(Input::Event event, Mode currentMode) {
   default:
     break;
   }
+
   return ResetType::None;
 }
 
@@ -135,7 +136,7 @@ inline DisplayData createDisplayData(const TripStateData &state, const GnssData 
     data.subType        = DisplayData::SubType::Clock;
 
     int hour = currentTime.hour;
-    if (currentTime.year >= 2026) { hour = (hour + 9) % 24; }
+    if (currentTime.year >= 2026) hour = (hour + 9) % 24;
     data.subValue.clockTime.hour   = hour;
     data.subValue.clockTime.minute = currentTime.minute;
     data.subUnit                   = "";
@@ -147,7 +148,7 @@ inline DisplayData createDisplayData(const TripStateData &state, const GnssData 
 
 inline SaveData createSaveData(const TripStateData &state, float voltage) {
   SaveData data;
-  data.magicNumber   = 0; // Filled by DataStore
+  data.magicNumber   = SAVE_DATA_MAGIC_NUMBER;
   data.totalDistance = state.totalKm;
   data.tripDistance  = state.tripDistance;
   data.movingTimeMs  = state.totalMovingMs;

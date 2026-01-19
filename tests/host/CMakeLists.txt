@@ -61,3 +61,29 @@ target_include_directories(run_benchmark PRIVATE
 target_compile_definitions(run_benchmark PRIVATE UNIT_TEST)
 target_compile_options(run_benchmark PRIVATE -Wall -Wextra -O3) # Use O3 for benchmark
 
+add_executable(run_benchmark_v1
+    mocks/MockGlobals.cpp
+    mocks/MockLibs.cpp
+    BenchmarkAppV1.cpp
+)
+target_include_directories(run_benchmark_v1 PRIVATE
+    mocks
+    ../../src
+    .
+)
+target_compile_definitions(run_benchmark_v1 PRIVATE UNIT_TEST)
+target_compile_options(run_benchmark_v1 PRIVATE -Wall -Wextra -O3)
+
+add_executable(run_benchmark_v2
+    mocks/MockGlobals.cpp
+    mocks/MockLibs.cpp
+    BenchmarkAppV2.cpp
+)
+target_include_directories(run_benchmark_v2 PRIVATE
+    mocks
+    ../../src2
+    .
+)
+target_compile_definitions(run_benchmark_v2 PRIVATE UNIT_TEST)
+target_compile_options(run_benchmark_v2 PRIVATE -Wall -Wextra -O3)
+

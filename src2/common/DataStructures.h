@@ -3,11 +3,8 @@
 #include <GNSS.h>
 #include <cstring>
 
-enum class UpdateStatus {
-  NoChange,   // 変更なし
-  Updated,    // 更新あり
-  ForceUpdate // 強制更新（ユーザー入力など）
-};
+enum class UpdateStatus { NoChange, Updated, ForceUpdate };
+enum class Mode { SPD_TIM, AVG_ODO, MAX_CLK };
 
 struct GnssData {
   SpNavData     navData;
@@ -47,6 +44,7 @@ struct TripStateData {
   bool isPaused() const {
     return status == Status::Paused;
   }
+
   bool isMoving() const {
     return status == Status::Moving;
   }
@@ -109,12 +107,13 @@ struct DisplayData {
       int minute;
     } clockTime; // MAX_CLKモード用
   } subValue;
-  const char *subUnit;
 
-  bool shouldBlink;
-
+  const char  *subUnit;
+  bool         shouldBlink;
   UpdateStatus updateStatus;
 };
+
+constexpr uint32_t SAVE_DATA_MAGIC_NUMBER = 0xDEADBEEF;
 
 struct SaveData {
   uint32_t magicNumber;
@@ -141,6 +140,27 @@ struct SaveData {
 };
 
 struct DisplayFrame {
+  struct Header {
+    char fixStatus[8];
+    char modeSpeed[8];
+    char modeTime[8];
+
+    Header() {
+      memset(fixStatus, 0, sizeof(fixStatus));
+      memset(modeSpeed, 0, sizeof(modeSpeed));
+      memset(modeTime, 0, sizeof(modeTime));
+    }
+
+    bool operator==(const Header &other) const {
+      return strcmp(fixStatus, other.fixStatus) == 0 && strcmp(modeSpeed, other.modeSpeed) == 0 &&
+             strcmp(modeTime, other.modeTime) == 0;
+    }
+
+    bool operator!=(const Header &other) const {
+      return !(*this == other);
+    }
+  };
+
   struct Item {
     char value[16];
     char unit[16];
@@ -159,26 +179,6 @@ struct DisplayFrame {
     }
   };
 
-  struct Header {
-    char fixStatus[8];
-    char modeSpeed[8];
-    char modeTime[8];
-
-    Header() {
-      memset(fixStatus, 0, sizeof(fixStatus));
-      memset(modeSpeed, 0, sizeof(modeSpeed));
-      memset(modeTime, 0, sizeof(modeTime));
-    }
-
-    bool operator==(const Header &other) const {
-      return strcmp(fixStatus, other.fixStatus) == 0 && strcmp(modeSpeed, other.modeSpeed) == 0 &&
-             strcmp(modeTime, other.modeTime) == 0;
-    }
-    bool operator!=(const Header &other) const {
-      return !(*this == other);
-    }
-  };
-
   Header header;
   Item   main;
   Item   sub;
@@ -192,5 +192,3 @@ struct DisplayFrame {
     return !(*this == other);
   }
 };
-
-enum class Mode { SPD_TIM, AVG_ODO, MAX_CLK };

@@ -1,37 +1,10 @@
 #pragma once
 
 #include <GNSS.h>
-#include <cstdio>
 #include <cstring>
 
 #include "../common/DataStructures.h"
 #include "../hardware/OLED.h"
-
-namespace Formatter {
-
-inline void formatSpeed(float speedKmh, char *buffer, size_t size) {
-  snprintf(buffer, size, "%4.1f", speedKmh);
-}
-
-inline void formatDistance(float distanceKm, char *buffer, size_t size) {
-  snprintf(buffer, size, "%5.2f", distanceKm);
-}
-
-inline void formatDuration(unsigned long millis, char *buffer, size_t size) {
-  const unsigned long seconds = millis / 1000;
-  const unsigned long h       = seconds / 3600;
-  const unsigned long m       = (seconds % 3600) / 60;
-  const unsigned long s       = seconds % 60;
-
-  if (h > 0) {
-    snprintf(buffer, size, "%lu:%02lu:%02lu", h, m, s);
-    return;
-  }
-
-  snprintf(buffer, size, "%02lu:%02lu", m, s);
-}
-
-} // namespace Formatter
 
 constexpr int16_t HEADER_HEIGHT        = 12;
 constexpr int16_t HEADER_TEXT_SIZE     = 1;
