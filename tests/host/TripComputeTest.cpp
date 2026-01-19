@@ -1,5 +1,5 @@
-#include "../../src2/domain/TripCompute.h"
-#include "../../src2/domain/MvuPipeline.h"
+#include "../../src2/domain/InputLogic.h"
+#include "../../src2/domain/TripLogic.h"
 #include "mocks/Arduino.h"
 #include "mocks/GNSS.h"
 #include <gtest/gtest.h>
@@ -9,26 +9,12 @@
 
 class TripComputeTest : public ::testing::Test {
 protected:
-  void SetUp() override {
-    _mock_millis = 0;
-  }
+  void SetUp() override { _mock_millis = 0; }
 
   // ヘルパー: 初期状態を作成
-  TripStateDataEx createInitialState() {
-    TripStateDataEx state;
-    state.currentSpeed   = 0.0f;
-    state.status         = TripStateData::Status::Stopped;
-    state.totalElapsedMs = 0;
-    state.maxSpeed       = 0.0f;
-    state.totalKm        = 0.0f;
-    state.tripDistance   = 0.0f;
-    state.totalMovingMs  = 0;
-    state.avgSpeed       = 0.0f;
-    state.lastUpdateTime = 0;
-    state.updateStatus   = UpdateStatus::NoChange;
-    state.lastLat        = 0.0f;
-    state.lastLon        = 0.0f;
-    state.hasLastCoord   = false;
+  TripState createInitialState() {
+    TripState state;
+    state.resetAll();
     return state;
   }
 
@@ -51,108 +37,107 @@ protected:
 // ========================================
 
 TEST_F(TripComputeTest, InitialState) {
-  TripStateDataEx state = createInitialState();
-  EXPECT_FLOAT_EQ(state.currentSpeed, 0.0f);
-  EXPECT_FLOAT_EQ(state.totalKm, 0.0f);
-  EXPECT_EQ(state.status, TripStateData::Status::Stopped);
-  EXPECT_EQ(state.totalMovingMs, 0);
+  TripState state = createInitialState();
+  EXPECT_FLOAT_EQ(state.speed.current, 0.0f);
+  EXPECT_FLOAT_EQ(state.distance.total, 0.0f);
+  EXPECT_EQ(state.status, TripStateBase::Status::Stopped);
+  EXPECT_EQ(state.time.moving, 0);
 }
 
 TEST_F(TripComputeTest, FirstUpdate) {
-  TripStateDataEx state = createInitialState();
-  GnssData        gnss  = createGnssData(10.0f, Fix3D);
-  Pipeline::computeTrip(state, gnss, 1000);
-  TripStateDataEx &newState = state;
+  TripState state = createInitialState();
+  GnssData  gnss  = createGnssData(10.0f, Fix3D);
+  TripLogic::computeTrip(state, gnss, 1000);
 
   // 初回更新では lastUpdateTime のみ設定される
-  EXPECT_EQ(newState.lastUpdateTime, 1000);
-  EXPECT_EQ(newState.updateStatus, UpdateStatus::Updated);
+  EXPECT_EQ(state.lastUpdateTime, 1000);
+  EXPECT_EQ(state.updateStatus, UpdateStatus::Updated);
 }
 
 TEST_F(TripComputeTest, UpdateStatusMoving) {
-  TripStateDataEx state = createInitialState();
-  GnssData        gnss  = createGnssData(10.0f, Fix3D);
+  TripState state = createInitialState();
+  GnssData  gnss  = createGnssData(10.0f, Fix3D);
 
   // First update to set baseline
-  Pipeline::computeTrip(state, gnss, 1000);
+  TripLogic::computeTrip(state, gnss, 1000);
 
   // Second update to calculate dt and update status to Moving
-  Pipeline::computeTrip(state, gnss, 2000);
+  TripLogic::computeTrip(state, gnss, 2000);
 
-  EXPECT_EQ(state.status, TripStateData::Status::Moving);
-  EXPECT_NEAR(state.currentSpeed, 10.0f, 0.01f);
+  EXPECT_EQ(state.status, TripStateBase::Status::Moving);
+  EXPECT_NEAR(state.speed.current, 10.0f, 0.01f);
 }
 
 TEST_F(TripComputeTest, AverageSpeed) {
-  TripStateDataEx state = createInitialState();
-  GnssData        gnss  = createGnssData(36.0f, Fix3D, 35.6812, 139.7671);
+  TripState state = createInitialState();
+  GnssData  gnss  = createGnssData(36.0f, Fix3D, 35.6812, 139.7671);
 
-  Pipeline::computeTrip(state, gnss, 1000); // sets lastUpdateTime
-  Pipeline::computeTrip(state, gnss, 2000); // sets hasLastCoord, status becomes Moving
+  TripLogic::computeTrip(state, gnss, 1000); // sets lastUpdateTime
+  TripLogic::computeTrip(state, gnss, 2000); // sets hasLastCoord, status becomes Moving
 
   // Move to another coordinate (approx 110m away)
   gnss.navData.latitude = 35.6822;
-  Pipeline::computeTrip(state, gnss, 3000); // tripDistance increments, totalMovingMs increments
-  Pipeline::computeTrip(state, gnss, 4000); // additional stats update
+  TripLogic::computeTrip(state, gnss, 3000); // tripDistance increments, time.moving increments
+  TripLogic::computeTrip(state, gnss, 4000); // additional stats update
 
-  EXPECT_GT(state.tripDistance, 0.0f);
-  EXPECT_GT(state.totalMovingMs, 0);
-  EXPECT_GT(state.avgSpeed, 0.0f);
+  EXPECT_GT(state.distance.trip, 0.0f);
+  EXPECT_GT(state.time.moving, 0);
+  EXPECT_GT(state.speed.avg, 0.0f);
 }
 
 TEST_F(TripComputeTest, GnssTimeout) {
-  TripStateDataEx state = createInitialState();
-  GnssData        gnss  = createGnssData(10.0f, Fix3D);
+  TripState state = createInitialState();
+  GnssData  gnss  = createGnssData(10.0f, Fix3D);
 
-  Pipeline::computeTrip(state, gnss, 1000);
-  Pipeline::computeTrip(state, gnss, 2000);
-  EXPECT_EQ(state.status, TripStateData::Status::Moving);
+  TripLogic::computeTrip(state, gnss, 1000);
+  TripLogic::computeTrip(state, gnss, 2000);
+  EXPECT_EQ(state.status, TripStateBase::Status::Moving);
 
   // Timeout
   gnss.status = UpdateStatus::NoChange;
-  Pipeline::computeTrip(state, gnss, 2000 + Pipeline::SIGNAL_TIMEOUT_MS + 100);
-  EXPECT_EQ(state.status, TripStateData::Status::Stopped);
-  EXPECT_FLOAT_EQ(state.currentSpeed, 0.0f);
+  TripLogic::computeTrip(state, gnss, 2000 + TripLogic::SIGNAL_TIMEOUT_MS + 100);
+  EXPECT_EQ(state.status, TripStateBase::Status::Stopped);
+  EXPECT_FLOAT_EQ(state.speed.current, 0.0f);
 }
 
 TEST_F(TripComputeTest, GnssFixLost) {
-  TripStateDataEx state = createInitialState();
-  GnssData        gnss  = createGnssData(10.0f, Fix3D);
+  TripState state = createInitialState();
+  GnssData  gnss  = createGnssData(10.0f, Fix3D);
 
-  Pipeline::computeTrip(state, gnss, 1000);
-  Pipeline::computeTrip(state, gnss, 2000);
-  EXPECT_EQ(state.status, TripStateData::Status::Moving);
+  TripLogic::computeTrip(state, gnss, 1000);
+  TripLogic::computeTrip(state, gnss, 2000);
+  EXPECT_EQ(state.status, TripStateBase::Status::Moving);
 
   // Lose fix
   gnss.navData.posFixMode = FixInvalid;
-  Pipeline::computeTrip(state, gnss, 3000);
-  EXPECT_EQ(state.status, TripStateData::Status::Stopped);
-  EXPECT_FLOAT_EQ(state.currentSpeed, 0.0f);
+  TripLogic::computeTrip(state, gnss, 3000);
+  EXPECT_EQ(state.status, TripStateBase::Status::Stopped);
+  EXPECT_FLOAT_EQ(state.speed.current, 0.0f);
 }
 
 TEST_F(TripComputeTest, GnssFix2D) {
-  TripStateDataEx state = createInitialState();
-  GnssData        gnss  = createGnssData(10.0f, Fix2D); // Only 2D fix
+  TripState state = createInitialState();
+  GnssData  gnss  = createGnssData(10.0f, Fix2D); // Only 2D fix
 
-  Pipeline::computeTrip(state, gnss, 1000);
-  Pipeline::computeTrip(state, gnss, 2000);
-  EXPECT_EQ(state.status, TripStateData::Status::Moving);
+  TripLogic::computeTrip(state, gnss, 1000);
+  TripLogic::computeTrip(state, gnss, 2000);
+  EXPECT_EQ(state.status, TripStateBase::Status::Moving);
 }
 
 TEST_F(TripComputeTest, MinMovingSpeed) {
-  TripStateDataEx state = createInitialState();
-  GnssData        gnss  = createGnssData(0.0f, Fix3D);
+  TripState state = createInitialState();
+  GnssData  gnss  = createGnssData(0.0f, Fix3D);
 
   // Just below threshold
-  gnss.navData.velocity = (Pipeline::MIN_MOVING_SPEED_KMH - 0.0001f) / 3.6f;
-  Pipeline::computeTrip(state, gnss, 1000);
-  Pipeline::computeTrip(state, gnss, 2000);
-  EXPECT_EQ(state.status, TripStateData::Status::Stopped);
+  gnss.navData.velocity = (TripLogic::MIN_MOVING_SPEED_KMH - 0.0001f) / 3.6f;
+  TripLogic::computeTrip(state, gnss, 1000);
+  TripLogic::computeTrip(state, gnss, 2000);
+  EXPECT_EQ(state.status, TripStateBase::Status::Stopped);
 
   // Just above threshold
-  gnss.navData.velocity = (Pipeline::MIN_MOVING_SPEED_KMH + 0.0001f) / 3.6f;
-  Pipeline::computeTrip(state, gnss, 3000);
-  EXPECT_EQ(state.status, TripStateData::Status::Moving);
+  gnss.navData.velocity = (TripLogic::MIN_MOVING_SPEED_KMH + 0.0001f) / 3.6f;
+  TripLogic::computeTrip(state, gnss, 3000);
+  EXPECT_EQ(state.status, TripStateBase::Status::Moving);
 }
 
 // ========================================
@@ -160,52 +145,52 @@ TEST_F(TripComputeTest, MinMovingSpeed) {
 // ========================================
 
 TEST_F(TripComputeTest, ElapsedTimeAccumulation) {
-  TripStateDataEx state = createInitialState();
-  GnssData        gnss  = createGnssData(10.0f, Fix3D);
+  TripState state = createInitialState();
+  GnssData  gnss  = createGnssData(10.0f, Fix3D);
 
-  Pipeline::computeTrip(state, gnss, 1000);
-  Pipeline::computeTrip(state, gnss, 2000); // Moving になるが、加算は次から
-  EXPECT_EQ(state.totalElapsedMs, 1000);
-  EXPECT_EQ(state.totalMovingMs, 0);
+  TripLogic::computeTrip(state, gnss, 1000);
+  TripLogic::computeTrip(state, gnss, 2000); // Moving になるが、加算は次から
+  EXPECT_EQ(state.time.elapsed, 1000);
+  EXPECT_EQ(state.time.moving, 0);
 
-  Pipeline::computeTrip(state, gnss, 3000); // ここで Moving として 1000ms 加算される
-  EXPECT_EQ(state.totalElapsedMs, 2000);
-  EXPECT_EQ(state.totalMovingMs, 1000);
+  TripLogic::computeTrip(state, gnss, 3000); // ここで Moving として 1000ms 加算される
+  EXPECT_EQ(state.time.elapsed, 2000);
+  EXPECT_EQ(state.time.moving, 1000);
 }
 
 TEST_F(TripComputeTest, MovingTimeExcludesStopped) {
-  TripStateDataEx state = createInitialState();
-  GnssData        gnss  = createGnssData(10.0f, Fix3D);
+  TripState state = createInitialState();
+  GnssData  gnss  = createGnssData(10.0f, Fix3D);
 
-  Pipeline::computeTrip(state, gnss, 1000);
-  Pipeline::computeTrip(state, gnss, 2000); // Status becomes Moving
-  Pipeline::computeTrip(state, gnss, 3000); // Moving (1000ms added)
-  EXPECT_EQ(state.totalMovingMs, 1000);
+  TripLogic::computeTrip(state, gnss, 1000);
+  TripLogic::computeTrip(state, gnss, 2000); // Status becomes Moving
+  TripLogic::computeTrip(state, gnss, 3000); // Moving (1000ms added)
+  EXPECT_EQ(state.time.moving, 1000);
 
   // Stop
   gnss.navData.velocity = 0.0f;
-  Pipeline::computeTrip(state, gnss, 4000); // Still 1000ms (last state was Moving)
-  Pipeline::computeTrip(state, gnss, 5000); // Last state was Stopped, so no add
-  EXPECT_EQ(state.totalMovingMs, 2000);     // (3000-4000) was Moving, (4000-5000) was Stopped
+  TripLogic::computeTrip(state, gnss, 4000); // Still 1000ms (last state was Moving)
+  TripLogic::computeTrip(state, gnss, 5000); // Last state was Stopped, so no add
+  EXPECT_EQ(state.time.moving, 2000);        // (3000-4000) was Moving, (4000-5000) was Stopped
 }
 
 TEST_F(TripComputeTest, PausedTimeExcluded) {
-  TripStateDataEx state = createInitialState();
-  GnssData        gnss  = createGnssData(10.0f, Fix3D);
+  TripState state = createInitialState();
+  GnssData  gnss  = createGnssData(10.0f, Fix3D);
 
-  Pipeline::computeTrip(state, gnss, 1000);
-  Pipeline::computeTrip(state, gnss, 2000); // Status becomes Moving
-  Pipeline::computeTrip(state, gnss, 3000); // Moving (1000ms added)
-  EXPECT_EQ(state.totalElapsedMs, 2000);    // (1000-2000) Stopped, (2000-3000) Moving
-  EXPECT_EQ(state.totalMovingMs, 1000);     // (2000-3000) Moving
+  TripLogic::computeTrip(state, gnss, 1000);
+  TripLogic::computeTrip(state, gnss, 2000); // Status becomes Moving
+  TripLogic::computeTrip(state, gnss, 3000); // Moving (1000ms added)
+  EXPECT_EQ(state.time.elapsed, 2000);       // (1000-2000) Stopped, (2000-3000) Moving
+  EXPECT_EQ(state.time.moving, 1000);        // (2000-3000) Moving
 
   // Pause
-  Pipeline::applyPause(state);
-  EXPECT_EQ(state.status, TripStateData::Status::Paused);
+  InputLogic::applyPause(state);
+  EXPECT_EQ(state.status, TripStateBase::Status::Paused);
 
-  Pipeline::computeTrip(state, gnss, 4000); // Last status was Paused
-  EXPECT_EQ(state.totalElapsedMs, 2000);    // No change
-  EXPECT_EQ(state.totalMovingMs, 1000);     // No change
+  TripLogic::computeTrip(state, gnss, 4000); // Last status was Paused
+  EXPECT_EQ(state.time.elapsed, 2000);       // No change
+  EXPECT_EQ(state.time.moving, 1000);        // No change
 }
 
 // ========================================
@@ -213,22 +198,22 @@ TEST_F(TripComputeTest, PausedTimeExcluded) {
 // ========================================
 
 TEST_F(TripComputeTest, MaxSpeedTracking) {
-  TripStateDataEx state = createInitialState();
-  GnssData        gnss  = createGnssData(10.0f, Fix3D);
+  TripState state = createInitialState();
+  GnssData  gnss  = createGnssData(10.0f, Fix3D);
 
-  Pipeline::computeTrip(state, gnss, 1000);
-  Pipeline::computeTrip(state, gnss, 2000);
-  EXPECT_NEAR(state.maxSpeed, 10.0f, 0.01f);
+  TripLogic::computeTrip(state, gnss, 1000);
+  TripLogic::computeTrip(state, gnss, 2000);
+  EXPECT_NEAR(state.speed.max, 10.0f, 0.01f);
 
   // Increase speed
   gnss.navData.velocity = 20.0f / 3.6f;
-  Pipeline::computeTrip(state, gnss, 3000);
-  EXPECT_NEAR(state.maxSpeed, 20.0f, 0.01f);
+  TripLogic::computeTrip(state, gnss, 3000);
+  EXPECT_NEAR(state.speed.max, 20.0f, 0.01f);
 
   // Decrease speed (max should not change)
   gnss.navData.velocity = 5.0f / 3.6f;
-  Pipeline::computeTrip(state, gnss, 4000);
-  EXPECT_NEAR(state.maxSpeed, 20.0f, 0.01f);
+  TripLogic::computeTrip(state, gnss, 4000);
+  EXPECT_NEAR(state.speed.max, 20.0f, 0.01f);
 }
 
 // ========================================
@@ -236,30 +221,26 @@ TEST_F(TripComputeTest, MaxSpeedTracking) {
 // ========================================
 
 TEST_F(TripComputeTest, PausedDoesNotAccumulateTripDistance) {
-  TripStateDataEx state = createInitialState();
-  GnssData        gnss  = createGnssData(10.0f, Fix3D, 35.0, 135.0);
+  TripState state = createInitialState();
+  GnssData  gnss  = createGnssData(10.0f, Fix3D, 35.0, 135.0);
 
-  Pipeline::computeTrip(state, gnss, 1000);
-  Pipeline::computeTrip(state, gnss, 2000); // hasLastCoord set
+  TripLogic::computeTrip(state, gnss, 1000);
+  TripLogic::computeTrip(state, gnss, 2000); // hasLastCoord set
 
   // Move
   gnss.navData.latitude = 35.001;
-  Pipeline::computeTrip(state, gnss, 3000);
-  float tripDist  = state.tripDistance;
-  float totalDist = state.totalKm;
+  TripLogic::computeTrip(state, gnss, 3000);
+  float tripDist  = state.distance.trip;
+  float totalDist = state.distance.total;
 
   // Pause
-  Pipeline::applyPause(state);
+  InputLogic::applyPause(state);
 
   // Move while paused
   // Just advancing time with velocity
-  Pipeline::computeTrip(state, gnss, 4000);
+  TripLogic::computeTrip(state, gnss, 4000);
 
   // tripDistance and totalKm should NOT change while paused
-  EXPECT_FLOAT_EQ(state.tripDistance, tripDist);
-  EXPECT_FLOAT_EQ(state.totalKm, totalDist);
+  EXPECT_FLOAT_EQ(state.distance.trip, tripDist);
+  EXPECT_FLOAT_EQ(state.distance.total, totalDist);
 }
-
-// ========================================
-// 平均速度の定期更新テスト
-// ========================================

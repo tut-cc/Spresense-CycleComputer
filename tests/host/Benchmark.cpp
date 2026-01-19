@@ -1,6 +1,6 @@
 #include "../../src/logic/Trip.h"
 #include "../../src2/common/DataStructures.h"
-#include "../../src2/domain/TripCompute.h"
+#include "../../src2/domain/TripLogic.h"
 #include "mocks/Arduino.h"
 #include "mocks/GNSS.h"
 #include <chrono>
@@ -45,7 +45,7 @@ int main() {
   navData.latitude = 35.6812;
 
   // --- src2 (v2) ---
-  TripStateDataEx state;
+  TripState state;
   state.resetAll();
   auto start2 = std::chrono::high_resolution_clock::now();
   for (int i = 1; i <= iterations; ++i) {
@@ -54,7 +54,7 @@ int main() {
     gnssData.timestamp = i;
     gnssData.status    = (i % 10 == 0) ? UpdateStatus::Updated : UpdateStatus::NoChange;
 
-    Pipeline::computeTrip(state, gnssData, i);
+    TripLogic::computeTrip(state, gnssData, i);
 
     if (i % 10 == 0) { navData.latitude += 0.000001f; }
   }
@@ -71,9 +71,9 @@ int main() {
 
   std::cout << "\n--- Accuracy Check ---" << std::endl;
   std::cout << "src (v1) Distance: " << trip.getState().totalKm << " km" << std::endl;
-  std::cout << "src2 (v2) Distance: " << state.totalKm << " km" << std::endl;
-  std::cout << "Diff             : " << std::abs(trip.getState().totalKm - state.totalKm) << " km"
-            << std::endl;
+  std::cout << "src2 (v2) Distance: " << state.distance.total << " km" << std::endl;
+  std::cout << "Diff             : " << std::abs(trip.getState().totalKm - state.distance.total)
+            << " km" << std::endl;
 
   return 0;
 }

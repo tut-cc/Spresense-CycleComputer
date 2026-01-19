@@ -1,14 +1,14 @@
 #include "../../src2/domain/MvuPipeline.h"
-#include "../../src2/domain/TripCompute.h"
+#include "../../src2/domain/TripLogic.h"
 #include "TripTestBase.h"
 
 /**
- * @brief src/logic/Trip.h と src2/logic/Pipeline.h + TripCompute.h の互換性を検証するテスト
+ * @brief src/logic/Trip.h と src2/logic/Pipeline.h + TripLogic.h の互換性を検証するテスト
  */
 class CompatibilityTest : public TripTestBase {
 protected:
   unsigned long   lastGnssTimestamp = 0;
-  TripStateDataEx state2;
+  TripState state2;
 
   void SetUp() override {
     TripTestBase::SetUp();
@@ -18,7 +18,7 @@ protected:
     state2.tripDistance   = 0.0f;
     state2.totalMovingMs  = 0;
     state2.maxSpeed       = 0.0f;
-    state2.status         = TripStateData::Status::Stopped;
+    state2.status         = TripStateBase::Status::Stopped;
     state2.fixMode        = FixInvalid;
     state2.hasLastCoord   = false;
     state2.lastUpdateTime = 0;
@@ -98,14 +98,14 @@ TEST_F(CompatibilityTest, PauseMatch) {
   // Pause
   trip.pause();
   Pipeline::applyPause(state2);
-  EXPECT_EQ(state2.status, TripStateData::Status::Paused);
+  EXPECT_EQ(state2.status, TripStateBase::Status::Paused);
 
   updateBoth(3000);
   compareStates();
 
   // Unpause (Stoppedになる)
   trip.pause();
-  state2.status = TripStateData::Status::Stopped;
+  state2.status = TripStateBase::Status::Stopped;
 
   updateBoth(4000);
   compareStates();

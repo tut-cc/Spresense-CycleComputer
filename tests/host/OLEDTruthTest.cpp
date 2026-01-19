@@ -110,10 +110,10 @@ TEST_F(OLEDTruthTest, BlinkRendering) {
 }
 
 // ---------------------------------------------------------
-// Pipeline logic needed for tests (using TripStateDataEx for methods)
+// Pipeline logic needed for tests (using TripState for methods)
 // ---------------------------------------------------------
 TEST_F(OLEDTruthTest, DummyToEnsureLink) {
-  TripStateDataEx state;
+  TripState state;
   state.resetAll();
-  EXPECT_EQ(state.status, TripStateData::Status::Stopped);
+  EXPECT_EQ(state.status, TripStateBase::Status::Stopped);
 }
