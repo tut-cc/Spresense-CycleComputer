@@ -21,7 +21,10 @@ Adafruit_GFX::Adafruit_GFX(int16_t w, int16_t h) {
 }
 
 // --- Adafruit_SSD1306 ---
-Adafruit_SSD1306::Adafruit_SSD1306(int16_t w, int16_t h, TwoWire *twi, int8_t rst_pin) : Adafruit_GFX(w, h) {
+bool Adafruit_SSD1306::mockBeginResult = true;
+
+Adafruit_SSD1306::Adafruit_SSD1306(int16_t w, int16_t h, TwoWire *twi, int8_t rst_pin)
+    : Adafruit_GFX(w, h) {
   (void)twi;
   (void)rst_pin;
 }
@@ -31,7 +34,7 @@ bool Adafruit_SSD1306::begin(uint8_t switchvcc, uint8_t i2caddr, bool reset, boo
   (void)i2caddr;
   (void)reset;
   (void)periphBegin;
-  return true; // Success
+  return mockBeginResult;
 }
 
 void Adafruit_SSD1306::display() {
@@ -85,7 +88,8 @@ void Adafruit_SSD1306::println(const char *s) {
   // std::cout << "OLED println: " << s << std::endl;
 }
 
-void Adafruit_SSD1306::getTextBounds(const String &str, int16_t x, int16_t y, int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h) {
+void Adafruit_SSD1306::getTextBounds(const String &str, int16_t x, int16_t y, int16_t *x1,
+                                     int16_t *y1, uint16_t *w, uint16_t *h) {
   // Mock logic to return some reasonable bounds
   // Assume 6x8 chars for size 1
   *x1 = x;
@@ -131,12 +135,15 @@ void Adafruit_GFX::drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color)
 SpNavTime SpGnss::mockTimeData     = {2023, 10, 1, 12, 30, 0, 0};
 float     SpGnss::mockVelocityData = 5.5f;
 
+int SpGnss::mockBeginResult = 0;
+int SpGnss::mockStartResult = 0;
+
 int SpGnss::begin() {
-  return 0;
+  return mockBeginResult;
 }
 int SpGnss::start(int mode) {
   (void)mode;
-  return 0;
+  return mockStartResult;
 }
 int SpGnss::stop() {
   return 0;

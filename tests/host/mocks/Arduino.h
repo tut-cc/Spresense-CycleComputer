@@ -61,6 +61,12 @@ inline void delay(unsigned long ms) {
 #define PIN_D13 13
 #define PIN_D14 14
 #define PIN_D15 15
+#define PIN_A0 16
+#define PIN_A1 17
+#define PIN_A2 18
+#define PIN_A3 19
+#define PIN_A4 20
+#define PIN_A5 21
 
 // Pin Modes
 #define INPUT 0
@@ -100,6 +106,11 @@ inline int digitalRead(int pin) {
 
 inline void digitalWrite(int pin, int val) {
   _mock_pin_states[pin] = val;
+}
+
+inline int analogRead(int pin) {
+  (void)pin;
+  return 512; // Return middle value
 }
 
 // Helper to set pin state for tests

@@ -47,4 +47,6 @@ public:
   // Mock control
   static SpNavTime mockTimeData;
   static float     mockVelocityData;
+  static int       mockBeginResult;
+  static int       mockStartResult;
 };

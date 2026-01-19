@@ -13,7 +13,9 @@ set(TEST_SOURCES
     mocks/MockGlobals.cpp
     mocks/MockLibs.cpp
     LogicTest.cpp
-    InputTest.cpp
+    UITest.cpp
+    HardwareTest.cpp
+    AppTest.cpp
 )
 
 add_executable(run_tests
