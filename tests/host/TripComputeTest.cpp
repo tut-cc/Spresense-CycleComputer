@@ -1,5 +1,5 @@
-#include "../../src2/TripCompute.h"
-#include "../../src2/Pipeline.h"
+#include "../../src2/logic/TripCompute.h"
+#include "../../src2/logic/Pipeline.h"
 #include "mocks/Arduino.h"
 #include "mocks/GNSS.h"
 #include <gtest/gtest.h>
@@ -342,4 +342,38 @@ TEST_F(TripComputeTest, AverageSpeedPeriodicUpdate) {
 
   // 移動時間が増えたので平均速度は下がる
   EXPECT_LT(state.avgSpeed, avgSpeed);
+}
+
+TEST_F(TripComputeTest, DriftWhileStoppedDoesNotAccumulateTripDistance) {
+  TripStateDataEx state = createInitialState();
+  GnssData        gnss  = createGnssData(10.0f, Fix3D);
+
+  // 1. Initial State
+  Pipeline::computeTrip(state, gnss, 1000); // T=1000
+
+  // 2. First Move (Sets Start Coordinate)
+  gnss.navData.latitude += 0.0001;
+  Pipeline::computeTrip(state, gnss, 2000); // T=2000
+
+  // 3. Second Move (Accumulates Distance)
+  gnss.navData.latitude += 0.0001;
+  Pipeline::computeTrip(state, gnss, 3000); // T=3000
+
+  EXPECT_EQ(state.status, TripStateData::Status::Moving);
+  EXPECT_GT(state.tripDistance, 0.0f);
+  EXPECT_EQ(state.totalMovingMs, 1000);
+
+  // 4. Stop
+  gnss.navData.velocity = 0.0f;
+  Pipeline::computeTrip(state, gnss, 4000); // T=4000: Status -> Stopped
+
+  float distBeforeDrift = state.tripDistance;
+
+  // 5. Simulate Drift (Jump 80m)
+  gnss.navData.latitude += 0.0008;
+  Pipeline::computeTrip(state, gnss, 5000); // T=5000
+
+  // Distance should NOT be added while stopped
+  EXPECT_NEAR(state.tripDistance, distBeforeDrift, 0.01f);
+  EXPECT_LT(state.avgSpeed, 100.0f);
 }

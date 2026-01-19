@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../DataStructures.h"
+#include "../common/DataStructures.h"
 #include <EEPROM.h>
 #include <math.h>
 #include <stddef.h>
@@ -16,80 +16,83 @@ public:
   static constexpr float SAVE_INTERVAL_MS = 30000.0f;
 
 private:
-  struct SaveData {
-    uint32_t       magicNumber;
-    PersistentData data;
-    uint32_t       crc;
-  };
-
-  SaveData lastSavedData;
+  SaveData buffer[2];
+  int      currentIdx = 0;
 
 public:
-  PersistentData load() {
+  SaveData load() {
     SaveData savedData;
     EEPROM.get(EEPROM_ADDR, savedData);
 
     const uint32_t calculatedCrc = calculateDataCRC(savedData);
 
     if (isValid(savedData, calculatedCrc)) {
-      lastSavedData = savedData;
-      return savedData.data;
+      buffer[currentIdx] = savedData;
+      return savedData;
     }
 
     // デフォルト値
-    PersistentData defaultData;
+    SaveData defaultData;
+    defaultData.magicNumber   = MAGIC_NUMBER;
     defaultData.totalDistance = 0.0f;
     defaultData.tripDistance  = 0.0f;
     defaultData.movingTimeMs  = 0;
     defaultData.maxSpeed      = 0.0f;
     defaultData.voltage       = 0.0f;
     defaultData.updateStatus  = UpdateStatus::NoChange;
+    defaultData.crc           = calculateDataCRC(defaultData);
 
-    lastSavedData.magicNumber = MAGIC_NUMBER;
-    lastSavedData.data        = defaultData;
-    lastSavedData.crc         = calculateDataCRC(lastSavedData);
+    buffer[currentIdx] = defaultData;
 
     return defaultData;
   }
 
-  void save(const PersistentData &currentData) {
-    const bool isMagicValid = (lastSavedData.magicNumber == MAGIC_NUMBER);
-    // 比較 (operator== を使用)
-    if (isMagicValid && lastSavedData.data == currentData) return;
+  void save(const SaveData &currentData) {
+    // 次のバッファインデックス
+    const int nextIdx = 1 - currentIdx;
 
-    SaveData saveData;
-    saveData.magicNumber = MAGIC_NUMBER;
-    saveData.data        = currentData;
-    saveData.crc         = calculateDataCRC(saveData);
+    // 保存用データを作成（Magic/CRC付与）
+    SaveData nextData    = currentData;
+    nextData.magicNumber = MAGIC_NUMBER;
+    nextData.crc         = calculateDataCRC(nextData);
 
-    // 書き込む前に一旦Magicを無効化（書き込み失敗検知用 - 既存仕様踏襲）
+    // 変更がなければ保存しない
+    // buffer[currentIdx] は最後に保存（またはロード）された正当なデータ
+    if (buffer[currentIdx] == nextData) return;
+
+    // 書き込む前に一旦Magicを無効化（書き込み失敗検知用）
     uint32_t  invalidMagic = 0;
     const int magicAddr    = EEPROM_ADDR + offsetof(SaveData, magicNumber);
     EEPROM.put(magicAddr, invalidMagic);
-    EEPROM.put(EEPROM_ADDR, saveData);
 
-    lastSavedData = saveData;
+    // データ書き込み
+    EEPROM.put(EEPROM_ADDR, nextData);
+
+    // バッファ更新
+    buffer[nextIdx] = nextData;
+    currentIdx      = nextIdx;
   }
 
   void clear() {
     const int magicAddr = EEPROM_ADDR + offsetof(SaveData, magicNumber);
     EEPROM.put(magicAddr, (uint32_t)0);
 
-    PersistentData cleanData;
+    SaveData cleanData;
+    cleanData.magicNumber   = MAGIC_NUMBER;
     cleanData.totalDistance = 0.0f;
     cleanData.tripDistance  = 0.0f;
     cleanData.movingTimeMs  = 0;
     cleanData.maxSpeed      = 0.0f;
     cleanData.voltage       = 0.0f;
     cleanData.updateStatus  = UpdateStatus::NoChange;
+    cleanData.crc           = calculateDataCRC(cleanData);
 
-    SaveData saveData;
-    saveData.magicNumber = MAGIC_NUMBER;
-    saveData.data        = cleanData;
-    saveData.crc         = calculateDataCRC(saveData);
+    EEPROM.put(EEPROM_ADDR, cleanData);
 
-    EEPROM.put(EEPROM_ADDR, saveData);
-    lastSavedData = saveData;
+    // バッファもリセット
+    buffer[currentIdx] = cleanData;
+    // 双方向バッファのリセットが必要なら両方セットするが、currentIdxだけで十分
+    buffer[1 - currentIdx] = cleanData;
   }
 
 private:
@@ -112,9 +115,9 @@ private:
   static bool isValid(const SaveData &data, uint32_t calculatedCrc) {
     if (calculatedCrc != data.crc) return false;
     if (data.magicNumber != MAGIC_NUMBER) return false;
-    if (isnan(data.data.totalDistance)) return false;
-    if (data.data.totalDistance < 0.0f) return false;
-    if (MAX_VALID_KM < data.data.totalDistance) return false;
+    if (isnan(data.totalDistance)) return false;
+    if (data.totalDistance < 0.0f) return false;
+    if (MAX_VALID_KM < data.totalDistance) return false;
     return true;
   }
 };

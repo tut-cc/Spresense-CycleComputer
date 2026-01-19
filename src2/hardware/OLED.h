@@ -24,6 +24,8 @@ public:
   OLED() : ssd1306(WIDTH, HEIGHT, &Wire, -1) {}
 
   bool begin() {
+    // I2Cを400kHzに設定して描画速度を向上させる（約10FPS -> 約40FPS）
+    Wire.setClock(400000);
     if (!ssd1306.begin(SSD1306_SWITCHCAPVCC, ADDRESS)) return false;
     ssd1306.clearDisplay();
     ssd1306.display();

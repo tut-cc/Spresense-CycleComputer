@@ -130,7 +130,12 @@ struct DisplayData {
 #include <cstring>
 
 // 4. 永続化データ（保存用）
-struct PersistentData {
+// 4. 保存用データ（SaveDataとPersistentDataを統合）
+struct SaveData {
+  // メタデータ
+  uint32_t magicNumber;
+
+  // データ本体
   float         totalDistance;
   float         tripDistance;
   unsigned long movingTimeMs;
@@ -140,13 +145,19 @@ struct PersistentData {
   // 更新状態
   UpdateStatus updateStatus;
 
-  bool operator==(const PersistentData &other) const {
-    return totalDistance == other.totalDistance && tripDistance == other.tripDistance &&
-           movingTimeMs == other.movingTimeMs && maxSpeed == other.maxSpeed &&
-           voltage == other.voltage;
+  // CRC
+  uint32_t crc;
+
+  bool operator==(const SaveData &other) const {
+    // 比較対象はマジックナンバーとデータ本体のみ（CRCは計算結果なので除外しても良いが、完全一致を見るなら含める）
+    // DataStoreの実装を見ると、magicとdataの比較をしていた
+    // ここではマジックナンバーとデータフィールドを比較
+    return magicNumber == other.magicNumber && totalDistance == other.totalDistance &&
+           tripDistance == other.tripDistance && movingTimeMs == other.movingTimeMs &&
+           maxSpeed == other.maxSpeed && voltage == other.voltage;
   }
 
-  bool operator!=(const PersistentData &other) const {
+  bool operator!=(const SaveData &other) const {
     return !(*this == other);
   }
 };

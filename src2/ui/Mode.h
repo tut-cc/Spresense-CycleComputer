@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../DataStructures.h"
+#include "../common/DataStructures.h"
 #include "Renderer.h"
 #include <Arduino.h>
 

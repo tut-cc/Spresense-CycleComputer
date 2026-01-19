@@ -1,6 +1,6 @@
 #include "../../src/logic/Trip.h"
-#include "../../src2/DataStructures.h"
-#include "../../src2/TripCompute.h"
+#include "../../src2/common/DataStructures.h"
+#include "../../src2/logic/TripCompute.h"
 #include "mocks/Arduino.h"
 #include "mocks/GNSS.h"
 #include <chrono>

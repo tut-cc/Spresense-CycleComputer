@@ -1,10 +1,10 @@
 #pragma once
 
-#include "DataStructures.h"
-#include "hardware/Gnss.h"
+#include "../common/DataStructures.h"
+#include "../hardware/Gnss.h"
 
-#include "ui/Input.h"
-#include "ui/Mode.h"
+#include "../ui/Input.h"
+#include "../ui/Mode.h"
 
 namespace Pipeline {
 
@@ -117,7 +117,7 @@ inline UserInputResult handleUserInput(T &state, Mode::ID currentMode, Input::Ev
 // ========================================
 
 inline DisplayData createDisplayData(const TripStateData &state, const GnssData &gnss,
-                                     Mode::ID mode) {
+                                     const SpGnssTime &currentTime, Mode::ID mode) {
   DisplayData data;
   data.fixMode      = (SpFixMode)gnss.navData.posFixMode;
   data.shouldBlink  = state.isPaused() && ((millis() / 500) % 2 == 0);
@@ -151,10 +151,10 @@ inline DisplayData createDisplayData(const TripStateData &state, const GnssData 
     data.mainUnit       = "km/h";
     data.subType        = DisplayData::SubType::Clock;
 
-    int hour = gnss.navData.time.hour;
-    if (gnss.navData.time.year >= 2026) { hour = (hour + 9) % 24; }
+    int hour = currentTime.hour;
+    if (currentTime.year >= 2026) { hour = (hour + 9) % 24; }
     data.subValue.clockTime.hour   = hour;
-    data.subValue.clockTime.minute = gnss.navData.time.minute;
+    data.subValue.clockTime.minute = currentTime.minute;
     data.subUnit                   = "";
     break;
   }
@@ -163,9 +163,18 @@ inline DisplayData createDisplayData(const TripStateData &state, const GnssData 
 }
 
 // Stage 5
-inline PersistentData createPersistentData(const TripStateData &state, float voltage) {
-  return {state.totalKm, state.tripDistance, state.totalMovingMs, state.maxSpeed,
-          voltage,       state.updateStatus};
+// Stage 5
+inline SaveData createSaveData(const TripStateData &state, float voltage) {
+  SaveData data;
+  data.magicNumber   = 0; // Filled by DataStore
+  data.totalDistance = state.totalKm;
+  data.tripDistance  = state.tripDistance;
+  data.movingTimeMs  = state.totalMovingMs;
+  data.maxSpeed      = state.maxSpeed;
+  data.voltage       = voltage;
+  data.updateStatus  = state.updateStatus;
+  data.crc           = 0; // Filled by DataStore
+  return data;
 }
 
 } // namespace Pipeline

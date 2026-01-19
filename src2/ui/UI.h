@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../DataStructures.h"
+#include "../common/DataStructures.h"
 #include "../hardware/OLED.h"
 #include "Input.h"
 #include "Mode.h"

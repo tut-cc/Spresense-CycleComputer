@@ -1,9 +1,9 @@
-#include "../../src2/Pipeline.h"
-#include "../../src2/TripCompute.h"
+#include "../../src2/logic/Pipeline.h"
+#include "../../src2/logic/TripCompute.h"
 #include "TripTestBase.h"
 
 /**
- * @brief src/logic/Trip.h と src2/Pipeline.h + TripCompute.h の互換性を検証するテスト
+ * @brief src/logic/Trip.h と src2/logic/Pipeline.h + TripCompute.h の互換性を検証するテスト
  */
 class CompatibilityTest : public TripTestBase {
 protected:

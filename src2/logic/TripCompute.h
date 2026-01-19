@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DataStructures.h"
+#include "../common/DataStructures.h"
 #include <Arduino.h>
 #include <GNSS.h>
 #include <math.h>
@@ -126,7 +126,7 @@ inline void computeTrip(TripStateDataEx &state, const GnssData &gnss, unsigned l
           state.lastLon = gnss.navData.longitude;
         }
 
-        if (state.status != TripStateData::Status::Paused) { state.tripDistance += delta; }
+        if (state.status == TripStateData::Status::Moving) { state.tripDistance += delta; }
         state.totalKm += delta;
       } else {
         state.lastLat      = gnss.navData.latitude;

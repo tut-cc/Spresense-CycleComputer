@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <cstring>
 
-#include "../DataStructures.h"
+#include "../common/DataStructures.h"
 #include "../hardware/OLED.h"
 
 namespace Formatter {

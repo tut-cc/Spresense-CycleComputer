@@ -1,4 +1,4 @@
-#include "../../src2/DataStructures.h"
+#include "../../src2/common/DataStructures.h"
 #include "../../src2/ui/UI.h"
 #include "mocks/Arduino.h"
 #include "mocks/DisplayLogger.h"

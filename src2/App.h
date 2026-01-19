@@ -1,10 +1,11 @@
 #include <Arduino.h>
 #include <stddef.h>
 
-#include "Pipeline.h"
-#include "TripCompute.h"
+#include "hardware/Clock.h"
 #include "hardware/Gnss.h"
 #include "logic/DataStore.h"
+#include "logic/Pipeline.h"
+#include "logic/TripCompute.h"
 #include "logic/VoltageMonitor.h"
 #include "ui/UI.h"
 
@@ -12,6 +13,7 @@ class App {
 private:
   // --- Hardware Abstractions ---
   Gnss           gnss;
+  Clock          systemClock;
   DataStore      dataStore;
   VoltageMonitor voltageMonitor;
   UI             userInterface;
@@ -29,11 +31,12 @@ public:
 
   void begin() {
     gnss.begin();
+    systemClock.begin();
     voltageMonitor.begin();
     userInterface.begin();
 
     // Init state from persistence
-    PersistentData saved = dataStore.load();
+    SaveData saved = dataStore.load();
     for (auto &state : tripState) {
       state.resetAll();
       state.totalKm       = saved.totalDistance;
@@ -57,6 +60,12 @@ public:
     // 2. Capture Inputs
     gnssData           = Pipeline::collectGnss(gnss);
     Input::Event event = userInterface.getInputEvent();
+
+    // Clock Sync
+    if (gnssData.status == UpdateStatus::Updated &&
+        (SpFixMode)gnssData.navData.posFixMode != FixInvalid) {
+      systemClock.sync(gnssData.navData.time);
+    }
 
     // 3. Process User Input
     if (event != Input::Event::NONE) {
@@ -88,8 +97,8 @@ private:
 
     // Only save when GNSS is stable or not updating to avoid IO jitter
     if (gnssData.status == UpdateStatus::NoChange) {
-      float          v     = voltageMonitor.update();
-      PersistentData pData = Pipeline::createPersistentData(state, v);
+      float    v     = voltageMonitor.update();
+      SaveData pData = Pipeline::createSaveData(state, v);
       dataStore.save(pData);
       lastSaveMs = now;
     }
@@ -102,7 +111,8 @@ private:
     bool gnssUpd  = (gnssData.status == UpdateStatus::Updated);
 
     if (changed || forced || gnssUpd || periodic) {
-      DisplayData dData = Pipeline::createDisplayData(curr, gnssData, currentMode);
+      SpGnssTime  currentTime = systemClock.now();
+      DisplayData dData = Pipeline::createDisplayData(curr, gnssData, currentTime, currentMode);
       userInterface.draw(dData);
       lastUiUpdateMs = now;
     }
