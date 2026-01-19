@@ -16,6 +16,12 @@ set(TEST_SOURCES
     UITest.cpp
     HardwareTest.cpp
     AppTest.cpp
+    EquivalenceTest.cpp
+    CalculationErrorTest.cpp
+    HardwareFailureTest.cpp
+    NegativeTest.cpp
+    SystemIntegrationTest.cpp
+    PowerLossTest.cpp
 )
 
 add_executable(run_tests

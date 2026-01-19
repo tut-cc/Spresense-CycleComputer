@@ -33,6 +33,14 @@ struct SpNavData {
   double        longitude;
   float         altitude; // not used but good to have
   int           numSatellites;
+
+  /**
+   * @brief Helper to move coordinates by meters (approximate)
+   */
+  void moveByMeters(float meters) {
+    // Approx 111,111 meters per degree of latitude
+    latitude += (double)meters / 111111.0;
+  }
 };
 
 class SpGnss {

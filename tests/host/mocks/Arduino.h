@@ -92,6 +92,7 @@ inline void shiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_
 
 // GPIO State Map (Pin -> State)
 extern std::map<int, int> _mock_pin_states;
+extern std::map<int, int> _mock_analog_values;
 
 inline void pinMode(int pin, int mode) {
   (void)pin;
@@ -109,13 +110,20 @@ inline void digitalWrite(int pin, int val) {
 }
 
 inline int analogRead(int pin) {
-  (void)pin;
+  if (_mock_analog_values.find(pin) != _mock_analog_values.end()) {
+    return _mock_analog_values[pin];
+  }
   return 512; // Return middle value
 }
 
 // Helper to set pin state for tests
 inline void setPinState(int pin, int state) {
   _mock_pin_states[pin] = state;
+}
+
+// Helper to set analog value for tests
+inline void setAnalogReadValue(int pin, int value) {
+  _mock_analog_values[pin] = value;
 }
 
 // Serial Mock

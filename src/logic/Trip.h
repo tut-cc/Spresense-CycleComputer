@@ -57,11 +57,15 @@ public:
 
     if (isGnssUpdated) {
       processGnssUpdate(navData, currentMillis);
+      // GNSS更新時は常に平均速度を再計算
+      state.avgSpeed = calculateAverageSpeed(state.tripDistance, state.totalMovingMs);
     } else {
       handleGnssTimeout(currentMillis);
+      // GNSS未更新時でも、1秒（1000ms）ごとに平均速度を更新（移動時間による減衰を反映）
+      if (dt >= 1000 || (currentMillis % 1000 < dt)) {
+        state.avgSpeed = calculateAverageSpeed(state.tripDistance, state.totalMovingMs);
+      }
     }
-
-    state.avgSpeed = calculateAverageSpeed(state.tripDistance, state.totalMovingMs);
   }
 
   void resetTrip() {
@@ -132,7 +136,7 @@ private:
     state.status       = determineStatus(state.status, moving);
     state.currentSpeed = calculateCurrentSpeed(state.status, rawKmh);
 
-    if (fix) {
+    if (fix && isValidCoordinate(navData.latitude, navData.longitude)) {
       float deltaKm = updateOdometer(navData.latitude, navData.longitude, moving);
       if (state.status != Status::Paused) { state.tripDistance += deltaKm; }
     }
@@ -148,14 +152,13 @@ private:
   }
 
   float updateOdometer(float lat, float lon, bool moving) {
-    if (!isValidCoordinate(lat, lon)) return 0.0f;
-
     if (!hasLastCoord) {
       updateLastCoordinate(lat, lon);
       hasLastCoord = true;
       return 0.0f;
     }
 
+    // If not moving, no distance is accumulated for the odometer
     if (!moving) return 0.0f;
 
     const float dist  = planarDistanceKm(lastLat, lastLon, lat, lon);

@@ -5,6 +5,7 @@
 #include "mocks/Arduino.h"
 #include "mocks/GNSS.h"
 #include <gtest/gtest.h>
+#include <limits>
 
 // --- Trip Tests ---
 
@@ -301,4 +302,119 @@ TEST(DataStoreTest, MaxDistanceLimit) {
   data.totalDistance = MAX_VALID_KM + 1.0f;
   ds.save(data);
   EXPECT_FLOAT_EQ(ds.load().totalDistance, 0.0f); // Should fail validation
+}
+
+TEST(DataStoreTest, Clear) {
+  DataStore ds;
+  AppData   data = {100.5f, 10.2f, 3600000, 25.5f, 4.2f};
+  ds.save(data);
+
+  // Verify data was saved
+  AppData loaded = ds.load();
+  EXPECT_FLOAT_EQ(loaded.totalDistance, 100.5f);
+
+  // Clear the data
+  ds.clear();
+  AppData cleared = ds.load();
+
+  // All values should be reset to 0
+  EXPECT_FLOAT_EQ(cleared.totalDistance, 0.0f);
+  EXPECT_FLOAT_EQ(cleared.tripDistance, 0.0f);
+  EXPECT_EQ(cleared.movingTimeMs, 0);
+  EXPECT_FLOAT_EQ(cleared.maxSpeed, 0.0f);
+  EXPECT_FLOAT_EQ(cleared.voltage, 0.0f);
+}
+
+TEST(DataStoreTest, NaNDistance) {
+  DataStore ds;
+  // Save data with NaN totalDistance
+  AppData data = {std::numeric_limits<float>::quiet_NaN(), 10.2f, 3600000, 25.5f, 4.2f};
+  ds.save(data);
+
+  // Load should return default values due to validation failure
+  AppData loaded = ds.load();
+  EXPECT_FLOAT_EQ(loaded.totalDistance, 0.0f);
+  EXPECT_FLOAT_EQ(loaded.tripDistance, 0.0f);
+}
+
+TEST(DataStoreTest, VoltageOnlyChange) {
+  DataStore ds;
+  AppData   data = {100.5f, 10.2f, 3600000, 25.5f, 4.2f};
+  ds.save(data);
+
+  // Clear write count
+  EEPROM.clearWriteCount();
+
+  // Change only voltage (isDataEqual excludes voltage)
+  data.voltage = 3.8f;
+  ds.save(data);
+
+  // No write should occur because isDataEqual returns true
+  EXPECT_EQ(EEPROM.writeCount, 0);
+
+  // Verify voltage change alone doesn't trigger save
+  AppData loaded = ds.load();
+  EXPECT_FLOAT_EQ(loaded.voltage, 4.2f); // Original voltage
+}
+
+TEST(DataStoreTest, InitialSave) {
+  DataStore ds;
+  // First save without any prior load
+  AppData data = {50.0f, 5.0f, 1800000, 15.0f, 4.0f};
+
+  EEPROM.clearWriteCount();
+  ds.save(data);
+
+  // Should write because lastSavedData is uninitialized
+  EXPECT_GT(EEPROM.writeCount, 0);
+
+  // Verify data was saved correctly
+  AppData loaded = ds.load();
+  EXPECT_FLOAT_EQ(loaded.totalDistance, 50.0f);
+  EXPECT_FLOAT_EQ(loaded.tripDistance, 5.0f);
+}
+
+// --- AppData Tests ---
+
+TEST(AppDataTest, EqualityOperator) {
+  AppData data1 = {100.5f, 10.2f, 3600000, 25.5f, 4.2f};
+  AppData data2 = {100.5f, 10.2f, 3600000, 25.5f, 4.2f};
+  AppData data3 = {100.5f, 10.2f, 3600000, 25.5f, 3.8f}; // Different voltage
+
+  // Same data should be equal
+  EXPECT_TRUE(data1 == data2);
+  EXPECT_FALSE(data1 != data2);
+
+  // Different voltage should make them unequal
+  EXPECT_FALSE(data1 == data3);
+  EXPECT_TRUE(data1 != data3);
+}
+
+TEST(AppDataTest, IsDataEqual) {
+  AppData data1 = {100.5f, 10.2f, 3600000, 25.5f, 4.2f};
+  AppData data2 = {100.5f, 10.2f, 3600000, 25.5f, 3.8f}; // Different voltage
+  AppData data3 = {100.6f, 10.2f, 3600000, 25.5f, 4.2f}; // Different totalDistance
+
+  // isDataEqual should ignore voltage
+  EXPECT_TRUE(data1.isDataEqual(data2));
+
+  // isDataEqual should detect other differences
+  EXPECT_FALSE(data1.isDataEqual(data3));
+}
+
+TEST(AppDataTest, IsDataEqualAllFields) {
+  AppData base = {100.5f, 10.2f, 3600000, 25.5f, 4.2f};
+
+  // Test each field individually
+  AppData diffTotal   = {100.6f, 10.2f, 3600000, 25.5f, 4.2f};
+  AppData diffTrip    = {100.5f, 10.3f, 3600000, 25.5f, 4.2f};
+  AppData diffTime    = {100.5f, 10.2f, 3600001, 25.5f, 4.2f};
+  AppData diffMaxSpd  = {100.5f, 10.2f, 3600000, 25.6f, 4.2f};
+  AppData diffVoltage = {100.5f, 10.2f, 3600000, 25.5f, 3.8f};
+
+  EXPECT_FALSE(base.isDataEqual(diffTotal));
+  EXPECT_FALSE(base.isDataEqual(diffTrip));
+  EXPECT_FALSE(base.isDataEqual(diffTime));
+  EXPECT_FALSE(base.isDataEqual(diffMaxSpd));
+  EXPECT_TRUE(base.isDataEqual(diffVoltage)); // Voltage is ignored
 }
