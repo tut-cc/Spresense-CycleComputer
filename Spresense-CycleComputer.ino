@@ -1,5 +1,3 @@
-#include <LowPower.h>
-
 #include "src2/App.h"
 
 App app;
@@ -12,4 +10,5 @@ void setup() {
 
 void loop() {
   app.update();
+  delay(30);
 }

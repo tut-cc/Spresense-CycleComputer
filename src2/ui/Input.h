@@ -1,14 +1,6 @@
 #pragma once
 
-/**
- * @file Input.h
- * @brief ボタン入力の統合処理
- *
- * 複数ボタンの状態を監視し、シングルプレス、同時押し、
- * 長押しなどの入力イベントを判定します。
- */
-
-#include "../common/Config.h"
+#include "../Config.h"
 #include "../hardware/Button.h"
 
 class Input {
@@ -16,87 +8,71 @@ public:
   enum class Event { NONE, SELECT, PAUSE, RESET, RESET_LONG };
 
 private:
-  enum class State { Idle, MayBeSingle, MayBeDoubleShort, MustBeDoubleLong };
-
-  Button selectButton;
-  Button pauseButton;
-
-  State state                = State::Idle;
-  Event potentialSingleEvent = Event::NONE;
-
-  unsigned long stateEnterTime = 0;
+  enum class State { Idle, Single, DblSrt, DblLng };
+  Button        b1, b2;
+  State         st   = State::Idle;
+  Event         pot  = Event::NONE;
+  unsigned long last = 0;
 
 public:
-  Input(int selectButtonPin, int pauseButtonPin)
-      : selectButton(selectButtonPin), pauseButton(pauseButtonPin) {}
+  Input(int p1, int p2) : b1(p1), b2(p2) {}
 
   void begin() {
-    selectButton.begin();
-    pauseButton.begin();
+    b1.begin();
+    b2.begin();
   }
 
   Event update() {
-    selectButton.update();
-    pauseButton.update();
-
-    const bool          selectPressed = selectButton.pressed;
-    const bool          selectHeld    = selectButton.held;
-    const bool          pausePressed  = pauseButton.pressed;
-    const bool          pauseHeld     = pauseButton.held;
-    const unsigned long now           = millis();
-
-    switch (state) {
+    b1.update();
+    b2.update();
+    unsigned long now = millis();
+    switch (st) {
     case State::Idle:
-      if (selectPressed && pausePressed) {
-        changeState(State::MayBeDoubleShort, now);
+      if (b1.pressed && b2.pressed) {
+        ch(State::DblSrt, now);
         return Event::NONE;
       }
-      if (selectPressed) {
-        potentialSingleEvent = Event::SELECT;
-        changeState(State::MayBeSingle, now);
+      if (b1.pressed) {
+        pot = Event::SELECT;
+        ch(State::Single, now);
         return Event::NONE;
       }
-      if (pausePressed) {
-        potentialSingleEvent = Event::PAUSE;
-        changeState(State::MayBeSingle, now);
+      if (b2.pressed) {
+        pot = Event::PAUSE;
+        ch(State::Single, now);
         return Event::NONE;
       }
       break;
-
-    case State::MayBeSingle:
-      if ((potentialSingleEvent == Event::SELECT && pausePressed) ||
-          (potentialSingleEvent == Event::PAUSE && selectPressed)) {
-        changeState(State::MayBeDoubleShort, now);
+    case State::Single:
+      if ((pot == Event::SELECT && b2.pressed) || (pot == Event::PAUSE && b1.pressed)) {
+        ch(State::DblSrt, now);
         return Event::NONE;
       }
-      if (now - stateEnterTime > Config::Button::SINGLE_PRESS_MS) {
-        changeState(State::Idle, now);
-        return potentialSingleEvent;
+      if (now - last > Config::Button::SINGLE_PRESS_MS) {
+        ch(State::Idle, now);
+        return pot;
       }
       break;
-
-    case State::MayBeDoubleShort:
-      if (!selectHeld || !pauseHeld) {
-        changeState(State::Idle, now);
+    case State::DblSrt:
+      if (!b1.held || !b2.held) {
+        ch(State::Idle, now);
         return Event::RESET;
       }
-      if (now - stateEnterTime > Config::Button::LONG_PRESS_MS) {
-        changeState(State::MustBeDoubleLong, now);
+      if (now - last > Config::Button::LONG_PRESS_MS) {
+        ch(State::DblLng, now);
         return Event::RESET_LONG;
       }
       break;
-
-    case State::MustBeDoubleLong:
-      if (!selectHeld && !pauseHeld) changeState(State::Idle, now);
+    case State::DblLng:
+      if (!b1.held && !b2.held) ch(State::Idle, now);
       break;
     }
-
     return Event::NONE;
   }
 
 private:
-  void changeState(State newState, unsigned long now) {
-    state          = newState;
-    stateEnterTime = now;
+  void ch(State s, unsigned long n) {
+    st   = s;
+    last = n;
   }
 };

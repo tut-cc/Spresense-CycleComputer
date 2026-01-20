@@ -1,14 +1,6 @@
 #pragma once
 
-/**
- * @file OLED.h
- * @brief SSD1306 OLED ディスプレイのラッパークラス
- *
- * Adafruit_SSD1306 ライブラリのラッパーとして、
- * 簡略化されたインターフェースを提供します。
- */
-
-#include "../common/Config.h"
+#include "../Config.h"
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <Wire.h>
@@ -16,41 +8,35 @@
 class OLED {
 public:
   struct Rect {
-    int16_t  x;
-    int16_t  y;
-    uint16_t w;
-    uint16_t h;
+    int16_t  x, y;
+    uint16_t w, h;
   };
 
 private:
-  Adafruit_SSD1306 ssd1306;
+  Adafruit_SSD1306 s;
 
 public:
-  OLED() : ssd1306(Config::Display::WIDTH, Config::Display::HEIGHT, &Wire, -1) {}
+  OLED() : s(Config::Display::WIDTH, Config::Display::HEIGHT, &Wire, -1) {}
 
   bool begin() {
-    Wire.setClock(400000);
-    if (!ssd1306.begin(SSD1306_SWITCHCAPVCC, Config::Display::ADDRESS)) return false;
-    ssd1306.clearDisplay();
-    ssd1306.display();
+    if (!s.begin(SSD1306_SWITCHCAPVCC, Config::Display::ADDRESS)) return false;
+    s.clearDisplay();
+    s.display();
     return true;
   }
 
   void restart() { begin(); }
-  void clear() { ssd1306.clearDisplay(); }
-  void display() { ssd1306.display(); }
-  void setTextSize(int size) { ssd1306.setTextSize(size); }
-  void setTextColor(int color) { ssd1306.setTextColor(color); }
-  void setCursor(int x, int y) { ssd1306.setCursor(x, y); }
-  void print(const char *text) { ssd1306.print(text); }
+  void clear() { s.clearDisplay(); }
+  void display() { s.display(); }
+  void setTextSize(int sz) { s.setTextSize(sz); }
+  void setTextColor(int c) { s.setTextColor(c); }
+  void setCursor(int x, int y) { s.setCursor(x, y); }
+  void print(const char *t) { s.print(t); }
+  void drawLine(int x0, int y0, int x1, int y1, int c) { s.drawLine(x0, y0, x1, y1, c); }
 
-  void drawLine(int x0, int y0, int x1, int y1, int color) {
-    ssd1306.drawLine(x0, y0, x1, y1, color);
-  }
-
-  Rect getTextBounds(const char *string) {
-    Rect rect;
-    ssd1306.getTextBounds(string, 0, 0, &rect.x, &rect.y, &rect.w, &rect.h);
-    return rect;
+  Rect getTextBounds(const char *str) {
+    Rect r;
+    s.getTextBounds(str, 0, 0, &r.x, &r.y, &r.w, &r.h);
+    return r;
   }
 };

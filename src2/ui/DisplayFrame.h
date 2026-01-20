@@ -1,118 +1,88 @@
 #pragma once
 
-/**
- * @file DisplayFrame.h
- * @brief OLEDに表示する1フレームのデータ構造と構築ロジック
- */
-
-#include "../common/Config.h"
-#include "../common/Formatter.h"
+#include "../Config.h"
 #include "../domain/TripState.h"
 #include <Arduino.h>
 #include <cstring>
+#include <stdio.h>
+
+namespace Fmt {
+inline void speed(float v, char *b, size_t s) { snprintf(b, s, "%4.1f", v < 0 ? 0 : v); }
+inline void dist(float v, char *b, size_t s) { snprintf(b, s, "%5.2f", v < 0 ? 0 : v); }
+inline void duration(unsigned long ms, char *b, size_t s) {
+  unsigned long sec = ms / 1000, h = sec / 3600, m = (sec % 3600) / 60, sc = sec % 60;
+  if (h > 0) snprintf(b, s, "%lu:%02lu:%02lu", h, m, sc);
+  else snprintf(b, s, "%02lu:%02lu", m, sc);
+}
+inline void clock(int h, int m, char *b, size_t s) { snprintf(b, s, "%02d:%02d", h, m); }
+} // namespace Fmt
+
+enum class Mode { SPD_TIM, AVG_ODO, MAX_CLK };
 
 struct DisplayFrame {
   struct Header {
-    const char *fixStatus;
-    const char *modeSpeed;
-    const char *modeTime;
+    const char *fixStatus = "";
+    const char *modeSpeed = "";
+    const char *modeTime  = "";
 
-    Header() : fixStatus(""), modeSpeed(""), modeTime("") {}
-
-    bool operator==(const Header &other) const {
-      return (fixStatus == other.fixStatus) && (modeSpeed == other.modeSpeed) && (timeMatch(other));
+    bool operator==(const Header &o) const {
+      return fixStatus == o.fixStatus && modeSpeed == o.modeSpeed && modeTime == o.modeTime;
     }
-    bool operator!=(const Header &other) const { return !(*this == other); }
-
-  private:
-    bool timeMatch(const Header &other) const { return modeTime == other.modeTime; }
-  };
+  } header;
 
   struct Item {
-    char        value[16];
-    const char *unit;
+    char        value[16] = {0};
+    const char *unit      = "";
 
-    Item() : unit("") { memset(value, 0, sizeof(value)); }
-
-    bool operator==(const Item &other) const {
-      return (strcmp(value, other.value) == 0) && (unit == other.unit);
-    }
-    bool operator!=(const Item &other) const { return !(*this == other); }
-  };
-
-  Header header;
-  Item   main;
-  Item   sub;
+    bool operator==(const Item &o) const { return strcmp(value, o.value) == 0 && unit == o.unit; }
+  } main, sub;
 
   DisplayFrame() = default;
 
-  DisplayFrame(const TripState &state, const GnssData &gnss, const SpGnssTime &currentTime,
-               Mode mode) {
-    struct ModeConfig {
-      const char *speedLabel;
-      const char *timeLabel;
-      const char *mainUnit;
-      const char *subUnit;
-    };
+  DisplayFrame(const TripState &state, const GnssData &gnss, const SpGnssTime &clock, Mode mode) {
+    static const char *FIX_LABELS[] = {"WAIT", "2D", "3D"};
+    const SpFixMode    fixMode      = (SpFixMode)gnss.navData.posFixMode;
+    header.fixStatus = (fixMode >= 1 && fixMode <= 3) ? FIX_LABELS[fixMode - 1] : FIX_LABELS[0];
 
-    static const ModeConfig CONFIGS[] = {
+    struct ModeCfg {
+      const char *s, *t, *mu, *su;
+    };
+    static const ModeCfg CFG[] = {
         {"SPD", "Time", "km/h", ""},
         {"AVG", "Odo", "km/h", "km"},
         {"MAX", "Clock", "km/h", ""},
     };
+    const auto &c    = CFG[(int)mode];
+    header.modeSpeed = c.s;
+    header.modeTime  = c.t;
 
-    static const char *FIX_LABELS[] = {"WAIT", "2D", "3D"};
+    main.unit = c.mu;
+    sub.unit  = c.su;
 
-    const ModeConfig &cfg = CONFIGS[(int)mode];
-
-    const SpFixMode fixMode = (SpFixMode)gnss.navData.posFixMode;
-    if (fixMode == Fix3D) header.fixStatus = FIX_LABELS[2];
-    else if (fixMode == Fix2D) header.fixStatus = FIX_LABELS[1];
-    else header.fixStatus = FIX_LABELS[0];
-
-    header.modeSpeed = cfg.speedLabel;
-    header.modeTime  = cfg.timeLabel;
-
-    const bool isBlinkPhase =
-        state.isPaused() && ((millis() / Config::UI::BLINK_INTERVAL_MS) % 2 == 0);
-    const bool shouldBlink = (mode == Mode::SPD_TIM) && isBlinkPhase;
+    const bool paused = state.isPaused() && ((millis() / Config::UI::BLINK_INTERVAL_MS) % 2 == 0);
 
     switch (mode) {
     case Mode::SPD_TIM:
-      Formatter::formatSpeed(state.speed.current, main.value, sizeof(main.value));
-      main.unit = cfg.mainUnit;
-      if (shouldBlink) {
-        strcpy(sub.value, "");
-        sub.unit = "";
-      } else {
-        Formatter::formatDuration(state.time.elapsed, sub.value, sizeof(sub.value));
-        sub.unit = cfg.subUnit;
-      }
+      Fmt::speed(state.speed.current, main.value, sizeof(main.value));
+      if (paused) strcpy(sub.value, ""), sub.unit = "";
+      else Fmt::duration(state.time.elapsed, sub.value, sizeof(sub.value));
       break;
-
     case Mode::AVG_ODO:
-      Formatter::formatSpeed(state.speed.avg, main.value, sizeof(main.value));
-      main.unit = cfg.mainUnit;
-      Formatter::formatDistance(state.distance.total, sub.value, sizeof(sub.value));
-      sub.unit = cfg.subUnit;
+      Fmt::speed(state.speed.avg, main.value, sizeof(main.value));
+      Fmt::dist(state.distance.total, sub.value, sizeof(sub.value));
       break;
-
-    case Mode::MAX_CLK: {
-      Formatter::formatSpeed(state.speed.max, main.value, sizeof(main.value));
-      main.unit = cfg.mainUnit;
-      int hour  = currentTime.hour;
-
-      if (currentTime.year >= Config::Time::MIN_VALID_YEAR)
-        hour = (hour + Config::Time::TIMEZONE_OFFSET_HOURS) % 24;
-      Formatter::formatClock(hour, currentTime.minute, sub.value, sizeof(sub.value));
-      sub.unit = cfg.subUnit;
+    case Mode::MAX_CLK:
+      Fmt::speed(state.speed.max, main.value, sizeof(main.value));
+      int h = (clock.year >= Config::Time::MIN_VALID_YEAR)
+                  ? (clock.hour + Config::Time::TIMEZONE_OFFSET_HOURS) % 24
+                  : clock.hour;
+      Fmt::clock(h, clock.minute, sub.value, sizeof(sub.value));
       break;
-    }
     }
   }
 
-  bool operator==(const DisplayFrame &other) const {
-    return (header == other.header) && (main == other.main) && (sub == other.sub);
+  bool operator==(const DisplayFrame &o) const {
+    return header == o.header && main == o.main && sub == o.sub;
   }
-  bool operator!=(const DisplayFrame &other) const { return !(*this == other); }
+  bool operator!=(const DisplayFrame &o) const { return !(*this == o); }
 };

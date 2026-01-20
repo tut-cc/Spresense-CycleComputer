@@ -1,70 +1,50 @@
 #pragma once
 
-/**
- * @file Button.h
- * @brief 物理ボタンのデバウンス処理と状態管理
- *
- * チャタリング防止のため、ステートマシンによる
- * デバウンス処理を実装しています。
- */
-
-#include "../common/Config.h"
+#include "../Config.h"
 #include <Arduino.h>
 
 class Button {
 public:
-  /// ボタンの状態を表す列挙型
-  enum class State { High, WaitStablizeHigh, Low, WaitStablizeLow };
+  const int pin;
+  bool      pressed = false, held = false;
+  enum { H, WL, L, WH } state = H;
+  unsigned long last          = 0;
 
-  const int     pinNumber;
-  State         state;
-  unsigned long lastStateChangeTime;
-  bool          pressed;
-  bool          held;
-
-public:
-  Button(int pin) : pinNumber(pin), state(State::High), pressed(false), held(false) {}
-
+  Button(int p) : pin(p) {}
   void begin() {
-    pinMode(pinNumber, INPUT_PULLUP);
-    state   = (digitalRead(pinNumber) == LOW) ? State::Low : State::High;
-    pressed = false;
+    pinMode(pin, INPUT_PULLUP);
+    state = digitalRead(pin) ? H : L;
   }
 
   void update() {
-    pressed                         = false;
-    const bool          rawPinLevel = digitalRead(pinNumber);
-    const unsigned long now         = millis();
-
+    pressed           = false;
+    bool          raw = digitalRead(pin);
+    unsigned long now = millis();
     switch (state) {
-    case State::High:
-      if (rawPinLevel == LOW) changeState(State::WaitStablizeLow, now);
+    case H:
+      if (!raw) {
+        state = WL;
+        last  = now;
+      }
       break;
-
-    case State::WaitStablizeLow:
-      if (rawPinLevel == HIGH) changeState(State::High, now);
-      else if (now - lastStateChangeTime > Config::Button::DEBOUNCE_MS) {
-        changeState(State::Low, now);
+    case WL:
+      if (raw) state = H;
+      else if (now - last > Config::Button::DEBOUNCE_MS) {
+        state   = L;
         pressed = true;
       }
       break;
-
-    case State::Low:
-      if (rawPinLevel == HIGH) changeState(State::WaitStablizeHigh, now);
+    case L:
+      if (raw) {
+        state = WH;
+        last  = now;
+      }
       break;
-
-    case State::WaitStablizeHigh:
-      if (rawPinLevel == LOW) changeState(State::Low, now);
-      else if (now - lastStateChangeTime > Config::Button::DEBOUNCE_MS)
-        changeState(State::High, now);
+    case WH:
+      if (!raw) state = L;
+      else if (now - last > Config::Button::DEBOUNCE_MS) state = H;
       break;
     }
-    held = (state == State::Low || state == State::WaitStablizeHigh);
-  }
-
-private:
-  void changeState(State newState, unsigned long now) {
-    state               = newState;
-    lastStateChangeTime = now;
+    held = (state == L || state == WH);
   }
 };

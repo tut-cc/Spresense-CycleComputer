@@ -1,18 +1,6 @@
 #pragma once
 
-/**
- * @file App.h
- * @brief サイクルコンピュータのメインアプリケーションクラス
- *
- * 全モジュールを統合し、メインループを制御します。
- * 入力収集 → 状態更新 → 出力処理 のパイプラインで動作。
- */
-
-#include <Arduino.h>
-#include <stddef.h>
-
-#include "common/Config.h"
-#include "common/DoubleBuffer.h"
+#include "Config.h"
 #include "domain/DataStore.h"
 #include "domain/TripState.h"
 #include "domain/VoltageMonitor.h"
@@ -23,170 +11,100 @@
 #include "ui/Renderer.h"
 #include <LowPower.h>
 
+template <typename T> struct DoubleBuffer {
+  T    b[2];
+  int  i = 0;
+  T   &current() { return b[i]; }
+  void initialize(const T &v) { b[0] = b[1] = v; }
+  bool apply(const T &n) {
+    i    = 1 - i;
+    b[i] = n;
+    return b[i] != b[1 - i];
+  }
+};
+
 class App {
 private:
-  Gnss           gnss;
-  Clock          systemClock;
-  DataStore      dataStore;
-  VoltageMonitor voltageMonitor;
-  Input          input;
-  Renderer       renderer;
-
-  Mode currentMode = Mode::SPD_TIM;
-
-  DoubleBuffer<TripState>    tripBuffer;
-  DoubleBuffer<DisplayFrame> frameBuffer;
-  DoubleBuffer<SaveData>     saveBuffer;
-
-  unsigned long currentTime   = 0;
-  GnssData      currentGnss   = {};
-  Input::Event  currentButton = Input::Event::NONE;
-
-  unsigned long lastSaveMs     = 0;
-  unsigned long lastUiUpdateMs = 0;
+  Gnss                       gnss;
+  Clock                      clock;
+  DataStore                  store;
+  VoltageMonitor             volt;
+  Input                      input;
+  Renderer                   renderer;
+  Mode                       mode = Mode::SPD_TIM;
+  DoubleBuffer<TripState>    trip;
+  DoubleBuffer<DisplayFrame> frame;
+  DoubleBuffer<SaveData>     save;
+  unsigned long              now = 0, lastUi = 0, lastSave = 0;
+  GnssData                   curGnss = {};
+  Input::Event               curBtn  = Input::Event::NONE;
 
 public:
   App() : input(Config::Pins::BUTTON_SELECT, Config::Pins::BUTTON_PAUSE) {}
 
   void begin() {
-    if (!renderer.begin()) shutdown();
+    if (!renderer.begin() || !gnss.begin()) {
+      LowPower.begin();
+      LowPower.deepSleep(0);
+    }
     input.begin();
-    if (!gnss.begin()) shutdown();
-
-    systemClock.begin();
-    voltageMonitor.begin();
-    loadFromStorage();
+    clock.begin();
+    volt.begin();
+    SaveData s = store.load();
+    trip.initialize(TripState(s));
+    save.initialize(s);
   }
 
   void update() {
-    collectInputs();
-    updateState();
-    processOutputs();
+    now    = millis();
+    curBtn = input.update();
+    if (gnss.update()) {
+      curGnss.updated = true;
+      curGnss.navData = gnss.navData;
+      if (curGnss.navData.posFixMode >= 2) clock.sync(curGnss.navData.time);
+    } else curGnss.updated = false;
+
+    if (curBtn != Input::Event::NONE) handleButton();
+    trip.apply(TripState(trip.current(), curGnss, now));
+
+    if (curBtn != Input::Event::NONE || now - lastUi >= Config::UI::UPDATE_INTERVAL_MS) {
+      if (frame.apply(DisplayFrame(trip.current(), curGnss, clock.now(), mode))) {
+        renderer.render(frame.current());
+        lastUi = now;
+      }
+    }
+
+    if (now - lastSave >= DataStore::SAVE_INTERVAL_MS && !curGnss.updated) {
+      trip.current().updateAverageSpeed();
+      if (save.apply(SaveData(trip.current(), volt.update()))) store.save(save.current());
+      lastSave = now;
+    }
   }
 
 private:
-  void shutdown() {
-    LowPower.begin();
-    LowPower.deepSleep(0);
-  }
-
-  void loadFromStorage() {
-    SaveData saved = dataStore.load();
-    tripBuffer.initialize(TripState(saved));
-    saveBuffer.initialize(saved);
-    lastSaveMs = millis();
-  }
-
-  void collectInputs() {
-    currentTime   = millis();
-    currentButton = input.update();
-
-    bool updated        = gnss.update();
-    currentGnss.updated = updated;
-    currentGnss.navData = gnss.navData;
-
-    if (updated) {
-      const SpFixMode fixMode = (SpFixMode)currentGnss.navData.posFixMode;
-      if (fixMode == Fix2D || fixMode == Fix3D) { systemClock.sync(currentGnss.navData.time); }
-    }
-  }
-
-  void updateState() {
-    if (currentButton != Input::Event::NONE) handleButton();
-    tripBuffer.apply(TripState(tripBuffer.current(), currentGnss, currentTime));
-  }
-
   void handleButton() {
-    TripState &state = tripBuffer.current();
-
-    switch (currentButton) {
+    auto &s = trip.current();
+    switch (curBtn) {
     case Input::Event::SELECT:
-      currentMode = rotateMode(currentMode);
+      mode = (Mode)(((int)mode + 1) % 3);
       break;
-
     case Input::Event::PAUSE:
-      state.status = state.isPaused() ? TripState::Status::Stopped : TripState::Status::Paused;
+      s.status = s.isPaused() ? TripState::Status::Stopped : TripState::Status::Paused;
       break;
-
     case Input::Event::RESET:
-      applyReset(currentMode);
+      if (mode == Mode::SPD_TIM) s.clearTripData();
+      else if (mode == Mode::AVG_ODO) s.clearAllData();
+      else s.resetMaxSpeed();
       break;
-
     case Input::Event::RESET_LONG:
-      resetAllData();
+      s.clearAllData();
+      store.clear();
+      renderer.resetDisplay();
+      frame.initialize({});
+      save.initialize(SaveData(s, 0));
       break;
-
     default:
       break;
     }
-  }
-
-  static Mode rotateMode(Mode mode) {
-    return static_cast<Mode>((static_cast<int>(mode) + 1) % Config::UI::MODE_COUNT);
-  }
-
-  void resetAllData() {
-    TripState &state = tripBuffer.current();
-    state.clearAllData();
-    dataStore.clear();
-    renderer.showResetMessage();
-    frameBuffer.initialize(DisplayFrame());
-    saveBuffer.initialize(SaveData(state, 0.0f));
-  }
-
-  void applyReset(Mode mode) {
-    TripState &state = tripBuffer.current();
-    switch (mode) {
-    case Mode::SPD_TIM:
-      state.clearTripData();
-      break;
-    case Mode::AVG_ODO:
-      state.clearAllData();
-      break;
-    case Mode::MAX_CLK:
-      state.resetMaxSpeed();
-      break;
-    }
-  }
-
-  void processOutputs() {
-    outputToDisplay();
-    outputToStorage();
-  }
-
-  void outputToDisplay() {
-    if (!shouldUpdateUI()) return;
-
-    SpGnssTime   nowClock = systemClock.now();
-    DisplayFrame nextFrame(tripBuffer.current(), currentGnss, nowClock, currentMode);
-    if (frameBuffer.apply(nextFrame)) {
-      renderer.render(frameBuffer.current());
-      lastUiUpdateMs = currentTime;
-    }
-  }
-
-  bool shouldUpdateUI() const {
-    const bool hasButtonInput  = (currentButton != Input::Event::NONE);
-    const bool intervalElapsed = (currentTime - lastUiUpdateMs >= Config::UI::UPDATE_INTERVAL_MS);
-    const bool stateChanged    = (tripBuffer.previous() != tripBuffer.current());
-    const bool gnssUpdated     = currentGnss.updated;
-    return hasButtonInput || intervalElapsed || stateChanged || gnssUpdated;
-  }
-
-  void outputToStorage() {
-    if (!shouldSave()) return;
-    float      currentVoltage = voltageMonitor.update();
-    TripState &state          = tripBuffer.current();
-    state.updateAverageSpeed();
-
-    SaveData nextSave(state, currentVoltage);
-    if (saveBuffer.apply(nextSave)) dataStore.save(saveBuffer.current());
-    lastSaveMs = currentTime;
-  }
-
-  bool shouldSave() const {
-    const bool shouldUpdate = (currentTime - lastSaveMs >= DataStore::SAVE_INTERVAL_MS);
-    const bool gnssStable   = !currentGnss.updated;
-    return shouldUpdate && gnssStable;
   }
 };

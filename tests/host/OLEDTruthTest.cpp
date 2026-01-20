@@ -70,7 +70,7 @@ TEST_F(OLEDTruthTest, RenderAVG_ODO) {
 }
 
 TEST_F(OLEDTruthTest, ResetMessage) {
-  renderer.showResetMessage();
+  renderer.resetDisplay();
   EXPECT_TRUE(hasText("RESETTING..."));
 }
 
