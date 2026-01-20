@@ -1,6 +1,5 @@
 #include "../../src/logic/Trip.h"
 #include "../../src2/common/DataStructures.h"
-#include "../../src2/domain/TripLogic.h"
 #include "mocks/Arduino.h"
 #include "mocks/GNSS.h"
 #include <chrono>
@@ -23,9 +22,8 @@ int main() {
   navData.time.year  = 2026;
 
   GnssData gnssData;
-  gnssData.navData   = navData;
-  gnssData.timestamp = 0;
-  gnssData.status    = UpdateStatus::Updated;
+  gnssData.navData = navData;
+  gnssData.updated = true;
 
   std::cout << "Starting Benchmark (" << iterations << " iterations)..." << std::endl;
 
@@ -46,15 +44,14 @@ int main() {
 
   // --- src2 (v2) ---
   TripState state;
-  state.resetAll();
+  state.clearAllData();
   auto start2 = std::chrono::high_resolution_clock::now();
   for (int i = 1; i <= iterations; ++i) {
-    _mock_millis       = i;
-    gnssData.navData   = navData;
-    gnssData.timestamp = i;
-    gnssData.status    = (i % 10 == 0) ? UpdateStatus::Updated : UpdateStatus::NoChange;
+    _mock_millis     = i;
+    gnssData.navData = navData;
+    gnssData.updated = (i % 10 == 0);
 
-    TripLogic::computeTrip(state, gnssData, i);
+    state = TripState(state, gnssData, i);
 
     if (i % 10 == 0) { navData.latitude += 0.000001f; }
   }

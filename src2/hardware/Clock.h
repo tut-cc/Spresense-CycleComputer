@@ -15,9 +15,8 @@ class Clock {
 public:
   void begin() { RTC.begin(); }
 
-  /// GPS時刻をRTCに同期
   void sync(const SpGnssTime &gpsTime) {
-    // GPS初期化直後は無効な日時が返されるため、妥当性をチェック
+
     if (gpsTime.year < Config::Time::MIN_VALID_YEAR) return;
 
     RtcTime rtcTime;

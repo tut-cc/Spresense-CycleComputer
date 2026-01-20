@@ -12,10 +12,10 @@ protected:
   App app;
 
   void SetUp() override {
-    _mock_millis             = 0;
-    _mock_pin_states[BTN_A]  = HIGH;
-    _mock_pin_states[BTN_B]  = HIGH;
-    SpGnss::mockVelocityData = 0.0f;
+    _mock_millis                                  = 0;
+    _mock_pin_states[Config::Pins::BUTTON_SELECT] = HIGH;
+    _mock_pin_states[Config::Pins::BUTTON_PAUSE]  = HIGH;
+    SpGnss::mockVelocityData                      = 0.0f;
     app.begin();
   }
 
@@ -42,9 +42,9 @@ TEST_F(App2Test, LoopProfiling) {
 
     // Periodic button presses (every 10 seconds)
     if (i % 1000 == 500) {
-      _mock_pin_states[BTN_A] = LOW; // Press
+      _mock_pin_states[Config::Pins::BUTTON_SELECT] = LOW; // Press
     } else if (i % 1000 == 510) {
-      _mock_pin_states[BTN_A] = HIGH; // Release
+      _mock_pin_states[Config::Pins::BUTTON_SELECT] = HIGH; // Release
     }
 
     auto start = std::chrono::high_resolution_clock::now();

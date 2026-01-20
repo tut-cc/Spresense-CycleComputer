@@ -12,54 +12,72 @@
 #include <cstring>
 
 #include "../common/Config.h"
-#include "../common/DataStructures.h"
 #include "../hardware/OLED.h"
+#include "DisplayFrame.h"
 
 /// 表示レイアウト定数
-constexpr int16_t HEADER_HEIGHT        = 12; // ヘッダー領域の高さ
-constexpr int16_t HEADER_TEXT_SIZE     = 1;  // ヘッダーテキストサイズ
-constexpr int16_t HEADER_LINE_Y_OFFSET = 2;  // 区切り線のY座標オフセット
-constexpr int16_t MAIN_AREA_Y_OFFSET   = 14; // メイン表示領域のY座標オフセット
-constexpr int16_t MAIN_VAL_SIZE        = 3;  // メイン値のテキストサイズ
-constexpr int16_t MAIN_UNIT_SIZE       = 1;  // メイン単位のテキストサイズ
-constexpr int16_t SUB_VAL_SIZE         = 2;  // サブ値のテキストサイズ
-constexpr int16_t SUB_UNIT_SIZE        = 1;  // サブ単位のテキストサイズ
-constexpr int16_t UNIT_SPACING         = 4;  // 値と単位の間隔
+constexpr int16_t HEADER_HEIGHT        = 12;
+constexpr int16_t HEADER_TEXT_SIZE     = 1;
+constexpr int16_t HEADER_LINE_Y_OFFSET = 2;
+constexpr int16_t MAIN_AREA_Y_OFFSET   = 14;
+constexpr int16_t MAIN_VAL_SIZE        = 3;
+constexpr int16_t MAIN_UNIT_SIZE       = 1;
+constexpr int16_t SUB_VAL_SIZE         = 2;
+constexpr int16_t SUB_UNIT_SIZE        = 1;
+constexpr int16_t UNIT_SPACING         = 4;
 
 class Renderer {
+private:
+  OLED oled;
+
 public:
   Renderer() {}
 
-  void render(OLED &oled, const DisplayFrame &frame) {
+  bool begin() { return oled.begin(); }
+
+  void render(const DisplayFrame &frame) {
     oled.clear();
-    drawHeader(oled, frame);
-    drawMainArea(oled, frame);
+    drawHeader(frame);
+    drawMainArea(frame);
     oled.display();
   }
 
+  void showResetMessage() {
+    oled.clear();
+    oled.setTextSize(2);
+    oled.setTextColor(WHITE);
+    const char *msg  = "RESETTING...";
+    OLED::Rect  rect = oled.getTextBounds(msg);
+    oled.setCursor((Config::Display::WIDTH - rect.w) / 2, (Config::Display::HEIGHT - rect.h) / 2);
+    oled.print(msg);
+    oled.display();
+    delay(500);
+    oled.restart();
+  }
+
 private:
-  void drawHeader(OLED &oled, const DisplayFrame &frame) {
+  void drawHeader(const DisplayFrame &frame) {
     oled.setTextSize(HEADER_TEXT_SIZE);
     oled.setTextColor(WHITE);
 
-    drawTextLeft(oled, 0, frame.header.fixStatus);
-    drawTextCenter(oled, 0, frame.header.modeSpeed);
-    drawTextRight(oled, 0, frame.header.modeTime);
+    drawTextLeft(0, frame.header.fixStatus);
+    drawTextCenter(0, frame.header.modeSpeed);
+    drawTextRight(0, frame.header.modeTime);
 
     int16_t lineY = HEADER_HEIGHT - HEADER_LINE_Y_OFFSET;
     oled.drawLine(0, lineY, Config::Display::WIDTH, lineY, WHITE);
   }
 
-  void drawMainArea(OLED &oled, const DisplayFrame &frame) {
+  void drawMainArea(const DisplayFrame &frame) {
     const int16_t headerH = HEADER_HEIGHT;
     const int16_t screenH = Config::Display::HEIGHT;
 
-    drawItem(oled, frame.main, headerH + MAIN_AREA_Y_OFFSET, MAIN_VAL_SIZE, MAIN_UNIT_SIZE, false);
-    drawItem(oled, frame.sub, screenH, SUB_VAL_SIZE, SUB_UNIT_SIZE, true);
+    drawItem(frame.main, headerH + MAIN_AREA_Y_OFFSET, MAIN_VAL_SIZE, MAIN_UNIT_SIZE, false);
+    drawItem(frame.sub, screenH, SUB_VAL_SIZE, SUB_UNIT_SIZE, true);
   }
 
-  void drawItem(OLED &oled, const DisplayFrame::Item &item, int16_t y, uint8_t valSize,
-                uint8_t unitSize, bool alignBottom) {
+  void drawItem(const DisplayFrame::Item &item, int16_t y, uint8_t valSize, uint8_t unitSize,
+                bool alignBottom) {
     oled.setTextSize(valSize);
     OLED::Rect valRect = oled.getTextBounds(item.value);
 
@@ -88,18 +106,18 @@ private:
     oled.print(item.unit);
   }
 
-  void drawTextLeft(OLED &oled, int16_t y, const char *text) {
+  void drawTextLeft(int16_t y, const char *text) {
     oled.setCursor(0, y);
     oled.print(text);
   }
 
-  void drawTextCenter(OLED &oled, int16_t y, const char *text) {
+  void drawTextCenter(int16_t y, const char *text) {
     OLED::Rect rect = oled.getTextBounds(text);
     oled.setCursor((Config::Display::WIDTH - rect.w) / 2, y);
     oled.print(text);
   }
 
-  void drawTextRight(OLED &oled, int16_t y, const char *text) {
+  void drawTextRight(int16_t y, const char *text) {
     OLED::Rect rect = oled.getTextBounds(text);
     oled.setCursor(Config::Display::WIDTH - rect.w, y);
     oled.print(text);

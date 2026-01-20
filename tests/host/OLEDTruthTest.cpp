@@ -1,16 +1,16 @@
-#include "../../src2/common/DataStructures.h"
-#include "../../src2/ui/UI.h"
+#include "../../src2/ui/Renderer.h"
 #include "mocks/Arduino.h"
 #include "mocks/DisplayLogger.h"
 #include <gtest/gtest.h>
 
 class OLEDTruthTest : public ::testing::Test {
 protected:
-  UI ui;
+  Renderer renderer;
 
   void SetUp() override {
     DisplayLogger::clear();
     _mock_millis = 1000;
+    renderer.begin();
   }
 
   bool hasText(const std::string &expected) {
@@ -33,7 +33,7 @@ TEST_F(OLEDTruthTest, RenderSPD_TIM) {
   strcpy(frame.sub.value, "1:01:01");
   frame.sub.unit = "";
 
-  ui.draw(frame);
+  renderer.render(frame);
 
   // Verify Header
   EXPECT_TRUE(hasText("3D"));
@@ -59,7 +59,7 @@ TEST_F(OLEDTruthTest, RenderAVG_ODO) {
   strcpy(frame.sub.value, "123.45");
   frame.sub.unit = "km";
 
-  ui.draw(frame);
+  renderer.render(frame);
 
   EXPECT_TRUE(hasText("2D"));
   EXPECT_TRUE(hasText("AVG"));
@@ -70,7 +70,7 @@ TEST_F(OLEDTruthTest, RenderAVG_ODO) {
 }
 
 TEST_F(OLEDTruthTest, ResetMessage) {
-  ui.showResetMessage();
+  renderer.showResetMessage();
   EXPECT_TRUE(hasText("RESETTING..."));
 }
 
@@ -86,7 +86,7 @@ TEST_F(OLEDTruthTest, BlinkRendering) {
   frameOn.sub.unit = "";
 
   DisplayLogger::clear();
-  ui.draw(frameOn);
+  renderer.render(frameOn);
   EXPECT_FALSE(hasText("12")); // Should NOT be visible
 
   // 2. Blink OFF (should transmit value)
@@ -100,12 +100,12 @@ TEST_F(OLEDTruthTest, BlinkRendering) {
   frameOff.sub.unit = "";
 
   DisplayLogger::clear();
-  ui.draw(frameOff);
+  renderer.render(frameOff);
   EXPECT_TRUE(hasText("00:12"));
 
   // 3. Blink ON again (should update frame and re-render)
   DisplayLogger::clear();
-  ui.draw(frameOn);
+  renderer.render(frameOn);
   EXPECT_FALSE(hasText("00:12")); // Should disappear again
 }
 
@@ -114,6 +114,6 @@ TEST_F(OLEDTruthTest, BlinkRendering) {
 // ---------------------------------------------------------
 TEST_F(OLEDTruthTest, DummyToEnsureLink) {
   TripState state;
-  state.resetAll();
-  EXPECT_EQ(state.status, TripStateBase::Status::Stopped);
+  state.clearAllData();
+  EXPECT_EQ(state.status, TripState::Status::Stopped);
 }

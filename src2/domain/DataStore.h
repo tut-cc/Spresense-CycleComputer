@@ -9,7 +9,7 @@
  */
 
 #include "../common/Config.h"
-#include "../common/DataStructures.h"
+#include "TripState.h"
 #include <EEPROM.h>
 #include <math.h>
 #include <stddef.h>
@@ -19,9 +19,9 @@ constexpr uint32_t CRC_POLY = 0xEDB88320;
 
 class DataStore {
 public:
-  /// 自動保存間隔 (Config.hから参照)
   static constexpr unsigned long SAVE_INTERVAL_MS = Config::Storage::SAVE_INTERVAL_MS;
-  SaveData                       load() {
+
+  SaveData load() {
     SaveData savedData;
     EEPROM.get(Config::Storage::EEPROM_ADDR, savedData);
 
@@ -30,27 +30,14 @@ public:
     if (isValid(savedData, calculatedCrc)) return savedData;
 
     SaveData defaultData;
-    defaultData.magicNumber   = SAVE_DATA_MAGIC_NUMBER;
-    defaultData.totalDistance = 0.0f;
-    defaultData.tripDistance  = 0.0f;
-    defaultData.movingTimeMs  = 0;
-    defaultData.maxSpeed      = 0.0f;
-    defaultData.voltage       = 0.0f;
-    defaultData.updateStatus  = UpdateStatus::NoChange;
-    defaultData.crc           = calculateDataCRC(defaultData);
+    defaultData.crc = calculateDataCRC(defaultData);
 
     return defaultData;
   }
 
   void save(const SaveData &currentData) {
-    SaveData nextData    = currentData;
-    nextData.magicNumber = SAVE_DATA_MAGIC_NUMBER;
-    nextData.crc         = calculateDataCRC(nextData);
-
-    uint32_t  invalidMagic = 0;
-    const int magicAddr    = Config::Storage::EEPROM_ADDR + offsetof(SaveData, magicNumber);
-    EEPROM.put(magicAddr, invalidMagic);
-
+    SaveData nextData = currentData;
+    nextData.crc      = calculateDataCRC(nextData);
     EEPROM.put(Config::Storage::EEPROM_ADDR, nextData);
   }
 
@@ -59,14 +46,7 @@ public:
     EEPROM.put(magicAddr, (uint32_t)0);
 
     SaveData cleanData;
-    cleanData.magicNumber   = SAVE_DATA_MAGIC_NUMBER;
-    cleanData.totalDistance = 0.0f;
-    cleanData.tripDistance  = 0.0f;
-    cleanData.movingTimeMs  = 0;
-    cleanData.maxSpeed      = 0.0f;
-    cleanData.voltage       = 0.0f;
-    cleanData.updateStatus  = UpdateStatus::NoChange;
-    cleanData.crc           = calculateDataCRC(cleanData);
+    cleanData.crc = calculateDataCRC(cleanData);
 
     EEPROM.put(Config::Storage::EEPROM_ADDR, cleanData);
   }
@@ -89,11 +69,12 @@ private:
   }
 
   static bool isValid(const SaveData &data, uint32_t calculatedCrc) {
-    if (calculatedCrc != data.crc) return false;
-    if (data.magicNumber != SAVE_DATA_MAGIC_NUMBER) return false;
-    if (isnan(data.totalDistance)) return false;
-    if (data.totalDistance < 0.0f) return false;
-    if (Config::Storage::MAX_VALID_DISTANCE_KM < data.totalDistance) return false;
-    return true;
+    const bool crcValid    = (calculatedCrc == data.crc);
+    const bool magicValid  = (data.magicNumber == SAVE_DATA_MAGIC_NUMBER);
+    const bool notNaN      = !isnan(data.totalDistance);
+    const bool notNegative = (data.totalDistance >= 0.0f);
+    const bool withinRange = (data.totalDistance <= Config::Storage::MAX_VALID_DISTANCE_KM);
+
+    return crcValid && magicValid && notNaN && notNegative && withinRange;
   }
 };

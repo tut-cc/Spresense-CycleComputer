@@ -21,8 +21,11 @@ public:
   T       &current() { return buffers[idx]; }
   const T &current() const { return buffers[idx]; }
   const T &previous() const { return buffers[1 - idx]; }
-
-  void swap() { idx = 1 - idx; }
+  bool     hasChanged() const { return current() != previous(); }
+  void     copyFromPrevious() { buffers[idx] = buffers[1 - idx]; }
+  T       &operator[](int i) { return buffers[i]; }
+  const T &operator[](int i) const { return buffers[i]; }
+  void     swap() { idx = 1 - idx; }
 
   void initialize(const T &value) {
     buffers[0] = value;
@@ -39,10 +42,4 @@ public:
     swap();
     copyFromPrevious();
   }
-
-  bool hasChanged() const { return current() != previous(); }
-  void copyFromPrevious() { buffers[idx] = buffers[1 - idx]; }
-
-  T       &operator[](int i) { return buffers[i]; }
-  const T &operator[](int i) const { return buffers[i]; }
 };

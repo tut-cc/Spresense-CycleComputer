@@ -14,12 +14,7 @@
 class Button {
 public:
   /// ボタンの状態を表す列挙型
-  enum class State {
-    High,             // ボタン離れている
-    WaitStablizeHigh, // HIGH安定待ち
-    Low,              // ボタン押されている
-    WaitStablizeLow   // LOW安定待ち
-  };
+  enum class State { High, WaitStablizeHigh, Low, WaitStablizeLow };
 
   const int     pinNumber;
   State         state;

@@ -14,12 +14,14 @@
 #include "common/Config.h"
 #include "common/DoubleBuffer.h"
 #include "domain/DataStore.h"
-#include "domain/TripLogic.h"
+#include "domain/TripState.h"
 #include "domain/VoltageMonitor.h"
 #include "hardware/Clock.h"
 #include "hardware/Gnss.h"
-#include "ui/FrameLogic.h"
-#include "ui/UI.h"
+#include "ui/DisplayFrame.h"
+#include "ui/Input.h"
+#include "ui/Renderer.h"
+#include <LowPower.h>
 
 class App {
 private:
@@ -27,7 +29,8 @@ private:
   Clock          systemClock;
   DataStore      dataStore;
   VoltageMonitor voltageMonitor;
-  UI             userInterface;
+  Input          input;
+  Renderer       renderer;
 
   Mode currentMode = Mode::SPD_TIM;
 
@@ -35,36 +38,24 @@ private:
   DoubleBuffer<DisplayFrame> frameBuffer;
   DoubleBuffer<SaveData>     saveBuffer;
 
-  unsigned long currentTime    = 0;
-  GnssData      currentGnss    = {};
-  Input::Event  currentButton  = Input::Event::NONE;
-  SpGnssTime    currentClock   = {};
-  float         currentVoltage = 0.0f;
+  unsigned long currentTime   = 0;
+  GnssData      currentGnss   = {};
+  Input::Event  currentButton = Input::Event::NONE;
 
   unsigned long lastSaveMs     = 0;
   unsigned long lastUiUpdateMs = 0;
 
-  bool gnssInitialized = false;
-
 public:
-  /**
-   * @brief アプリケーションの初期化
-   * @return true: 全モジュールの初期化成功, false: いずれかのモジュールが失敗
-   */
-  bool begin() {
-    // GNSS初期化（失敗してもアプリは継続可能）
-    gnssInitialized = gnss.begin();
-    if (!gnssInitialized) {
-      // GNSSが使えなくても他の機能は動作可能
-      // ログ出力やLED点滅などで警告を出すことも検討
-    }
+  App() : input(Config::Pins::BUTTON_SELECT, Config::Pins::BUTTON_PAUSE) {}
+
+  void begin() {
+    if (!renderer.begin()) shutdown();
+    input.begin();
+    if (!gnss.begin()) shutdown();
 
     systemClock.begin();
     voltageMonitor.begin();
-    userInterface.begin();
     loadFromStorage();
-
-    return gnssInitialized; // メイン機能の状態を返す
   }
 
   void update() {
@@ -74,60 +65,47 @@ public:
   }
 
 private:
+  void shutdown() {
+    LowPower.begin();
+    LowPower.deepSleep(0);
+  }
+
   void loadFromStorage() {
     SaveData saved = dataStore.load();
-
-    TripState state;
-    state.resetAll();
-    state.distance.total = saved.totalDistance;
-    state.distance.trip  = saved.tripDistance;
-    state.time.moving    = saved.movingTimeMs;
-    state.speed.max      = saved.maxSpeed;
-
-    tripBuffer.initialize(state);
+    tripBuffer.initialize(TripState(saved));
     saveBuffer.initialize(saved);
     lastSaveMs = millis();
   }
 
   void collectInputs() {
-    currentTime    = millis();
-    currentButton  = userInterface.getInputEvent();
-    currentClock   = systemClock.now();
-    currentVoltage = voltageMonitor.update();
+    currentTime   = millis();
+    currentButton = input.update();
 
     bool updated        = gnss.update();
-    currentGnss.status  = updated ? UpdateStatus::Updated : UpdateStatus::NoChange;
+    currentGnss.updated = updated;
     currentGnss.navData = gnss.navData;
 
-    if (updated && (SpFixMode)currentGnss.navData.posFixMode != FixInvalid) {
-      systemClock.sync(currentGnss.navData.time);
+    if (updated) {
+      const SpFixMode fixMode = (SpFixMode)currentGnss.navData.posFixMode;
+      if (fixMode == Fix2D || fixMode == Fix3D) { systemClock.sync(currentGnss.navData.time); }
     }
   }
 
   void updateState() {
-    tripBuffer.prepare();
-    tripBuffer.current().resetMeta();
-
-    if (currentButton != Input::Event::NONE) {
-      if (handleButton()) return;
-    }
-
-    TripLogic::computeTrip(tripBuffer.current(), currentGnss, currentTime);
+    if (currentButton != Input::Event::NONE) handleButton();
+    tripBuffer.apply(TripState(tripBuffer.current(), currentGnss, currentTime));
   }
 
-  bool handleButton() {
+  void handleButton() {
     TripState &state = tripBuffer.current();
 
     switch (currentButton) {
     case Input::Event::SELECT:
-      currentMode = static_cast<Mode>((static_cast<int>(currentMode) + 1) % 3);
-      state.forceUpdate();
+      currentMode = rotateMode(currentMode);
       break;
 
     case Input::Event::PAUSE:
-      state.status =
-          state.isPaused() ? TripStateBase::Status::Stopped : TripStateBase::Status::Paused;
-      state.forceUpdate();
+      state.status = state.isPaused() ? TripState::Status::Stopped : TripState::Status::Paused;
       break;
 
     case Input::Event::RESET:
@@ -135,27 +113,35 @@ private:
       break;
 
     case Input::Event::RESET_LONG:
-      state.resetAll();
-      dataStore.clear();
-      userInterface.showResetMessage();
-      frameBuffer.initialize(DisplayFrame());
-      saveBuffer.initialize(createSaveData(state, 0.0f));
-      return true;
+      resetAllData();
+      break;
 
     default:
       break;
     }
-    return false;
+  }
+
+  static Mode rotateMode(Mode mode) {
+    return static_cast<Mode>((static_cast<int>(mode) + 1) % Config::UI::MODE_COUNT);
+  }
+
+  void resetAllData() {
+    TripState &state = tripBuffer.current();
+    state.clearAllData();
+    dataStore.clear();
+    renderer.showResetMessage();
+    frameBuffer.initialize(DisplayFrame());
+    saveBuffer.initialize(SaveData(state, 0.0f));
   }
 
   void applyReset(Mode mode) {
     TripState &state = tripBuffer.current();
     switch (mode) {
     case Mode::SPD_TIM:
-      state.resetTrip();
+      state.clearTripData();
       break;
     case Mode::AVG_ODO:
-      state.resetAll();
+      state.clearAllData();
       break;
     case Mode::MAX_CLK:
       state.resetMaxSpeed();
@@ -171,47 +157,36 @@ private:
   void outputToDisplay() {
     if (!shouldUpdateUI()) return;
 
-    DisplayFrame nextFrame =
-        FrameLogic::buildFrame(tripBuffer.current(), currentGnss, currentClock, currentMode);
-
+    SpGnssTime   nowClock = systemClock.now();
+    DisplayFrame nextFrame(tripBuffer.current(), currentGnss, nowClock, currentMode);
     if (frameBuffer.apply(nextFrame)) {
-      userInterface.draw(frameBuffer.current());
+      renderer.render(frameBuffer.current());
       lastUiUpdateMs = currentTime;
     }
   }
 
   bool shouldUpdateUI() const {
-    return (currentButton != Input::Event::NONE) ||
-           (currentTime - lastUiUpdateMs >= Config::UI::UPDATE_INTERVAL_MS) ||
-           TripLogic::isChanged(tripBuffer.previous(), tripBuffer.current()) ||
-           (currentGnss.status == UpdateStatus::Updated);
+    const bool hasButtonInput  = (currentButton != Input::Event::NONE);
+    const bool intervalElapsed = (currentTime - lastUiUpdateMs >= Config::UI::UPDATE_INTERVAL_MS);
+    const bool stateChanged    = (tripBuffer.previous() != tripBuffer.current());
+    const bool gnssUpdated     = currentGnss.updated;
+    return hasButtonInput || intervalElapsed || stateChanged || gnssUpdated;
   }
 
   void outputToStorage() {
     if (!shouldSave()) return;
+    float      currentVoltage = voltageMonitor.update();
+    TripState &state          = tripBuffer.current();
+    state.updateAverageSpeed();
 
-    SaveData nextSave = createSaveData(tripBuffer.current(), currentVoltage);
-
-    if (saveBuffer.apply(nextSave)) { dataStore.save(saveBuffer.current()); }
+    SaveData nextSave(state, currentVoltage);
+    if (saveBuffer.apply(nextSave)) dataStore.save(saveBuffer.current());
     lastSaveMs = currentTime;
   }
 
   bool shouldSave() const {
     const bool shouldUpdate = (currentTime - lastSaveMs >= DataStore::SAVE_INTERVAL_MS);
-    const bool gnssStable   = (currentGnss.status == UpdateStatus::NoChange);
+    const bool gnssStable   = !currentGnss.updated;
     return shouldUpdate && gnssStable;
-  }
-
-  static SaveData createSaveData(const TripState &state, float voltage) {
-    SaveData data;
-    data.magicNumber   = SAVE_DATA_MAGIC_NUMBER;
-    data.totalDistance = state.distance.total;
-    data.tripDistance  = state.distance.trip;
-    data.movingTimeMs  = state.time.moving;
-    data.maxSpeed      = state.speed.max;
-    data.voltage       = voltage;
-    data.updateStatus  = state.updateStatus;
-    data.crc           = 0;
-    return data;
   }
 };
