@@ -1,44 +1,24 @@
 #pragma once
-/**
- * @file VoltageMonitor.h
- * @brief バッテリー電圧監視クラス
- *
- * 電圧を測定し、低電圧時に警告LEDを点灯させます。
- */
 
-#include "../hardware/VoltageSensor.h"
 #include <Arduino.h>
 
-constexpr int   WARN_LED              = PIN_D00; ///< 警告LED接続ピン
-constexpr int   VOLTAGE_PIN           = PIN_A5;  ///< 電圧測定ピン
-constexpr float LOW_VOLTAGE_THRESHOLD = 1.0f;    ///< 低電圧警告しきい値(V)
+constexpr int   WARN_LED              = PIN_D00;
+constexpr int   VOLTAGE_PIN           = PIN_A5;
+constexpr float LOW_VOLTAGE_THRESHOLD = 1.0f;
+constexpr float REFERENCE_VOLTAGE     = 3.3f;
+constexpr float ADC_MAX_VALUE         = 1023.0f;
 
-/**
- * @class VoltageMonitor
- * @brief バッテリー電圧の監視と警告
- */
 class VoltageMonitor {
-private:
-  VoltageSensor voltageSensor; ///< 電圧センサー
-
 public:
-  VoltageMonitor() : voltageSensor(VOLTAGE_PIN) {}
-
-  /** @brief 初期化 */
   void begin() {
-    voltageSensor.begin();
+    pinMode(VOLTAGE_PIN, INPUT);
     pinMode(WARN_LED, OUTPUT);
   }
 
-  /**
-   * @brief 電圧を測定して警告LED制御
-   * @return 現在の電圧(V)
-   */
   float update() {
-    const float currentVoltage = voltageSensor.readVoltage();
-    // 低電圧ならLED点灯、そうでなければ消灯
-    if (currentVoltage <= LOW_VOLTAGE_THRESHOLD) digitalWrite(WARN_LED, HIGH);
-    else digitalWrite(WARN_LED, LOW);
+    int   rawValue       = analogRead(VOLTAGE_PIN);
+    float currentVoltage = (rawValue / ADC_MAX_VALUE) * REFERENCE_VOLTAGE;
+    digitalWrite(WARN_LED, (currentVoltage <= LOW_VOLTAGE_THRESHOLD) ? HIGH : LOW);
     return currentVoltage;
   }
 };

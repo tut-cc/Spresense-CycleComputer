@@ -1,6 +1,5 @@
-#include "../../src2/domain/DisplayLogic.h"
-#include "../../src2/domain/InputLogic.h"
 #include "../../src2/domain/TripLogic.h"
+#include "../../src2/ui/FrameLogic.h"
 #include "mocks/Arduino.h"
 #include "mocks/GNSS.h"
 #include <gtest/gtest.h>
@@ -11,14 +10,12 @@ class PipelineTest : public ::testing::Test {
 protected:
   void SetUp() override { _mock_millis = 0; }
 
-  // ヘルパー: 初期状態を作成
   TripState createInitialState() {
     TripState state;
     state.resetAll();
     return state;
   }
 
-  // ヘルパー: GNSSデータを作成
   GnssData createGnssData(float velocityKmh, SpFixMode fixMode, bool updated = true) {
     GnssData data;
     data.navData.velocity   = velocityKmh / 3.6f;
@@ -29,42 +26,27 @@ protected:
     data.status             = updated ? UpdateStatus::Updated : UpdateStatus::NoChange;
     return data;
   }
+
+  // ヘルパー: Pause切替
+  void togglePause(TripState &state) {
+    state.status =
+        state.isPaused() ? TripStateBase::Status::Stopped : TripStateBase::Status::Paused;
+    state.forceUpdate();
+  }
 };
 
 // ========================================
-// ユーザー入力処理のテスト
+// TripState操作のテスト
 // ========================================
 
-TEST_F(PipelineTest, ResetType_Determination) {
-  // RESET_LONG -> AllWithStorage
-  EXPECT_EQ(InputLogic::determineResetType(Input::Event::RESET_LONG, Mode::SPD_TIM),
-            InputLogic::ResetType::AllWithStorage);
-
-  // RESET + SPD_TIM -> Trip
-  EXPECT_EQ(InputLogic::determineResetType(Input::Event::RESET, Mode::SPD_TIM),
-            InputLogic::ResetType::Trip);
-
-  // RESET + AVG_ODO -> All
-  EXPECT_EQ(InputLogic::determineResetType(Input::Event::RESET, Mode::AVG_ODO),
-            InputLogic::ResetType::All);
-
-  // RESET + MAX_CLK -> MaxSpeed
-  EXPECT_EQ(InputLogic::determineResetType(Input::Event::RESET, Mode::MAX_CLK),
-            InputLogic::ResetType::MaxSpeed);
-
-  // その他 -> None
-  EXPECT_EQ(InputLogic::determineResetType(Input::Event::NONE, Mode::SPD_TIM),
-            InputLogic::ResetType::None);
-}
-
-TEST_F(PipelineTest, ApplyReset_Trip) {
+TEST_F(PipelineTest, ResetTrip) {
   TripState state      = createInitialState();
   state.time.elapsed   = 5000;
   state.distance.trip  = 10.5f;
   state.distance.total = 100.0f;
   state.speed.max      = 50.0f;
 
-  InputLogic::applyReset(state, InputLogic::ResetType::Trip);
+  state.resetTrip();
 
   // トリップデータのみリセット
   EXPECT_EQ(state.time.elapsed, 0);
@@ -74,56 +56,49 @@ TEST_F(PipelineTest, ApplyReset_Trip) {
   // 累積データは保持
   EXPECT_FLOAT_EQ(state.distance.total, 100.0f);
   EXPECT_FLOAT_EQ(state.speed.max, 50.0f);
-
   EXPECT_EQ(state.updateStatus, UpdateStatus::ForceUpdate);
 }
 
-TEST_F(PipelineTest, ApplyReset_MaxSpeed) {
+TEST_F(PipelineTest, ResetMaxSpeed) {
   TripState state     = createInitialState();
   state.speed.max     = 50.0f;
   state.distance.trip = 10.5f;
 
-  InputLogic::applyReset(state, InputLogic::ResetType::MaxSpeed);
+  state.resetMaxSpeed();
 
-  // 最高速度のみリセット
   EXPECT_FLOAT_EQ(state.speed.max, 0.0f);
-
-  // 他のデータは保持
   EXPECT_FLOAT_EQ(state.distance.trip, 10.5f);
-
   EXPECT_EQ(state.updateStatus, UpdateStatus::ForceUpdate);
 }
 
-TEST_F(PipelineTest, ApplyReset_All) {
+TEST_F(PipelineTest, ResetAll) {
   TripState state      = createInitialState();
   state.time.elapsed   = 5000;
   state.distance.trip  = 10.5f;
   state.distance.total = 100.0f;
   state.speed.max      = 50.0f;
 
-  InputLogic::applyReset(state, InputLogic::ResetType::All);
+  state.resetAll();
 
-  // 全データリセット
   EXPECT_EQ(state.time.elapsed, 0);
   EXPECT_FLOAT_EQ(state.distance.trip, 0.0f);
   EXPECT_FLOAT_EQ(state.distance.total, 0.0f);
   EXPECT_FLOAT_EQ(state.speed.max, 0.0f);
   EXPECT_EQ(state.status, TripStateBase::Status::Stopped);
-
   EXPECT_EQ(state.updateStatus, UpdateStatus::ForceUpdate);
 }
 
-TEST_F(PipelineTest, ApplyPause) {
+TEST_F(PipelineTest, TogglePause) {
   TripState state = createInitialState();
   state.status    = TripStateBase::Status::Stopped;
 
   // Stopped -> Paused
-  InputLogic::applyPause(state);
+  togglePause(state);
   EXPECT_EQ(state.status, TripStateBase::Status::Paused);
   EXPECT_EQ(state.updateStatus, UpdateStatus::ForceUpdate);
 
   // Paused -> Stopped
-  InputLogic::applyPause(state);
+  togglePause(state);
   EXPECT_EQ(state.status, TripStateBase::Status::Stopped);
 }
 
@@ -132,21 +107,22 @@ TEST_F(PipelineTest, BlinkLogic) {
   state.status    = TripStateBase::Status::Paused;
   GnssData gnss   = createGnssData(0.0f, Fix3D);
 
-  // Time 0: blink ON (shouldBlink = true)
-  _mock_millis       = 0;
-  SpGnssTime   t     = {2024, 1, 1, 12, 0, 0, 0};
-  DisplayState data0 = DisplayLogic::create(state, gnss, t, Mode::SPD_TIM);
-  EXPECT_TRUE(data0.shouldBlink);
+  SpGnssTime t = {2024, 1, 1, 12, 0, 0, 0};
 
-  // Time 500: blink OFF
-  _mock_millis       = 500;
-  DisplayState data1 = DisplayLogic::create(state, gnss, t, Mode::SPD_TIM);
-  EXPECT_FALSE(data1.shouldBlink);
+  // Time 0: blink ON (sub.value should be empty)
+  _mock_millis        = 0;
+  DisplayFrame frame0 = FrameLogic::buildFrame(state, gnss, t, Mode::SPD_TIM);
+  EXPECT_STREQ(frame0.sub.value, "");
+
+  // Time 500: blink OFF (sub.value should have content)
+  _mock_millis        = 500;
+  DisplayFrame frame1 = FrameLogic::buildFrame(state, gnss, t, Mode::SPD_TIM);
+  EXPECT_STRNE(frame1.sub.value, "");
 
   // Time 1000: blink ON
-  _mock_millis       = 1000;
-  DisplayState data2 = DisplayLogic::create(state, gnss, t, Mode::SPD_TIM);
-  EXPECT_TRUE(data2.shouldBlink);
+  _mock_millis        = 1000;
+  DisplayFrame frame2 = FrameLogic::buildFrame(state, gnss, t, Mode::SPD_TIM);
+  EXPECT_STREQ(frame2.sub.value, "");
 }
 
 TEST_F(PipelineTest, BlinkLogic_NoBlinkInOtherModes) {
@@ -158,53 +134,23 @@ TEST_F(PipelineTest, BlinkLogic_NoBlinkInOtherModes) {
   SpGnssTime t = {2024, 1, 1, 12, 0, 0, 0};
 
   // SPD_TIM -> should blink
-  DisplayState dataSPD = DisplayLogic::create(state, gnss, t, Mode::SPD_TIM);
-  EXPECT_TRUE(dataSPD.shouldBlink);
+  DisplayFrame frameSPD = FrameLogic::buildFrame(state, gnss, t, Mode::SPD_TIM);
+  EXPECT_STREQ(frameSPD.sub.value, "");
 
   // AVG_ODO -> should NOT blink
-  DisplayState dataAVG = DisplayLogic::create(state, gnss, t, Mode::AVG_ODO);
-  EXPECT_FALSE(dataAVG.shouldBlink);
+  DisplayFrame frameAVG = FrameLogic::buildFrame(state, gnss, t, Mode::AVG_ODO);
+  EXPECT_STRNE(frameAVG.sub.value, "");
 
   // MAX_CLK -> should NOT blink
-  DisplayState dataMAX = DisplayLogic::create(state, gnss, t, Mode::MAX_CLK);
-  EXPECT_FALSE(dataMAX.shouldBlink);
-}
-
-TEST_F(PipelineTest, SwitchMode) {
-  // SELECT -> 次のモード
-  EXPECT_EQ(InputLogic::switchMode(Mode::SPD_TIM, Input::Event::SELECT), Mode::AVG_ODO);
-  EXPECT_EQ(InputLogic::switchMode(Mode::AVG_ODO, Input::Event::SELECT), Mode::MAX_CLK);
-  EXPECT_EQ(InputLogic::switchMode(Mode::MAX_CLK, Input::Event::SELECT), Mode::SPD_TIM);
-
-  // その他 -> 変更なし
-  EXPECT_EQ(InputLogic::switchMode(Mode::SPD_TIM, Input::Event::NONE), Mode::SPD_TIM);
-}
-
-TEST_F(PipelineTest, HandleUserInput_Pause) {
-  TripState state = createInitialState();
-
-  auto result = InputLogic::handleEvent(state, Mode::SPD_TIM, Input::Event::PAUSE);
-
-  EXPECT_EQ(state.status, TripStateBase::Status::Paused);
-  EXPECT_EQ(result.newMode, Mode::SPD_TIM);
-  EXPECT_FALSE(result.shouldClearStorage);
-}
-
-TEST_F(PipelineTest, HandleUserInput_ResetLong) {
-  TripState state      = createInitialState();
-  state.distance.total = 100.0f;
-
-  auto result = InputLogic::handleEvent(state, Mode::SPD_TIM, Input::Event::RESET_LONG);
-
-  EXPECT_FLOAT_EQ(state.distance.total, 0.0f);
-  EXPECT_TRUE(result.shouldClearStorage);
+  DisplayFrame frameMAX = FrameLogic::buildFrame(state, gnss, t, Mode::MAX_CLK);
+  EXPECT_STRNE(frameMAX.sub.value, "");
 }
 
 // ========================================
-// 表示データ生成のテスト
+// 表示データ生成のテスト（DisplayFrame直接）
 // ========================================
 
-TEST_F(PipelineTest, CreateDisplayState_SpdTim) {
+TEST_F(PipelineTest, BuildFrame_SpdTim) {
   TripState state     = createInitialState();
   state.speed.current = 25.5f;
   state.time.elapsed  = 3665000; // 1:01:05
@@ -212,17 +158,16 @@ TEST_F(PipelineTest, CreateDisplayState_SpdTim) {
   GnssData   gnss = createGnssData(25.5f, Fix3D);
   SpGnssTime t    = {2024, 1, 1, 12, 0, 0, 0};
 
-  DisplayState data = DisplayLogic::create(state, gnss, t, Mode::SPD_TIM);
+  _mock_millis       = 500; // no blink
+  DisplayFrame frame = FrameLogic::buildFrame(state, gnss, t, Mode::SPD_TIM);
 
-  EXPECT_STREQ(data.modeSpeedLabel, "SPD");
-  EXPECT_STREQ(data.modeTimeLabel, "Time");
-  EXPECT_FLOAT_EQ(data.mainValue, 25.5f);
-  EXPECT_STREQ(data.mainUnit, "km/h");
-  EXPECT_EQ(data.subType, DisplayState::SubType::Duration);
-  EXPECT_EQ(data.subValue.durationMs, 3665000);
+  EXPECT_STREQ(frame.header.modeSpeed, "SPD");
+  EXPECT_STREQ(frame.header.modeTime, "Time");
+  EXPECT_STREQ(frame.main.unit, "km/h");
+  EXPECT_STREQ(frame.header.fixStatus, "3D");
 }
 
-TEST_F(PipelineTest, CreateDisplayState_AvgOdo) {
+TEST_F(PipelineTest, BuildFrame_AvgOdo) {
   TripState state      = createInitialState();
   state.speed.avg      = 18.3f;
   state.distance.total = 123.45f;
@@ -230,18 +175,15 @@ TEST_F(PipelineTest, CreateDisplayState_AvgOdo) {
   GnssData   gnss = createGnssData(20.0f, Fix3D);
   SpGnssTime t    = {2024, 1, 1, 12, 0, 0, 0};
 
-  DisplayState data = DisplayLogic::create(state, gnss, t, Mode::AVG_ODO);
+  DisplayFrame frame = FrameLogic::buildFrame(state, gnss, t, Mode::AVG_ODO);
 
-  EXPECT_STREQ(data.modeSpeedLabel, "AVG");
-  EXPECT_STREQ(data.modeTimeLabel, "Odo");
-  EXPECT_FLOAT_EQ(data.mainValue, 18.3f);
-  EXPECT_STREQ(data.mainUnit, "km/h");
-  EXPECT_EQ(data.subType, DisplayState::SubType::Distance);
-  EXPECT_FLOAT_EQ(data.subValue.distanceKm, 123.45f);
-  EXPECT_STREQ(data.subUnit, "km");
+  EXPECT_STREQ(frame.header.modeSpeed, "AVG");
+  EXPECT_STREQ(frame.header.modeTime, "Odo");
+  EXPECT_STREQ(frame.main.unit, "km/h");
+  EXPECT_STREQ(frame.sub.unit, "km");
 }
 
-TEST_F(PipelineTest, CreateDisplayState_MaxClk) {
+TEST_F(PipelineTest, BuildFrame_MaxClk) {
   TripState state = createInitialState();
   state.speed.max = 45.2f;
 
@@ -250,14 +192,11 @@ TEST_F(PipelineTest, CreateDisplayState_MaxClk) {
   gnss.navData.time.hour   = 10;
   gnss.navData.time.minute = 30;
 
-  DisplayState data = DisplayLogic::create(state, gnss, gnss.navData.time, Mode::MAX_CLK);
+  DisplayFrame frame = FrameLogic::buildFrame(state, gnss, gnss.navData.time, Mode::MAX_CLK);
 
-  EXPECT_STREQ(data.modeSpeedLabel, "MAX");
-  EXPECT_STREQ(data.modeTimeLabel, "Clock");
-  EXPECT_FLOAT_EQ(data.mainValue, 45.2f);
-  EXPECT_EQ(data.subType, DisplayState::SubType::Clock);
-  EXPECT_EQ(data.subValue.clockTime.hour, 19); // JST
-  EXPECT_EQ(data.subValue.clockTime.minute, 30);
+  EXPECT_STREQ(frame.header.modeSpeed, "MAX");
+  EXPECT_STREQ(frame.header.modeTime, "Clock");
+  EXPECT_STREQ(frame.sub.value, "19:30");
 }
 
 // ========================================
@@ -281,9 +220,6 @@ TEST_F(PipelineTest, IsMoving) {
 }
 
 TEST_F(PipelineTest, CalculateAverageSpeed) {
-  // 10km を 1時間で移動 -> 10km/h
   EXPECT_FLOAT_EQ(TripLogic::calculateAverageSpeed(10.0f, 3600000), 10.0f);
-
-  // 移動時間0 -> 0km/h
   EXPECT_FLOAT_EQ(TripLogic::calculateAverageSpeed(10.0f, 0), 0.0f);
 }

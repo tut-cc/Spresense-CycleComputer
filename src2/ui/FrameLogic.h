@@ -1,76 +1,78 @@
 #pragma once
-/**
- * @file FrameLogic.h
- * @brief 表示フレームの構築ロジック
- *
- * DisplayStateからDisplayFrame（描画用データ）を生成します。
- * Formatterを使って数値を文字列に変換し、フレームを構築します。
- */
 
 #include "../common/DataStructures.h"
 #include "../common/Formatter.h"
+#include <Arduino.h>
 #include <string.h>
 
 namespace FrameLogic {
 
-/**
- * @brief 内部実装用名前空間
- */
-namespace Internal {
-using FormatterFunc = void (*)(const DisplayState &, char *, size_t);
+struct ModeConfig {
+  const char *speedLabel;
+  const char *timeLabel;
+  const char *mainUnit;
+  const char *subUnit;
+};
 
-/** @brief 経過時間をフォーマット */
-inline void fmtDuration(const DisplayState &d, char *b, size_t s) {
-  Formatter::formatDuration(d.subValue.durationMs, b, s);
-}
+static const ModeConfig CONFIGS[] = {
+    {"SPD", "Time", "km/h", ""},
+    {"AVG", "Odo", "km/h", "km"},
+    {"MAX", "Clock", "km/h", ""},
+};
 
-/** @brief 距離をフォーマット */
-inline void fmtDistance(const DisplayState &d, char *b, size_t s) {
-  Formatter::formatDistance(d.subValue.distanceKm, b, s);
-}
+static const char *FIX_LABELS[] = {"WAIT", "2D", "3D"};
 
-/** @brief 時刻をフォーマット */
-inline void fmtClock(const DisplayState &d, char *b, size_t s) {
-  (void)s;
-  Formatter::formatClock(d.subValue.clockTime.hour, d.subValue.clockTime.minute, b);
-}
-} // namespace Internal
-
-/**
- * @brief 表示フレームを構築
- * @param data 表示用データ
- * @return DisplayFrame 描画用フレーム
- *
- * 点滅中(shouldBlink==true)はサブ表示を空にします。
- */
-inline DisplayFrame buildFrame(const DisplayState &data) {
+inline DisplayFrame buildFrame(const TripStateBase &state, const GnssData &gnss,
+                               const SpGnssTime &currentTime, Mode mode) {
   DisplayFrame frame;
 
-  // ヘッダー: GPS状態ラベル
-  static const char *FIX_LABELS[] = {"WAIT", "2D", "3D"};
-  int                fixIdx       = (int)data.fixMode;
-  if (fixIdx < 0 || fixIdx > 2) fixIdx = 0;
-  frame.header.fixStatus = FIX_LABELS[fixIdx];
+  const ModeConfig &cfg = CONFIGS[(int)mode];
 
-  // ヘッダー: モードラベル
-  frame.header.modeSpeed = data.modeSpeedLabel;
-  frame.header.modeTime  = data.modeTimeLabel;
-
-  // メイン表示: 速度
-  Formatter::formatSpeed(data.mainValue, frame.main.value, sizeof(frame.main.value));
-  frame.main.unit = data.mainUnit;
-
-  // サブ表示: 点滅中は空、そうでなければモードに応じた値
-  if (data.shouldBlink) {
-    strcpy(frame.sub.value, "");
-    frame.sub.unit = "";
+  const SpFixMode fixMode = (SpFixMode)gnss.navData.posFixMode;
+  if (fixMode == Fix3D) {
+    frame.header.fixStatus = FIX_LABELS[2];
+  } else if (fixMode == Fix2D) {
+    frame.header.fixStatus = FIX_LABELS[1];
   } else {
-    // サブタイプに応じたフォーマッタを使用
-    static const Internal::FormatterFunc formatters[] = {Internal::fmtDuration,
-                                                         Internal::fmtDistance, Internal::fmtClock};
-    formatters[(int)data.subType](data, frame.sub.value, sizeof(frame.sub.value));
-    frame.sub.unit = data.subUnit;
+    frame.header.fixStatus = FIX_LABELS[0];
   }
+  frame.header.modeSpeed = cfg.speedLabel;
+  frame.header.modeTime  = cfg.timeLabel;
+
+  const bool isBlinkPhase = state.isPaused() && ((millis() / 500) % 2 == 0);
+  const bool shouldBlink  = (mode == Mode::SPD_TIM) && isBlinkPhase;
+
+  switch (mode) {
+  case Mode::SPD_TIM:
+    Formatter::formatSpeed(state.speed.current, frame.main.value, sizeof(frame.main.value));
+    frame.main.unit = cfg.mainUnit;
+    if (shouldBlink) {
+      strcpy(frame.sub.value, "");
+      frame.sub.unit = "";
+    } else {
+      Formatter::formatDuration(state.time.elapsed, frame.sub.value, sizeof(frame.sub.value));
+      frame.sub.unit = cfg.subUnit;
+    }
+    break;
+
+  case Mode::AVG_ODO:
+    Formatter::formatSpeed(state.speed.avg, frame.main.value, sizeof(frame.main.value));
+    frame.main.unit = cfg.mainUnit;
+    Formatter::formatDistance(state.distance.total, frame.sub.value, sizeof(frame.sub.value));
+    frame.sub.unit = cfg.subUnit;
+    break;
+
+  case Mode::MAX_CLK: {
+    Formatter::formatSpeed(state.speed.max, frame.main.value, sizeof(frame.main.value));
+    frame.main.unit = cfg.mainUnit;
+    int hour        = currentTime.hour;
+    if (currentTime.year >= 2026) hour = (hour + 9) % 24;
+    Formatter::formatClock(hour, currentTime.minute, frame.sub.value);
+    frame.sub.unit = cfg.subUnit;
+    break;
+  }
+  }
+
   return frame;
 }
 

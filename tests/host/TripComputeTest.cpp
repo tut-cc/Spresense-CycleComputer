@@ -1,4 +1,3 @@
-#include "../../src2/domain/InputLogic.h"
 #include "../../src2/domain/TripLogic.h"
 #include "mocks/Arduino.h"
 #include "mocks/GNSS.h"
@@ -29,6 +28,13 @@ protected:
     data.timestamp          = millis();
     data.status             = updated ? UpdateStatus::Updated : UpdateStatus::NoChange;
     return data;
+  }
+
+  // ヘルパー: Pause切替（InputLogicの代わり）
+  void togglePause(TripState &state) {
+    state.status =
+        state.isPaused() ? TripStateBase::Status::Stopped : TripStateBase::Status::Paused;
+    state.forceUpdate();
   }
 };
 
@@ -185,7 +191,7 @@ TEST_F(TripComputeTest, PausedTimeExcluded) {
   EXPECT_EQ(state.time.moving, 1000);        // (2000-3000) Moving
 
   // Pause
-  InputLogic::applyPause(state);
+  togglePause(state);
   EXPECT_EQ(state.status, TripStateBase::Status::Paused);
 
   TripLogic::computeTrip(state, gnss, 4000); // Last status was Paused
@@ -234,7 +240,7 @@ TEST_F(TripComputeTest, PausedDoesNotAccumulateTripDistance) {
   float totalDist = state.distance.total;
 
   // Pause
-  InputLogic::applyPause(state);
+  togglePause(state);
 
   // Move while paused
   // Just advancing time with velocity
