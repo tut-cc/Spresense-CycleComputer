@@ -1,21 +1,10 @@
 #pragma once
 
 #include "../Config.h"
-#include "../domain/TripState.h"
+#include "../domain/TripData.h"
 #include <Arduino.h>
 #include <cstring>
 #include <stdio.h>
-
-namespace Fmt {
-inline void speed(float v, char *b, size_t s) { snprintf(b, s, "%4.1f", v < 0 ? 0 : v); }
-inline void dist(float v, char *b, size_t s) { snprintf(b, s, "%5.2f", v < 0 ? 0 : v); }
-inline void duration(unsigned long ms, char *b, size_t s) {
-  unsigned long sec = ms / 1000, h = sec / 3600, m = (sec % 3600) / 60, sc = sec % 60;
-  if (h > 0) snprintf(b, s, "%lu:%02lu:%02lu", h, m, sc);
-  else snprintf(b, s, "%02lu:%02lu", m, sc);
-}
-inline void clock(int h, int m, char *b, size_t s) { snprintf(b, s, "%02d:%02d", h, m); }
-} // namespace Fmt
 
 enum class Mode { SPD_TIM, AVG_ODO, MAX_CLK };
 
@@ -39,7 +28,7 @@ struct DisplayFrame {
 
   DisplayFrame() = default;
 
-  DisplayFrame(const TripState &state, const GnssData &gnss, const SpGnssTime &clock, Mode mode) {
+  DisplayFrame(const TripData &state, const GnssData &gnss, const SpGnssTime &clock, Mode mode) {
     static const char *FIX_LABELS[] = {"WAIT", "2D", "3D"};
     const SpFixMode    fixMode      = (SpFixMode)gnss.navData.posFixMode;
     header.fixStatus = (fixMode >= 1 && fixMode <= 3) ? FIX_LABELS[fixMode - 1] : FIX_LABELS[0];
@@ -47,11 +36,13 @@ struct DisplayFrame {
     struct ModeCfg {
       const char *s, *t, *mu, *su;
     };
+
     static const ModeCfg CFG[] = {
         {"SPD", "Time", "km/h", ""},
         {"AVG", "Odo", "km/h", "km"},
         {"MAX", "Clock", "km/h", ""},
     };
+
     const auto &c    = CFG[(int)mode];
     header.modeSpeed = c.s;
     header.modeTime  = c.t;
@@ -63,21 +54,28 @@ struct DisplayFrame {
 
     switch (mode) {
     case Mode::SPD_TIM:
-      Fmt::speed(state.speed.current, main.value, sizeof(main.value));
+      snprintf(main.value, sizeof(main.value), "%4.1f", state.speed.current);
       if (paused) strcpy(sub.value, ""), sub.unit = "";
-      else Fmt::duration(state.time.elapsed, sub.value, sizeof(sub.value));
-      break;
+      else {
+        unsigned long sec = state.time.elapsed / 1000, h = sec / 3600, m = (sec % 3600) / 60,
+                      sc = sec % 60;
+        if (h > 0) snprintf(sub.value, sizeof(sub.value), "%lu:%02lu:%02lu", h, m, sc);
+        else snprintf(sub.value, sizeof(sub.value), "%02lu:%02lu", m, sc);
+      }
+      return;
+
     case Mode::AVG_ODO:
-      Fmt::speed(state.speed.avg, main.value, sizeof(main.value));
-      Fmt::dist(state.distance.total, sub.value, sizeof(sub.value));
-      break;
+      snprintf(main.value, sizeof(main.value), "%4.1f", state.speed.avg);
+      snprintf(sub.value, sizeof(sub.value), "%5.2f", state.distance.total);
+      return;
+
     case Mode::MAX_CLK:
-      Fmt::speed(state.speed.max, main.value, sizeof(main.value));
+      snprintf(main.value, sizeof(main.value), "%4.1f", state.speed.max);
       int h = (clock.year >= Config::Time::MIN_VALID_YEAR)
                   ? (clock.hour + Config::Time::TIMEZONE_OFFSET_HOURS) % 24
                   : clock.hour;
-      Fmt::clock(h, clock.minute, sub.value, sizeof(sub.value));
-      break;
+      snprintf(sub.value, sizeof(sub.value), "%02d:%02d", h, clock.minute);
+      return;
     }
   }
 

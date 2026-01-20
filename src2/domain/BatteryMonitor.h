@@ -3,7 +3,7 @@
 #include "../Config.h"
 #include <Arduino.h>
 
-class VoltageMonitor {
+class BatteryMonitor {
 public:
   void begin() { pinMode(Config::Pins::LOW_BATT_LED, OUTPUT); }
 

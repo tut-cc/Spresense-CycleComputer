@@ -1,74 +1,94 @@
 #pragma once
 
 #include "../Config.h"
-#include "../hardware/OLED.h"
 #include "DisplayFrame.h"
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <Wire.h>
 
 class Renderer {
 private:
-  OLED oled;
+  Adafruit_SSD1306 d;
 
-public:
-  Renderer() = default;
-  bool begin() { return oled.begin(); }
+  struct Bounds {
+    int16_t  x, y;
+    uint16_t w, h;
+  };
 
-  void render(const DisplayFrame &f) {
-    oled.clear();
-    drawHeader(f.header);
-    drawItem(f.main, 30, 3, 1, false); // Main Area
-    drawItem(f.sub, 64, 2, 1, true);   // Sub Area
-    oled.display();
+  inline Bounds getBounds(const char *s) {
+    Bounds b;
+    d.getTextBounds(s, 0, 0, &b.x, &b.y, &b.w, &b.h);
+    return b;
   }
 
-  void resetDisplay() {
-    oled.clear();
-    oled.setTextSize(1);
-    const char *msg  = "RESETTING...";
-    OLED::Rect  rect = oled.getTextBounds(msg);
-    oled.setCursor((Config::Display::WIDTH - rect.w) / 2, (Config::Display::HEIGHT - rect.h) / 2);
-    oled.print(msg);
-    oled.display();
+public:
+  Renderer() : d(Config::Display::WIDTH, Config::Display::HEIGHT, &Wire, -1) {}
+
+  inline bool begin() {
+    if (!d.begin(SSD1306_SWITCHCAPVCC, Config::Display::ADDRESS)) return false;
+    d.clearDisplay();
+    d.display();
+    return true;
+  }
+
+  inline void render(const DisplayFrame &f) {
+    d.clearDisplay();
+    drawHeader(f.header);
+    drawItem(f.main, 30, 3, 1, false);
+    drawItem(f.sub, 64, 2, 1, true);
+    d.display();
+  }
+
+  inline void resetDisplay() {
+    d.clearDisplay();
+    d.setTextSize(1);
+    const char *msg = "RESETTING...";
+    Bounds      b   = getBounds(msg);
+    d.setCursor((Config::Display::WIDTH - b.w) / 2, (Config::Display::HEIGHT - b.h) / 2);
+    d.print(msg);
+    d.display();
     delay(500);
-    oled.restart();
+    begin();
   }
 
 private:
-  void drawHeader(const DisplayFrame::Header &h) {
-    oled.setTextSize(1);
-    oled.setTextColor(WHITE);
-    oled.setCursor(0, 0);
-    oled.print(h.fixStatus);
-    OLED::Rect r = oled.getTextBounds(h.modeSpeed);
-    oled.setCursor((Config::Display::WIDTH - r.w) / 2, 0);
-    oled.print(h.modeSpeed);
-    r = oled.getTextBounds(h.modeTime);
-    oled.setCursor(Config::Display::WIDTH - r.w, 0);
-    oled.print(h.modeTime);
-    oled.drawLine(0, 10, Config::Display::WIDTH, 10, WHITE);
+  inline void drawHeader(const DisplayFrame::Header &h) {
+    d.setTextSize(1);
+    d.setTextColor(WHITE);
+    d.setCursor(0, 0);
+    d.print(h.fixStatus);
+    Bounds b = getBounds(h.modeSpeed);
+    d.setCursor((Config::Display::WIDTH - b.w) / 2, 0);
+    d.print(h.modeSpeed);
+    b = getBounds(h.modeTime);
+    d.setCursor(Config::Display::WIDTH - b.w, 0);
+    d.print(h.modeTime);
+    d.drawLine(0, 10, Config::Display::WIDTH, 10, WHITE);
   }
 
-  void drawItem(const DisplayFrame::Item &item, int16_t y, uint8_t vSize, uint8_t uSize, bool btm) {
-    oled.setTextSize(vSize);
-    OLED::Rect vR = oled.getTextBounds(item.value);
-    int16_t    tW = vR.w;
-    OLED::Rect uR = {0, 0, 0, 0};
+  inline void drawItem(const DisplayFrame::Item &item, int16_t y, uint8_t vSize, uint8_t uSize,
+                       bool btm) {
+    d.setTextSize(vSize);
+    Bounds  vB = getBounds(item.value);
+    int16_t tW = vB.w;
+    Bounds  uB = {0, 0, 0, 0};
     if (item.unit[0]) {
-      oled.setTextSize(uSize);
-      uR = oled.getTextBounds(item.unit);
-      tW += 4 + uR.w;
+      d.setTextSize(uSize);
+      uB = getBounds(item.unit);
+      tW += 4 + uB.w;
     }
 
     int16_t x  = (Config::Display::WIDTH - tW) / 2;
-    int16_t vY = btm ? (y - vR.h) : (y - vR.h / 2);
-    int16_t uY = btm ? (y - uR.h) : (y + vR.h / 2 - uR.h);
+    int16_t vY = btm ? (y - vB.h) : (y - vB.h / 2);
+    int16_t uY = btm ? (y - uB.h) : (y + vB.h / 2 - uB.h);
 
-    oled.setTextSize(vSize);
-    oled.setCursor(x, vY);
-    oled.print(item.value);
+    d.setTextSize(vSize);
+    d.setCursor(x, vY);
+    d.print(item.value);
     if (item.unit[0]) {
-      oled.setTextSize(uSize);
-      oled.setCursor(x + vR.w + 4, uY);
-      oled.print(item.unit);
+      d.setTextSize(uSize);
+      d.setCursor(x + vB.w + 4, uY);
+      d.print(item.unit);
     }
   }
 };

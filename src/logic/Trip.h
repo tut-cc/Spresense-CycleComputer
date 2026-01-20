@@ -42,9 +42,7 @@ private:
   bool          hasLastUpdate    = false;
 
 public:
-  void begin() {
-    reset();
-  }
+  void begin() { reset(); }
 
   void update(const SpNavData &navData, unsigned long currentMillis, bool isGnssUpdated) {
     if (!hasLastUpdate) {
@@ -105,9 +103,7 @@ public:
     distanceResidue = 0.0f;
   }
 
-  void resetMaxSpeed() {
-    state.maxSpeed = 0.0f;
-  }
+  void resetMaxSpeed() { state.maxSpeed = 0.0f; }
 
   void reset() {
     resetTrip();
@@ -126,9 +122,7 @@ public:
     state.status        = Status::Stopped;
   }
 
-  const State &getState() const {
-    return state;
-  }
+  const State &getState() const { return state; }
 
 private:
   void initializeUpdateTime(unsigned long currentMillis) {
@@ -154,9 +148,6 @@ private:
 
     if (fix && isValidCoordinate(navData.latitude, navData.longitude)) {
       updateOdometer(navData.latitude, navData.longitude, moving);
-      // Coordinate based distance calculation is disabled in favor of speed integration
-      // float deltaKm = updateOdometer(navData.latitude, navData.longitude, moving);
-      // if (state.status != Status::Paused) { state.tripDistance += deltaKm; }
     }
 
     state.maxSpeed = fmaxf(state.maxSpeed, state.currentSpeed);
@@ -176,17 +167,9 @@ private:
       return 0.0f;
     }
 
-    // If not moving, no distance is accumulated for the odometer
-    // if (!moving) return 0.0f;
-
-    // Keep updating coordinates for reference, but don't add distance
     const float dist = planarDistanceKm(lastLat, lastLon, lat, lon);
-    // const float delta = calculateEffectiveDistance(dist);
-
     if (shouldUpdateLastCoordinate(dist)) { updateLastCoordinate(lat, lon); }
-
-    // state.totalKm += delta; // Disabled
-    return 0.0f; // delta;
+    return 0.0f;
   }
 
   void updateLastCoordinate(float lat, float lon) {
@@ -194,17 +177,11 @@ private:
     lastLon = lon;
   }
 
-  static float calculateRawKmh(float velocity) {
-    return velocity * MS_TO_KMH;
-  }
+  static float calculateRawKmh(float velocity) { return velocity * MS_TO_KMH; }
 
-  static bool hasFix(SpFixMode mode) {
-    return (mode == Fix2D || mode == Fix3D);
-  }
+  static bool hasFix(SpFixMode mode) { return (mode == Fix2D || mode == Fix3D); }
 
-  static bool isMoving(bool fix, float rawKmh) {
-    return fix && (rawKmh > MIN_MOVING_SPEED_KMH);
-  }
+  static bool isMoving(bool fix, float rawKmh) { return fix && (rawKmh > MIN_MOVING_SPEED_KMH); }
 
   static Status determineStatus(Status currentStatus, bool moving) {
     if (currentStatus == Status::Paused) return Status::Paused;
@@ -237,17 +214,13 @@ private:
     return 0.0f;
   }
 
-  static bool shouldUpdateLastCoordinate(float dist) {
-    return dist > MIN_DELTA;
-  }
+  static bool shouldUpdateLastCoordinate(float dist) { return dist > MIN_DELTA; }
 
   static bool isValidCoordinate(float lat, float lon) {
     return !(fabsf(lat) < MIN_ABS && fabsf(lon) < MIN_ABS);
   }
 
-  static constexpr float toRad(float degrees) {
-    return degrees * PI / 180.0f;
-  }
+  static constexpr float toRad(float degrees) { return degrees * PI / 180.0f; }
 
   static float planarDistanceKm(float lat1, float lon1, float lat2, float lon2) {
     const float latRad = toRad((lat1 + lat2) / 2.0f);

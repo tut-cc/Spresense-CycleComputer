@@ -10,5 +10,5 @@ void setup() {
 
 void loop() {
   app.update();
-  delay(30);
+  // delay(30);
 }

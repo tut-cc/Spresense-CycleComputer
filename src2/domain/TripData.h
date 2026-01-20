@@ -1,43 +1,51 @@
 #pragma once
 
 #include "../Config.h"
+#include "SaveData.h"
 #include <Arduino.h>
 #include <GNSS.h>
+#include <RTC.h>
+
+struct Clock {
+  inline void begin() { RTC.begin(); }
+
+  inline void sync(const SpGnssTime &gt) {
+    if (gt.year < Config::Time::MIN_VALID_YEAR) return;
+    RtcTime rt(gt.year, gt.month, gt.day, gt.hour, gt.minute, gt.sec);
+    RTC.setTime(rt);
+  }
+
+  inline SpGnssTime now() {
+    RtcTime rt = RTC.getTime();
+    return {(unsigned short)rt.year(),
+            (unsigned char)rt.month(),
+            (unsigned char)rt.day(),
+            (unsigned char)rt.hour(),
+            (unsigned char)rt.minute(),
+            (unsigned char)rt.second(),
+            0};
+  }
+};
 
 struct GnssData {
   SpNavData navData;
   bool      updated;
 };
 
-struct TripState;
+struct TripData;
 constexpr float MS_TO_HOUR = 3600000.0f;
 
-struct SaveData {
-  uint32_t      magic     = 0xDEADBEEF;
-  float         totalDist = 0;
-  float         tripDist  = 0;
-  unsigned long moveTime  = 0;
-  float         maxSpd    = 0;
-  float         volt      = 0;
-  uint32_t      crc       = 0;
-
-  SaveData() = default;
-  SaveData(const TripState &s, float v);
-  bool operator==(const SaveData &o) const {
-    return totalDist == o.totalDist && tripDist == o.tripDist && moveTime == o.moveTime &&
-           maxSpd == o.maxSpd && volt == o.volt;
-  }
-  bool operator!=(const SaveData &o) const { return !(*this == o); }
-};
-
-struct TripState {
+struct TripData {
   enum class Status { Stopped, Moving, Paused };
+
   struct Speed {
     float current, max, avg;
   } speed = {0, 0, 0};
+
   struct Dist {
     float total, trip;
   } distance = {0, 0};
+
   struct Time {
     unsigned long elapsed, moving;
   } time = {0, 0};
@@ -46,20 +54,25 @@ struct TripState {
   SpFixMode     fixMode     = FixInvalid;
   unsigned long lastUpdate  = 0;
   float         distResidue = 0.0f;
+  Clock         clock;
 
-  TripState() = default;
-  TripState(const SaveData &s) {
+  TripData() = default;
+
+  TripData(const SaveData &s) {
     distance.total = s.totalDist;
     distance.trip  = s.tripDist;
     time.moving    = s.moveTime;
     speed.max      = s.maxSpd;
   }
 
-  TripState(const TripState &p, const GnssData &g, unsigned long now) : TripState(p) {
+  TripData(const TripData &p, const GnssData &g, unsigned long now) : TripData(p) {
+    if (g.updated && g.navData.posFixMode >= 2) clock.sync(g.navData.time);
+
     if (lastUpdate == 0) {
       lastUpdate = now;
       return;
     }
+
     unsigned long dt = now - lastUpdate;
     if (status != Status::Paused) {
       time.elapsed += dt;
@@ -73,6 +86,7 @@ struct TripState {
         }
       }
     }
+
     if (g.updated) {
       fixMode   = (SpFixMode)g.navData.posFixMode;
       float raw = g.navData.velocity * 3.6f;
@@ -86,23 +100,27 @@ struct TripState {
         speed.current = 0.0f;
       }
     }
+
     lastUpdate = now;
   }
 
   bool isPaused() const { return status == Status::Paused; }
-  void clearAllData() { *this = TripState(); }
-  void clearTripData() {
+  void clearAllData() { *this = TripData(); }
+
+  void clearAvgOdo() {
+    status        = Status::Stopped;
     speed.current = speed.avg = 0;
-    status                    = Status::Stopped;
     time.elapsed = time.moving = 0;
     distance.trip = distResidue = 0;
   }
-  void resetMaxSpeed() { speed.max = 0; }
+
+  void clearMaxSpeed() { speed.max = 0; }
+
   void updateAverageSpeed() {
     speed.avg = (time.moving > 0) ? (distance.trip / (time.moving / MS_TO_HOUR)) : 0;
   }
 
-  bool operator!=(const TripState &o) const {
+  bool operator!=(const TripData &o) const {
     return fabsf(speed.current - o.speed.current) > 0.05f ||
            fabsf(distance.trip - o.distance.trip) > 0.001f ||
            (time.elapsed / 1000 != o.time.elapsed / 1000) || status != o.status ||
@@ -110,6 +128,8 @@ struct TripState {
   }
 };
 
-inline SaveData::SaveData(const TripState &s, float v)
+inline SaveData::SaveData(const TripData &s, float v)
     : totalDist(s.distance.total), tripDist(s.distance.trip), moveTime(s.time.moving),
-      maxSpd(s.speed.max), volt(v) {}
+      maxSpd(s.speed.max), volt(v) {
+  updateCRC();
+}
