@@ -1,5 +1,14 @@
 #pragma once
 
+/**
+ * @file FrameLogic.h
+ * @brief 表示フレームの構築ロジック
+ *
+ * トリップ状態とGNSS データから、OLEDに表示する
+ * DisplayFrame構造体を生成します。
+ */
+
+#include "../common/Config.h"
 #include "../common/DataStructures.h"
 #include "../common/Formatter.h"
 #include <Arduino.h>
@@ -29,13 +38,9 @@ inline DisplayFrame buildFrame(const TripStateBase &state, const GnssData &gnss,
   const ModeConfig &cfg = CONFIGS[(int)mode];
 
   const SpFixMode fixMode = (SpFixMode)gnss.navData.posFixMode;
-  if (fixMode == Fix3D) {
-    frame.header.fixStatus = FIX_LABELS[2];
-  } else if (fixMode == Fix2D) {
-    frame.header.fixStatus = FIX_LABELS[1];
-  } else {
-    frame.header.fixStatus = FIX_LABELS[0];
-  }
+  if (fixMode == Fix3D) frame.header.fixStatus = FIX_LABELS[2];
+  else if (fixMode == Fix2D) frame.header.fixStatus = FIX_LABELS[1];
+  else frame.header.fixStatus = FIX_LABELS[0];
   frame.header.modeSpeed = cfg.speedLabel;
   frame.header.modeTime  = cfg.timeLabel;
 
@@ -66,7 +71,9 @@ inline DisplayFrame buildFrame(const TripStateBase &state, const GnssData &gnss,
     Formatter::formatSpeed(state.speed.max, frame.main.value, sizeof(frame.main.value));
     frame.main.unit = cfg.mainUnit;
     int hour        = currentTime.hour;
-    if (currentTime.year >= 2026) hour = (hour + 9) % 24;
+    // GPS時刻(UTC)をJST(+9時間)に変換
+    if (currentTime.year >= Config::Time::MIN_VALID_YEAR)
+      hour = (hour + Config::Time::TIMEZONE_OFFSET_HOURS) % 24;
     Formatter::formatClock(hour, currentTime.minute, frame.sub.value);
     frame.sub.unit = cfg.subUnit;
     break;

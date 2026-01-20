@@ -1,8 +1,17 @@
 #pragma once
 
+/**
+ * @file App.h
+ * @brief サイクルコンピュータのメインアプリケーションクラス
+ *
+ * 全モジュールを統合し、メインループを制御します。
+ * 入力収集 → 状態更新 → 出力処理 のパイプラインで動作。
+ */
+
 #include <Arduino.h>
 #include <stddef.h>
 
+#include "common/Config.h"
 #include "common/DoubleBuffer.h"
 #include "domain/DataStore.h"
 #include "domain/TripLogic.h"
@@ -35,13 +44,27 @@ private:
   unsigned long lastSaveMs     = 0;
   unsigned long lastUiUpdateMs = 0;
 
+  bool gnssInitialized = false;
+
 public:
-  void begin() {
-    gnss.begin();
+  /**
+   * @brief アプリケーションの初期化
+   * @return true: 全モジュールの初期化成功, false: いずれかのモジュールが失敗
+   */
+  bool begin() {
+    // GNSS初期化（失敗してもアプリは継続可能）
+    gnssInitialized = gnss.begin();
+    if (!gnssInitialized) {
+      // GNSSが使えなくても他の機能は動作可能
+      // ログ出力やLED点滅などで警告を出すことも検討
+    }
+
     systemClock.begin();
     voltageMonitor.begin();
     userInterface.begin();
     loadFromStorage();
+
+    return gnssInitialized; // メイン機能の状態を返す
   }
 
   void update() {
@@ -158,7 +181,8 @@ private:
   }
 
   bool shouldUpdateUI() const {
-    return (currentButton != Input::Event::NONE) || (currentTime - lastUiUpdateMs >= 500) ||
+    return (currentButton != Input::Event::NONE) ||
+           (currentTime - lastUiUpdateMs >= Config::UI::UPDATE_INTERVAL_MS) ||
            TripLogic::isChanged(tripBuffer.previous(), tripBuffer.current()) ||
            (currentGnss.status == UpdateStatus::Updated);
   }

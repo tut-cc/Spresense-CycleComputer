@@ -1,5 +1,12 @@
 #pragma once
 
+/**
+ * @file Gnss.h
+ * @brief GNSSモジュールのラッパークラス
+ *
+ * GPS/GLONASS/Galileo/QZSS衛星からの位置・速度情報を取得します。
+ */
+
 #include <GNSS.h>
 
 class Gnss {

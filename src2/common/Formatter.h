@@ -1,5 +1,14 @@
 #pragma once
 
+/**
+ * @file Formatter.h
+ * @brief 数値の文字列フォーマット関数群
+ *
+ * 速度、距離、時間などの数値を表示用の文字列に変換します。
+ * 組み込み環境での高速動作のため、標準ライブラリ(sprintf等)を避け、
+ * 独自の軽量実装を提供しています。
+ */
+
 #include <math.h>
 #include <stddef.h>
 
@@ -62,7 +71,7 @@ inline char *copyAndPad(char *dest, char *srcStart, char *srcEnd, int totalWidth
     *dest++ = ' ';
     padding--;
   }
-  while (srcEnd > srcStart) { *dest++ = *--srcEnd; }
+  while (srcEnd > srcStart) *dest++ = *--srcEnd;
   return dest;
 }
 
@@ -74,7 +83,7 @@ inline char *writeFracPart(float frac, int precision, char *dest) {
     *t++ = '0' + (intFrac % 10);
     intFrac /= 10;
   }
-  while (t > temp) { *dest++ = *--t; }
+  while (t > temp) *dest++ = *--t;
   return dest;
 }
 

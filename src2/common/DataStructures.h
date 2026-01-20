@@ -1,11 +1,31 @@
 #pragma once
 
+/**
+ * @file DataStructures.h
+ * @brief アプリケーション全体で使用するデータ構造の定義
+ *
+ * GNSS、トリップ情報、保存データ、表示フレームなど、
+ * モジュール間でやり取りされる主要なデータ型を定義します。
+ */
+
 #include <GNSS.h>
 #include <cstring>
 
-enum class UpdateStatus { NoChange, Updated, ForceUpdate };
-enum class Mode { SPD_TIM, AVG_ODO, MAX_CLK };
+/// 状態更新の種類を示す列挙型
+enum class UpdateStatus {
+  NoChange,   // 変更なし
+  Updated,    // 通常の更新
+  ForceUpdate // 強制更新（ボタン押下等）
+};
 
+/// 表示モードを示す列挙型
+enum class Mode {
+  SPD_TIM, // 現在速度 & 経過時間
+  AVG_ODO, // 平均速度 & 総走行距離
+  MAX_CLK  // 最高速度 & 現在時刻
+};
+
+/// GNSSから取得したデータを保持する構造体
 struct GnssData {
   SpNavData     navData;
   unsigned long timestamp;
@@ -83,6 +103,8 @@ struct TripState : public TripStateBase {
   }
 };
 
+/// EEPROM保存データの有効性を検証するためのマジックナンバー
+/// 初期化されていないEEPROMや破損データを検出するために使用
 constexpr uint32_t SAVE_DATA_MAGIC_NUMBER = 0xDEADBEEF;
 
 struct SaveData {

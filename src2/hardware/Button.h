@@ -1,12 +1,25 @@
 #pragma once
 
-#include <Arduino.h>
+/**
+ * @file Button.h
+ * @brief 物理ボタンのデバウンス処理と状態管理
+ *
+ * チャタリング防止のため、ステートマシンによる
+ * デバウンス処理を実装しています。
+ */
 
-constexpr unsigned long DEBOUNCE_DELAY_MS = 20;
+#include "../common/Config.h"
+#include <Arduino.h>
 
 class Button {
 public:
-  enum class State { High, WaitStablizeHigh, Low, WaitStablizeLow };
+  /// ボタンの状態を表す列挙型
+  enum class State {
+    High,             // ボタン離れている
+    WaitStablizeHigh, // HIGH安定待ち
+    Low,              // ボタン押されている
+    WaitStablizeLow   // LOW安定待ち
+  };
 
   const int     pinNumber;
   State         state;
@@ -35,7 +48,7 @@ public:
 
     case State::WaitStablizeLow:
       if (rawPinLevel == HIGH) changeState(State::High, now);
-      else if (now - lastStateChangeTime > DEBOUNCE_DELAY_MS) {
+      else if (now - lastStateChangeTime > Config::Button::DEBOUNCE_MS) {
         changeState(State::Low, now);
         pressed = true;
       }
@@ -47,7 +60,8 @@ public:
 
     case State::WaitStablizeHigh:
       if (rawPinLevel == LOW) changeState(State::Low, now);
-      else if (now - lastStateChangeTime > DEBOUNCE_DELAY_MS) changeState(State::High, now);
+      else if (now - lastStateChangeTime > Config::Button::DEBOUNCE_MS)
+        changeState(State::High, now);
       break;
     }
     held = (state == State::Low || state == State::WaitStablizeHigh);

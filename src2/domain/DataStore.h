@@ -1,21 +1,29 @@
 #pragma once
 
+/**
+ * @file DataStore.h
+ * @brief EEPROM への永続データ保存・読み込み機能
+ *
+ * トリップデータ（走行距離、時間、最高速度など）をEEPROMに保存し、
+ * 電源OFF後も値を保持します。CRCチェックによりデータ破損を検出します。
+ */
+
+#include "../common/Config.h"
 #include "../common/DataStructures.h"
 #include <EEPROM.h>
 #include <math.h>
 #include <stddef.h>
 
-constexpr uint32_t      CRC_POLY     = 0xEDB88320;
-constexpr float         MAX_VALID_KM = 1000000.0f;
-constexpr unsigned long EEPROM_ADDR  = 0;
+/// CRC32計算用の多項式定数 (IEEE 802.3 標準)
+constexpr uint32_t CRC_POLY = 0xEDB88320;
 
 class DataStore {
 public:
-  static constexpr float SAVE_INTERVAL_MS = 30000.0f;
-
-  SaveData load() {
+  /// 自動保存間隔 (Config.hから参照)
+  static constexpr unsigned long SAVE_INTERVAL_MS = Config::Storage::SAVE_INTERVAL_MS;
+  SaveData                       load() {
     SaveData savedData;
-    EEPROM.get(EEPROM_ADDR, savedData);
+    EEPROM.get(Config::Storage::EEPROM_ADDR, savedData);
 
     const uint32_t calculatedCrc = calculateDataCRC(savedData);
 
@@ -40,14 +48,14 @@ public:
     nextData.crc         = calculateDataCRC(nextData);
 
     uint32_t  invalidMagic = 0;
-    const int magicAddr    = EEPROM_ADDR + offsetof(SaveData, magicNumber);
+    const int magicAddr    = Config::Storage::EEPROM_ADDR + offsetof(SaveData, magicNumber);
     EEPROM.put(magicAddr, invalidMagic);
 
-    EEPROM.put(EEPROM_ADDR, nextData);
+    EEPROM.put(Config::Storage::EEPROM_ADDR, nextData);
   }
 
   void clear() {
-    const int magicAddr = EEPROM_ADDR + offsetof(SaveData, magicNumber);
+    const int magicAddr = Config::Storage::EEPROM_ADDR + offsetof(SaveData, magicNumber);
     EEPROM.put(magicAddr, (uint32_t)0);
 
     SaveData cleanData;
@@ -60,7 +68,7 @@ public:
     cleanData.updateStatus  = UpdateStatus::NoChange;
     cleanData.crc           = calculateDataCRC(cleanData);
 
-    EEPROM.put(EEPROM_ADDR, cleanData);
+    EEPROM.put(Config::Storage::EEPROM_ADDR, cleanData);
   }
 
 private:
@@ -85,7 +93,7 @@ private:
     if (data.magicNumber != SAVE_DATA_MAGIC_NUMBER) return false;
     if (isnan(data.totalDistance)) return false;
     if (data.totalDistance < 0.0f) return false;
-    if (MAX_VALID_KM < data.totalDistance) return false;
+    if (Config::Storage::MAX_VALID_DISTANCE_KM < data.totalDistance) return false;
     return true;
   }
 };

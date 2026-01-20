@@ -1,9 +1,15 @@
 #pragma once
 
-#include "../hardware/Button.h"
+/**
+ * @file Input.h
+ * @brief ボタン入力の統合処理
+ *
+ * 複数ボタンの状態を監視し、シングルプレス、同時押し、
+ * 長押しなどの入力イベントを判定します。
+ */
 
-constexpr unsigned long SINGLE_PRESS_MS = 30;
-constexpr unsigned long LONG_PRESS_MS   = 3000;
+#include "../common/Config.h"
+#include "../hardware/Button.h"
 
 class Input {
 public:
@@ -63,7 +69,7 @@ public:
         changeState(State::MayBeDoubleShort, now);
         return Event::NONE;
       }
-      if (now - stateEnterTime > SINGLE_PRESS_MS) {
+      if (now - stateEnterTime > Config::Button::SINGLE_PRESS_MS) {
         changeState(State::Idle, now);
         return potentialSingleEvent;
       }
@@ -74,7 +80,7 @@ public:
         changeState(State::Idle, now);
         return Event::RESET;
       }
-      if (now - stateEnterTime > LONG_PRESS_MS) {
+      if (now - stateEnterTime > Config::Button::LONG_PRESS_MS) {
         changeState(State::MustBeDoubleLong, now);
         return Event::RESET_LONG;
       }

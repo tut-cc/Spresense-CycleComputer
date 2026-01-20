@@ -1,5 +1,14 @@
 #pragma once
 
+/**
+ * @file TripLogic.h
+ * @brief トリップデータの計算ロジック
+ *
+ * GNSS情報から速度、距離、時間を計算し、トリップ状態を更新します。
+ * 移動判定、タイムアウト処理、平均速度計算などの純粋関数を提供。
+ */
+
+#include "../common/Config.h"
 #include "../common/DataStructures.h"
 #include <Arduino.h>
 #include <GNSS.h>
@@ -7,11 +16,20 @@
 
 namespace TripLogic {
 
-constexpr float         MS_PER_HOUR          = 3600000.0f;
-constexpr float         MIN_ABS              = 1e-6f;
-constexpr float         MS_TO_KMH            = 3.6f;
-constexpr float         MIN_MOVING_SPEED_KMH = 0.5f;
-constexpr unsigned long SIGNAL_TIMEOUT_MS    = 3000;
+/// ミリ秒から時間への変換係数
+constexpr float MS_PER_HOUR = 3600000.0f;
+
+/// 浮動小数点比較用の最小値
+constexpr float MIN_ABS = 1e-6f;
+
+/// m/s から km/h への変換係数
+constexpr float MS_TO_KMH = 3.6f;
+
+/// 移動判定の最低速度 (Config.hから参照)
+constexpr float MIN_MOVING_SPEED_KMH = Config::Gnss::MIN_MOVING_SPEED_KMH;
+
+/// GNSS信号ロストのタイムアウト (Config.hから参照)
+constexpr unsigned long SIGNAL_TIMEOUT_MS = Config::Gnss::SIGNAL_TIMEOUT_MS;
 
 inline float calculateRawKmh(float velocity) { return velocity * MS_TO_KMH; }
 inline bool  hasFix(SpFixMode mode) { return (mode == Fix2D || mode == Fix3D); }
@@ -83,7 +101,7 @@ inline void handleGnssUpdate(TripState &state, const GnssData &gnss) {
   state.status        = determineStatus(state.status, moving);
   state.speed.current = calculateCurrentSpeed(state.status, rawKmh);
 
-  if (state.speed.current > state.speed.max) { state.speed.max = state.speed.current; }
+  if (state.speed.current > state.speed.max) state.speed.max = state.speed.current;
   state.updateStatus = UpdateStatus::Updated;
 }
 

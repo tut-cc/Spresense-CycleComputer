@@ -1,12 +1,17 @@
 #pragma once
 
+/**
+ * @file OLED.h
+ * @brief SSD1306 OLED ディスプレイのラッパークラス
+ *
+ * Adafruit_SSD1306 ライブラリのラッパーとして、
+ * 簡略化されたインターフェースを提供します。
+ */
+
+#include "../common/Config.h"
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <Wire.h>
-
-constexpr int WIDTH   = 128;
-constexpr int HEIGHT  = 64;
-constexpr int ADDRESS = 0x3C;
 
 class OLED {
 public:
@@ -21,11 +26,11 @@ private:
   Adafruit_SSD1306 ssd1306;
 
 public:
-  OLED() : ssd1306(WIDTH, HEIGHT, &Wire, -1) {}
+  OLED() : ssd1306(Config::Display::WIDTH, Config::Display::HEIGHT, &Wire, -1) {}
 
   bool begin() {
     Wire.setClock(400000);
-    if (!ssd1306.begin(SSD1306_SWITCHCAPVCC, ADDRESS)) return false;
+    if (!ssd1306.begin(SSD1306_SWITCHCAPVCC, Config::Display::ADDRESS)) return false;
     ssd1306.clearDisplay();
     ssd1306.display();
     return true;

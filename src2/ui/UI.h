@@ -1,12 +1,18 @@
 #pragma once
 
+/**
+ * @file UI.h
+ * @brief ユーザーインターフェース統合クラス
+ *
+ * OLED表示、ボタン入力、レンダリングを統合し、
+ * 一つのUIモジュールとして提供します。
+ */
+
+#include "../common/Config.h"
 #include "../common/DataStructures.h"
 #include "../hardware/OLED.h"
 #include "Input.h"
 #include "Renderer.h"
-
-constexpr int BTN_A = PIN_D09;
-constexpr int BTN_B = PIN_D04;
 
 class UI {
 private:
@@ -15,7 +21,7 @@ private:
   Renderer renderer;
 
 public:
-  UI() : input(BTN_A, BTN_B) {}
+  UI() : input(Config::Pins::BUTTON_SELECT, Config::Pins::BUTTON_PAUSE) {}
 
   void begin() {
     oled.begin();
@@ -32,7 +38,7 @@ public:
     oled.setTextColor(WHITE);
     const char *msg  = "RESETTING...";
     OLED::Rect  rect = oled.getTextBounds(msg);
-    oled.setCursor((WIDTH - rect.w) / 2, (HEIGHT - rect.h) / 2);
+    oled.setCursor((Config::Display::WIDTH - rect.w) / 2, (Config::Display::HEIGHT - rect.h) / 2);
     oled.print(msg);
     oled.display();
     delay(500);
