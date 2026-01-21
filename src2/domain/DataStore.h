@@ -6,24 +6,25 @@
 #include <cmath>
 
 struct DataStore {
-  static constexpr unsigned long SAVE_INTERVAL_MS       = Config::Storage::SAVE_INTERVAL_MS;
-  static constexpr uint32_t      SAVE_DATA_MAGIC_NUMBER = 0xDEADBEEF;
+  static constexpr unsigned long SAVE_INTERVAL_MS = Config::Storage::SAVE_INTERVAL_MS;
 
   static inline SaveData load() {
-    SaveData s;
-    EEPROM.get(Config::Storage::EEPROM_ADDR, s);
-    if (s.calculateCRC() == s.crc && s.magic == SAVE_DATA_MAGIC_NUMBER &&
-        !std::isnan(s.totalDist) && s.totalDist >= 0)
-      return s;
+    SaveData saveData;
+    EEPROM.get(Config::Storage::EEPROM_ADDR, saveData);
+    if (saveData.isValid() && !std::isnan(saveData.totalDistance) && saveData.totalDistance >= 0)
+      return saveData;
+
     return SaveData();
   }
 
-  static inline void save(const SaveData &s) { EEPROM.put(Config::Storage::EEPROM_ADDR, s); }
+  static inline void save(const SaveData &saveData) {
+    EEPROM.put(Config::Storage::EEPROM_ADDR, saveData);
+  }
 
   static inline void clear() {
-    SaveData d;
-    d.magic = 0;
-    d.updateCRC();
-    EEPROM.put(Config::Storage::EEPROM_ADDR, d);
+    SaveData emptyData;
+    emptyData.magic = 0;
+    emptyData.updateCRC();
+    EEPROM.put(Config::Storage::EEPROM_ADDR, emptyData);
   }
 };

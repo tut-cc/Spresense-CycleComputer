@@ -11,14 +11,14 @@
 #include <LowPower.h>
 
 template <typename T> struct DoubleBuffer {
-  T    b[2];
-  int  i = 0;
-  T   &current() { return b[i]; }
-  void initialize(const T &v) { b[0] = b[1] = v; }
-  bool apply(const T &n) {
-    i    = 1 - i;
-    b[i] = n;
-    return b[i] != b[1 - i];
+  T    buffers[2];
+  int  index = 0;
+  T   &current() { return buffers[index]; }
+  void initialize(const T &value) { buffers[0] = buffers[1] = value; }
+  bool apply(const T &newValue) {
+    index          = 1 - index;
+    buffers[index] = newValue;
+    return buffers[index] != buffers[1 - index];
   }
 };
 
@@ -26,14 +26,14 @@ class App {
 private:
   SpGnss                     gnss;
   DataStore                  store;
-  BatteryMonitor             volt;
+  BatteryMonitor             batteryMonitor;
   Input                      input;
   Renderer                   renderer;
   Mode                       mode = Mode::SPD_TIM;
   DoubleBuffer<TripData>     trip;
   DoubleBuffer<DisplayFrame> frame;
   DoubleBuffer<SaveData>     save;
-  unsigned long              now = 0, lastUi = 0, lastSave = 0, frames = 0, lastFps = 0;
+  unsigned long              now = 0, lastUi = 0, lastSave = 0, loops = 0, lastFps = 0;
   GnssData                   curGnss = {};
   Input::Event               curBtn  = Input::Event::NONE;
 
@@ -42,28 +42,33 @@ public:
 
   void begin() {
     Serial.begin(115200);
-    bool gOk = (gnss.begin() == 0);
-    if (gOk) {
+    bool gnssInitialized = (gnss.begin() == 0);
+    if (gnssInitialized) {
       gnss.select(GPS);
       gnss.select(GLONASS);
       gnss.select(QZ_L1CA);
-      gOk = (gnss.start(COLD_START) == 0);
+      gnssInitialized = (gnss.start(COLD_START) == 0);
     }
 
-    if (!renderer.begin() || !gOk) {
+    if (!renderer.begin() || !gnssInitialized) {
       LowPower.begin();
       LowPower.deepSleep(0);
     }
 
     input.begin();
-    volt.begin();
-    SaveData s = store.load();
-    trip.initialize(TripData(s));
+    batteryMonitor.begin();
+    SaveData savedData = store.load();
+    trip.initialize(savedData.toTripData());
     trip.current().clock.begin();
-    save.initialize(s);
+    save.initialize(savedData);
   }
 
   void update() {
+    static unsigned long nextLoop = millis();
+    while (millis() < nextLoop) delay(1);
+    nextLoop += 33;
+
+    loops++;
     now             = millis();
     curBtn          = input.update();
     curGnss.updated = (gnss.waitUpdate(0) == 1);
@@ -72,53 +77,51 @@ public:
     if (curBtn != Input::Event::NONE) handleButton();
     trip.apply(TripData(trip.current(), curGnss, now));
 
-    if (true) { // Force update for FPS measurement
+    if (curBtn != Input::Event::NONE || now - lastUi >= Config::UI::UPDATE_INTERVAL_MS) {
       if (frame.apply(DisplayFrame(trip.current(), curGnss, trip.current().clock.now(), mode))) {
         renderer.render(frame.current());
         lastUi = now;
-        frames++;
       }
     }
 
-    if (now - lastFps >= 1000) {
-      Serial.print("FPS: ");
-      Serial.println(frames);
-      frames  = 0;
-      lastFps = now;
+    if (now - lastSave >= DataStore::SAVE_INTERVAL_MS && !curGnss.updated) {
+      if (save.apply(SaveData(trip.current(), batteryMonitor.update()))) store.save(save.current());
+      lastSave = now;
     }
 
-    if (now - lastSave >= DataStore::SAVE_INTERVAL_MS && !curGnss.updated) {
-      trip.current().updateAverageSpeed();
-      if (save.apply(SaveData(trip.current(), volt.update()))) store.save(save.current());
-      lastSave = now;
+    if (now - lastFps >= 1000) {
+      Serial.print("LOOPS: ");
+      Serial.println(loops);
+      loops   = 0;
+      lastFps = now;
     }
   }
 
 private:
   void handleButton() {
-    auto &s = trip.current();
+    auto &tripState = trip.current();
 
     switch (curBtn) {
     case Input::Event::SELECT:
-      mode = (Mode)(((int)mode + 1) % 3);
+      mode = static_cast<Mode>((static_cast<int>(mode) + 1) % 3);
       return;
 
     case Input::Event::PAUSE:
-      s.status = s.isPaused() ? TripData::Status::Stopped : TripData::Status::Paused;
+      tripState.togglePause();
       return;
 
     case Input::Event::RESET:
-      if (mode == Mode::SPD_TIM) s.clearAvgOdo();
-      else if (mode == Mode::AVG_ODO) s.clearAllData();
-      else s.clearMaxSpeed();
+      if (mode == Mode::SPD_TIM) tripState.clearAvgOdo();
+      if (mode == Mode::MAX_CLK) tripState.clearMaxSpeed();
+      if (mode == Mode::AVG_ODO) tripState.clearAllData();
       return;
 
     case Input::Event::RESET_LONG:
-      s.clearAllData();
+      tripState.clearAllData();
       store.clear();
       renderer.resetDisplay();
       frame.initialize({});
-      save.initialize(SaveData(s, 0));
+      save.initialize(SaveData(tripState, 0));
       return;
 
     default:

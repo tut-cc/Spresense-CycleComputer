@@ -8,7 +8,4 @@ void setup() {
   app.begin();
 }
 
-void loop() {
-  app.update();
-  // delay(30);
-}
+void loop() { app.update(); }

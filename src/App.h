@@ -50,11 +50,13 @@ private:
   VoltageMonitor  voltageMonitor;
   DataPersistence dataPersistence;
   UI              userInterface;
+  unsigned long   loops = 0, lastFps = 0;
 
 public:
   App() : dataPersistence(dataStore, trip) {}
 
   void begin() {
+    Serial.begin(115200);
     gnss.begin();
     trip.begin();
     voltageMonitor.begin();
@@ -63,6 +65,7 @@ public:
   }
 
   void update() {
+    loops++;
     const bool      isGnssUpdated = gnss.update();
     const SpNavData navData       = gnss.getNavData();
 
@@ -72,5 +75,13 @@ public:
     float currentVoltage = voltageMonitor.update();
     dataPersistence.update(isGnssUpdated, currentVoltage);
     userInterface.update(trip, dataStore, clock, navData);
+
+    unsigned long now = millis();
+    if (now - lastFps >= 1000) {
+      Serial.print("LOOPS: ");
+      Serial.println(loops);
+      loops   = 0;
+      lastFps = now;
+    }
   }
 };

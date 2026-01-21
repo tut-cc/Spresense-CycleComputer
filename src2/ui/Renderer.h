@@ -8,87 +8,90 @@
 
 class Renderer {
 private:
-  Adafruit_SSD1306 d;
+  Adafruit_SSD1306 display;
 
-  struct Bounds {
+  struct TextBounds {
     int16_t  x, y;
-    uint16_t w, h;
+    uint16_t width, height;
   };
 
-  inline Bounds getBounds(const char *s) {
-    Bounds b;
-    d.getTextBounds(s, 0, 0, &b.x, &b.y, &b.w, &b.h);
-    return b;
+  inline TextBounds getTextBounds(const char *text) {
+    TextBounds bounds;
+    display.getTextBounds(text, 0, 0, &bounds.x, &bounds.y, &bounds.width, &bounds.height);
+    return bounds;
   }
 
 public:
-  Renderer() : d(Config::Display::WIDTH, Config::Display::HEIGHT, &Wire, -1) {}
+  Renderer() : display(Config::Display::WIDTH, Config::Display::HEIGHT, &Wire, -1) {}
 
   inline bool begin() {
-    if (!d.begin(SSD1306_SWITCHCAPVCC, Config::Display::ADDRESS)) return false;
-    d.clearDisplay();
-    d.display();
+    if (!display.begin(SSD1306_SWITCHCAPVCC, Config::Display::ADDRESS)) return false;
+    display.clearDisplay();
+    display.display();
     return true;
   }
 
-  inline void render(const DisplayFrame &f) {
-    d.clearDisplay();
-    drawHeader(f.header);
-    drawItem(f.main, 30, 3, 1, false);
-    drawItem(f.sub, 64, 2, 1, true);
-    d.display();
+  inline void render(const DisplayFrame &frame) {
+    display.clearDisplay();
+    drawHeader(frame.header);
+    drawItem(frame.main, 30, 3, 1, false);
+    drawItem(frame.sub, 64, 2, 1, true);
+    display.display();
   }
 
   inline void resetDisplay() {
-    d.clearDisplay();
-    d.setTextSize(1);
-    const char *msg = "RESETTING...";
-    Bounds      b   = getBounds(msg);
-    d.setCursor((Config::Display::WIDTH - b.w) / 2, (Config::Display::HEIGHT - b.h) / 2);
-    d.print(msg);
-    d.display();
+    display.clearDisplay();
+    display.setTextSize(1);
+    const char *message = "RESETTING...";
+    TextBounds  bounds  = getTextBounds(message);
+    display.setCursor((Config::Display::WIDTH - bounds.width) / 2,
+                      (Config::Display::HEIGHT - bounds.height) / 2);
+    display.print(message);
+    display.display();
     delay(500);
     begin();
   }
 
 private:
-  inline void drawHeader(const DisplayFrame::Header &h) {
-    d.setTextSize(1);
-    d.setTextColor(WHITE);
-    d.setCursor(0, 0);
-    d.print(h.fixStatus);
-    Bounds b = getBounds(h.modeSpeed);
-    d.setCursor((Config::Display::WIDTH - b.w) / 2, 0);
-    d.print(h.modeSpeed);
-    b = getBounds(h.modeTime);
-    d.setCursor(Config::Display::WIDTH - b.w, 0);
-    d.print(h.modeTime);
-    d.drawLine(0, 10, Config::Display::WIDTH, 10, WHITE);
+  inline void drawHeader(const Header &header) {
+    display.setTextSize(1);
+    display.setTextColor(WHITE);
+    display.setCursor(0, 0);
+    display.print(header.fixStatus);
+    TextBounds bounds = getTextBounds(header.modeSpeed);
+    display.setCursor((Config::Display::WIDTH - bounds.width) / 2, 0);
+    display.print(header.modeSpeed);
+    bounds = getTextBounds(header.modeTime);
+    display.setCursor(Config::Display::WIDTH - bounds.width, 0);
+    display.print(header.modeTime);
+    display.drawLine(0, 10, Config::Display::WIDTH, 10, WHITE);
   }
 
-  inline void drawItem(const DisplayFrame::Item &item, int16_t y, uint8_t vSize, uint8_t uSize,
-                       bool btm) {
-    d.setTextSize(vSize);
-    Bounds  vB = getBounds(item.value);
-    int16_t tW = vB.w;
-    Bounds  uB = {0, 0, 0, 0};
+  inline void drawItem(const Item &item, int16_t yPosition, uint8_t valueTextSize,
+                       uint8_t unitTextSize, bool alignBottom) {
+    display.setTextSize(valueTextSize);
+    const TextBounds valueBounds = getTextBounds(item.value);
+    int16_t          totalWidth  = valueBounds.width;
+    TextBounds       unitBounds  = {0, 0, 0, 0};
     if (item.unit[0]) {
-      d.setTextSize(uSize);
-      uB = getBounds(item.unit);
-      tW += 4 + uB.w;
+      display.setTextSize(unitTextSize);
+      unitBounds = getTextBounds(item.unit);
+      totalWidth += 4 + unitBounds.width;
     }
 
-    int16_t x  = (Config::Display::WIDTH - tW) / 2;
-    int16_t vY = btm ? (y - vB.h) : (y - vB.h / 2);
-    int16_t uY = btm ? (y - uB.h) : (y + vB.h / 2 - uB.h);
+    const int16_t xPosition = (Config::Display::WIDTH - totalWidth) / 2;
+    const int16_t valueY =
+        alignBottom ? (yPosition - valueBounds.height) : (yPosition - valueBounds.height / 2);
+    const int16_t unitY = alignBottom ? (yPosition - unitBounds.height)
+                                      : (yPosition + valueBounds.height / 2 - unitBounds.height);
 
-    d.setTextSize(vSize);
-    d.setCursor(x, vY);
-    d.print(item.value);
+    display.setTextSize(valueTextSize);
+    display.setCursor(xPosition, valueY);
+    display.print(item.value);
     if (item.unit[0]) {
-      d.setTextSize(uSize);
-      d.setCursor(x + vB.w + 4, uY);
-      d.print(item.unit);
+      display.setTextSize(unitTextSize);
+      display.setCursor(xPosition + valueBounds.width + 4, unitY);
+      display.print(item.unit);
     }
   }
 };
