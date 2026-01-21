@@ -15,16 +15,7 @@ struct Clock {
     RTC.setTime(rtcTime);
   }
 
-  inline SpGnssTime now() {
-    RtcTime rtcTime = RTC.getTime();
-    return {(unsigned short)rtcTime.year(),
-            (unsigned char)rtcTime.month(),
-            (unsigned char)rtcTime.day(),
-            (unsigned char)rtcTime.hour(),
-            (unsigned char)rtcTime.minute(),
-            (unsigned char)rtcTime.second(),
-            0};
-  }
+  inline RtcTime now() { return RTC.getTime(); }
 };
 
 struct GnssData {
@@ -52,7 +43,7 @@ struct TripData {
   SpFixMode     fixMode          = FixInvalid;
   unsigned long lastUpdate       = 0;
   float         distResidue      = 0.0f;
-  float         weightedSpeedSum = 0.0f; // Σ(speed × deltaTime) for avg calculation
+  float         weightedSpeedSum = 0.0f; // Σ(speed × deltaTime) for avg
   Clock         clock;
 
   TripData() = default;
@@ -76,41 +67,26 @@ struct TripData {
 
     unsigned long deltaTime = currentTime - lastUpdate;
 
-    // GPS更新の処理を先に行い、移動判定を取得
-    bool isMoving = false;
     if (gnssData.updated) {
       fixMode        = (SpFixMode)gnssData.navData.posFixMode;
       float rawSpeed = gnssData.navData.velocity * 3.6f;
 
-      // EMAフィルタで速度を平滑化
       float smoothedSpeed = Config::Gnss::SPEED_SMOOTHING * rawSpeed +
                             (1.0f - Config::Gnss::SPEED_SMOOTHING) * speed.current;
 
-      isMoving      = (fixMode >= static_cast<int>(SpFixMode::Fix2D));
-      isMoving      = isMoving && (smoothedSpeed > Config::Gnss::MIN_MOVING_SPEED_KMH);
-      speed.current = isMoving ? smoothedSpeed : 0.0f;
+      bool validFix = (fixMode >= static_cast<int>(SpFixMode::Fix2D));
+      bool moving   = validFix && (smoothedSpeed > Config::Gnss::MIN_MOVING_SPEED_KMH);
+      speed.current = moving ? smoothedSpeed : 0.0f;
       speed.max     = max(speed.max, speed.current);
-      activityState = isMoving ? ActivityState::Moving : ActivityState::Stopped;
-
-      // 診断用ログ
-      Serial.print("Sats:");
-      Serial.print(gnssData.navData.numSatellites);
-      Serial.print(" PDOP:");
-      Serial.print(gnssData.navData.pdop);
-      Serial.print(" Raw:");
-      Serial.print(rawSpeed);
-      Serial.print(" Smooth:");
-      Serial.println(smoothedSpeed);
+      activityState = moving ? ActivityState::Moving : ActivityState::Stopped;
     } else if (currentTime - lastUpdate > Config::Gnss::SIGNAL_TIMEOUT_MS) {
       speed.current = 0.0f;
       activityState = ActivityState::Stopped;
     }
 
-    // elapsed time は timerPaused でないときのみカウント（表示用タイマー）
     if (!timerPaused) time.elapsed += deltaTime;
 
-    // moving time と距離は実際に動いていればカウント（Paused中も継続）
-    if (isMoving) {
+    if (activityState == ActivityState::Moving) {
       time.moving += deltaTime;
       weightedSpeedSum += speed.current * deltaTime;
       speed.avg = weightedSpeedSum / time.moving;

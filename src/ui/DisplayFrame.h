@@ -34,7 +34,7 @@ struct DisplayFrame {
 
   DisplayFrame() = default;
 
-  DisplayFrame(const TripData &state, const GnssData &gnss, const SpGnssTime &clock, Mode mode) {
+  DisplayFrame(const TripData &state, const GnssData &gnss, const RtcTime &clock, Mode mode) {
     static const char *FIX_LABELS[] = {"WAIT", "2D", "3D"};
     const SpFixMode    fixMode      = (SpFixMode)gnss.navData.posFixMode;
     header.fixStatus = (fixMode >= 1 && fixMode <= 3) ? FIX_LABELS[fixMode - 1] : FIX_LABELS[0];
@@ -80,10 +80,10 @@ struct DisplayFrame {
 
     case Mode::MAX_CLK:
       snprintf(main.value, sizeof(main.value), "%4.1f", state.speed.max);
-      int displayHour = (clock.year >= Config::Time::MIN_VALID_YEAR)
-                            ? (clock.hour + Config::Time::TIMEZONE_OFFSET_HOURS) % 24
-                            : clock.hour;
-      snprintf(sub.value, sizeof(sub.value), "%02d:%02d", displayHour, clock.minute);
+      int displayHour = (clock.year() >= Config::Time::MIN_VALID_YEAR)
+                            ? (clock.hour() + Config::Time::TIMEZONE_OFFSET_HOURS) % 24
+                            : clock.hour();
+      snprintf(sub.value, sizeof(sub.value), "%02d:%02d", displayHour, clock.minute());
       return;
     }
   }

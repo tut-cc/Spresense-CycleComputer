@@ -28,9 +28,9 @@ constexpr unsigned long LONG_PRESS_MS   = 3000; // 長押し判定時間
 
 // GNSS設定
 namespace Gnss {
-constexpr unsigned long SIGNAL_TIMEOUT_MS    = 3000; // GNSS信号ロスト判定時間
-constexpr float         MIN_MOVING_SPEED_KMH = 0.5f; // 移動判定の最低速度
-constexpr float SPEED_SMOOTHING = 0.3f; // EMA平滑化係数 (0.0-1.0、小さいほど滑らか)
+constexpr unsigned long SIGNAL_TIMEOUT_MS = 3000; // GNSS信号ロスト判定時間
+constexpr float MIN_MOVING_SPEED_KMH = 4.0f; // 移動判定の最低速度（GPSドリフト対策）
+constexpr float SPEED_SMOOTHING = 0.7f; // EMA平滑化係数 (0.0-1.0、小さいほど滑らか)
 } // namespace Gnss
 
 // データ保存設定
