@@ -1,72 +1,134 @@
 #pragma once
 
 #include "../Config.h"
-#include "../hardware/Button.h"
+
+struct Button {
+  const int pin;
+  bool      pressed = false, held = false;
+  enum { High, WaitLow, Low, WaitHigh } state = High;
+  unsigned long lastChangeTime                = 0;
+
+  Button(int pinNumber) : pin(pinNumber) {}
+
+  inline void begin() {
+    pinMode(pin, INPUT_PULLUP);
+    state = digitalRead(pin) ? High : Low;
+  }
+
+  inline void update() {
+    pressed                   = false;
+    bool          rawState    = digitalRead(pin);
+    unsigned long currentTime = millis();
+
+    switch (state) {
+    case High:
+      if (!rawState) {
+        state          = WaitLow;
+        lastChangeTime = currentTime;
+      }
+      break;
+
+    case WaitLow:
+      if (rawState) state = High;
+      else if (currentTime - lastChangeTime > Config::Button::DEBOUNCE_MS) {
+        state   = Low;
+        pressed = true;
+      }
+      break;
+
+    case Low:
+      if (rawState) {
+        state          = WaitHigh;
+        lastChangeTime = currentTime;
+      }
+      break;
+
+    case WaitHigh:
+      if (!rawState) state = Low;
+      else if (currentTime - lastChangeTime > Config::Button::DEBOUNCE_MS) state = High;
+      break;
+    }
+
+    held = (state == Low || state == WaitHigh);
+  }
+};
 
 class Input {
 public:
-  enum class ID {
-    NONE,
-    SELECT,
-    PAUSE,
-    RESET,
-  };
+  enum class Event { NONE, SELECT, PAUSE, RESET, RESET_LONG };
 
 private:
-  Button btnSelect;
-  Button btnPause;
-
-  ID            pendingEvent = ID::NONE;
-  unsigned long pendingTime  = 0;
+  enum class State { Idle, SinglePressed, DoubleStarted, DoubleLongPressed };
+  Button        buttonSelect, buttonPause;
+  State         currentState  = State::Idle;
+  Event         pendingEvent  = Event::NONE;
+  unsigned long lastEventTime = 0;
 
 public:
-  Input() : btnSelect(Config::Pin::BTN_A), btnPause(Config::Pin::BTN_B) {}
+  Input(int selectPin, int pausePin) : buttonSelect(selectPin), buttonPause(pausePin) {}
 
   void begin() {
-    btnSelect.begin();
-    btnPause.begin();
+    buttonSelect.begin();
+    buttonPause.begin();
   }
 
-  ID update() {
-    const bool          selectPressed = btnSelect.isPressed();
-    const bool          pausePressed  = btnPause.isPressed();
-    const unsigned long now           = millis();
+  Event update() {
+    buttonSelect.update();
+    buttonPause.update();
+    unsigned long currentTime = millis();
 
-    if ((selectPressed && (pausePressed || btnPause.isHeld())) ||
-        (pausePressed && (selectPressed || btnSelect.isHeld()))) {
-      pendingEvent = ID::NONE;
-      return ID::RESET;
-    }
-
-    if (pendingEvent != ID::NONE) {
-      const bool otherPressed  = pendingEvent == ID::SELECT && pausePressed;
-      const bool otherPressed2 = pendingEvent == ID::PAUSE && selectPressed;
-      if (otherPressed || otherPressed2) {
-        pendingEvent = ID::NONE;
-        return ID::RESET;
+    switch (currentState) {
+    case State::Idle:
+      if (buttonSelect.pressed && buttonPause.pressed) {
+        changeState(State::DoubleStarted, currentTime);
+        return Event::NONE;
       }
-
-      if (Config::Input::SIMULTANEOUS_DELAY_MS <= now - pendingTime) {
-        ID confirmed = pendingEvent;
-        pendingEvent = ID::NONE;
-        return confirmed;
+      if (buttonSelect.pressed) {
+        pendingEvent = Event::SELECT;
+        changeState(State::SinglePressed, currentTime);
+        return Event::NONE;
       }
+      if (buttonPause.pressed) {
+        pendingEvent = Event::PAUSE;
+        changeState(State::SinglePressed, currentTime);
+        return Event::NONE;
+      }
+      break;
 
-      return ID::NONE;
+    case State::SinglePressed:
+      if ((pendingEvent == Event::SELECT && buttonPause.pressed) ||
+          (pendingEvent == Event::PAUSE && buttonSelect.pressed)) {
+        changeState(State::DoubleStarted, currentTime);
+        return Event::NONE;
+      }
+      if (currentTime - lastEventTime > Config::Button::SINGLE_PRESS_MS) {
+        changeState(State::Idle, currentTime);
+        return pendingEvent;
+      }
+      break;
+
+    case State::DoubleStarted:
+      if (!buttonSelect.held || !buttonPause.held) {
+        changeState(State::Idle, currentTime);
+        return Event::RESET;
+      }
+      if (currentTime - lastEventTime > Config::Button::LONG_PRESS_MS) {
+        changeState(State::DoubleLongPressed, currentTime);
+        return Event::RESET_LONG;
+      }
+      break;
+
+    case State::DoubleLongPressed:
+      if (!buttonSelect.held && !buttonPause.held) changeState(State::Idle, currentTime);
+      break;
     }
 
-    if (selectPressed) {
-      pendingEvent = ID::SELECT;
-      pendingTime  = now;
-      return ID::NONE;
-    }
+    return Event::NONE;
+  }
 
-    if (pausePressed) {
-      pendingEvent = ID::PAUSE;
-      pendingTime  = now;
-      return ID::NONE;
-    }
-
-    return ID::NONE;
+private:
+  void changeState(State newState, unsigned long eventTime) {
+    currentState  = newState;
+    lastEventTime = eventTime;
   }
 };

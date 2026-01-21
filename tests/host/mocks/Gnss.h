@@ -11,7 +11,7 @@
 #define COLD_START 0
 #define HOT_START 1
 
-enum SpGnssFixType { FixInvalid = 0, Fix2D = 1, Fix3D = 2 };
+enum SpGnssFixType { FixInvalid = 1, Fix2D = 2, Fix3D = 3 };
 typedef SpGnssFixType SpFixMode;
 
 struct SpNavTime {

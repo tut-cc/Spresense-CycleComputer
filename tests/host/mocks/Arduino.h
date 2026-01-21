@@ -10,6 +10,8 @@
 #include <cstring>
 #include <iostream>
 
+#define PI 3.1415926535897932384626433832795
+
 // Mock basic types
 using std::abs;
 using std::max;
@@ -59,6 +61,12 @@ inline void delay(unsigned long ms) {
 #define PIN_D13 13
 #define PIN_D14 14
 #define PIN_D15 15
+#define PIN_A0 16
+#define PIN_A1 17
+#define PIN_A2 18
+#define PIN_A3 19
+#define PIN_A4 20
+#define PIN_A5 21
 
 // Pin Modes
 #define INPUT 0
@@ -84,6 +92,7 @@ inline void shiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_
 
 // GPIO State Map (Pin -> State)
 extern std::map<int, int> _mock_pin_states;
+extern std::map<int, int> _mock_analog_values;
 
 inline void pinMode(int pin, int mode) {
   (void)pin;
@@ -100,9 +109,21 @@ inline void digitalWrite(int pin, int val) {
   _mock_pin_states[pin] = val;
 }
 
+inline int analogRead(int pin) {
+  if (_mock_analog_values.find(pin) != _mock_analog_values.end()) {
+    return _mock_analog_values[pin];
+  }
+  return 512; // Return middle value
+}
+
 // Helper to set pin state for tests
 inline void setPinState(int pin, int state) {
   _mock_pin_states[pin] = state;
+}
+
+// Helper to set analog value for tests
+inline void setAnalogReadValue(int pin, int value) {
+  _mock_analog_values[pin] = value;
 }
 
 // Serial Mock

@@ -1,5 +1,3 @@
-#include <LowPower.h>
-
 #include "src/App.h"
 
 App app;
@@ -10,6 +8,4 @@ void setup() {
   app.begin();
 }
 
-void loop() {
-  app.update();
-}
+void loop() { app.update(); }

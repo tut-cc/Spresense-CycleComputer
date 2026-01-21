@@ -1,100 +1,97 @@
 #pragma once
 
-#include <GNSS.h>
-#include <cstring>
-
-#include "../hardware/OLED.h"
-#include "Frame.h"
+#include "../Config.h"
+#include "DisplayFrame.h"
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <Wire.h>
 
 class Renderer {
 private:
-  Frame lastFrame;
-  bool  firstRender = true;
+  Adafruit_SSD1306 display;
+
+  struct TextBounds {
+    int16_t  x, y;
+    uint16_t width, height;
+  };
+
+  inline TextBounds getTextBounds(const char *text) {
+    TextBounds bounds;
+    display.getTextBounds(text, 0, 0, &bounds.x, &bounds.y, &bounds.width, &bounds.height);
+    return bounds;
+  }
 
 public:
-  void render(OLED &oled, Frame &frame) {
-    if (!firstRender && frame == lastFrame) return;
+  Renderer() : display(Config::Display::WIDTH, Config::Display::HEIGHT, &Wire, -1) {}
 
-    firstRender = false;
-    lastFrame   = frame;
+  inline bool begin() {
+    if (!display.begin(SSD1306_SWITCHCAPVCC, Config::Display::ADDRESS)) return false;
+    display.clearDisplay();
+    display.display();
+    return true;
+  }
 
-    oled.clear();
-    drawHeader(oled, frame);
-    drawMainArea(oled, frame);
-    oled.display();
+  inline void render(const DisplayFrame &frame) {
+    display.clearDisplay();
+    drawHeader(frame.header);
+    drawItem(frame.main, 30, 3, 1, false);
+    drawItem(frame.sub, 64, 2, 1, true);
+    display.display();
+  }
+
+  inline void resetDisplay() {
+    display.clearDisplay();
+    display.setTextSize(1);
+    const char *message = "RESETTING...";
+    TextBounds  bounds  = getTextBounds(message);
+    display.setCursor((Config::Display::WIDTH - bounds.width) / 2,
+                      (Config::Display::HEIGHT - bounds.height) / 2);
+    display.print(message);
+    display.display();
+    delay(500);
+    begin();
   }
 
 private:
-  void drawHeader(OLED &oled, const Frame &frame) {
-    oled.setTextSize(Config::Renderer::HEADER_TEXT_SIZE);
-    oled.setTextColor(WHITE);
-
-    drawTextLeft(oled, 0, frame.header.fixStatus);
-    drawTextCenter(oled, 0, frame.header.modeSpeed);
-    drawTextRight(oled, 0, frame.header.modeTime);
-
-    int16_t lineY = Config::Renderer::HEADER_HEIGHT - 2;
-    oled.drawLine(0, lineY, oled.getWidth(), lineY, WHITE);
+  inline void drawHeader(const Header &header) {
+    display.setTextSize(1);
+    display.setTextColor(WHITE);
+    display.setCursor(0, 0);
+    display.print(header.fixStatus);
+    TextBounds bounds = getTextBounds(header.modeSpeed);
+    display.setCursor((Config::Display::WIDTH - bounds.width) / 2, 0);
+    display.print(header.modeSpeed);
+    bounds = getTextBounds(header.modeTime);
+    display.setCursor(Config::Display::WIDTH - bounds.width, 0);
+    display.print(header.modeTime);
+    display.drawLine(0, 10, Config::Display::WIDTH, 10, WHITE);
   }
 
-  void drawMainArea(OLED &oled, const Frame &frame) {
-    const int16_t headerH = Config::Renderer::HEADER_HEIGHT;
-    const int16_t screenH = oled.getHeight();
-
-    drawItem(oled, frame.main, headerH + 14, 3, 1, false);
-    drawItem(oled, frame.sub, screenH, 2, 1, true);
-  }
-
-  void drawItem(OLED &oled, const Frame::Item &item, int16_t y, uint8_t valSize, uint8_t unitSize,
-                bool alignBottom) {
-    const int16_t spacing = 4;
-
-    oled.setTextSize(valSize);
-    OLED::Rect valRect = oled.getTextBounds(item.value);
-    oled.setTextSize(unitSize);
-    OLED::Rect unitRect = oled.getTextBounds(item.unit);
-
-    int16_t totalW = valRect.w;
-    if (0 < strlen(item.unit)) totalW += spacing + unitRect.w;
-
-    int16_t startX = (oled.getWidth() - totalW) / 2;
-
-    int16_t valY;
-    int16_t unitY;
-
-    if (alignBottom) {
-      valY  = y - valRect.h;
-      unitY = y - unitRect.h;
-    } else {
-      valY  = y - valRect.h / 2;
-      unitY = (y + valRect.h / 2) - unitRect.h;
+  inline void drawItem(const Item &item, int16_t yPosition, uint8_t valueTextSize,
+                       uint8_t unitTextSize, bool alignBottom) {
+    display.setTextSize(valueTextSize);
+    const TextBounds valueBounds = getTextBounds(item.value);
+    int16_t          totalWidth  = valueBounds.width;
+    TextBounds       unitBounds  = {0, 0, 0, 0};
+    if (item.unit[0]) {
+      display.setTextSize(unitTextSize);
+      unitBounds = getTextBounds(item.unit);
+      totalWidth += 4 + unitBounds.width;
     }
 
-    oled.setTextSize(valSize);
-    oled.setCursor(startX, valY);
-    oled.print(item.value);
+    const int16_t xPosition = (Config::Display::WIDTH - totalWidth) / 2;
+    const int16_t valueY =
+        alignBottom ? (yPosition - valueBounds.height) : (yPosition - valueBounds.height / 2);
+    const int16_t unitY = alignBottom ? (yPosition - unitBounds.height)
+                                      : (yPosition + valueBounds.height / 2 - unitBounds.height);
 
-    if (0 < strlen(item.unit)) {
-      oled.setTextSize(unitSize);
-      oled.setCursor(startX + valRect.w + spacing, unitY);
-      oled.print(item.unit);
+    display.setTextSize(valueTextSize);
+    display.setCursor(xPosition, valueY);
+    display.print(item.value);
+    if (item.unit[0]) {
+      display.setTextSize(unitTextSize);
+      display.setCursor(xPosition + valueBounds.width + 4, unitY);
+      display.print(item.unit);
     }
-  }
-
-  void drawTextLeft(OLED &oled, int16_t y, const char *text) {
-    oled.setCursor(0, y);
-    oled.print(text);
-  }
-
-  void drawTextCenter(OLED &oled, int16_t y, const char *text) {
-    OLED::Rect rect = oled.getTextBounds(text);
-    oled.setCursor((oled.getWidth() - rect.w) / 2, y);
-    oled.print(text);
-  }
-
-  void drawTextRight(OLED &oled, int16_t y, const char *text) {
-    OLED::Rect rect = oled.getTextBounds(text);
-    oled.setCursor(oled.getWidth() - rect.w, y);
-    oled.print(text);
   }
 };

@@ -10,8 +10,9 @@
 #define QZ_L1S 4
 #define COLD_START 0
 #define HOT_START 1
+typedef int SpStartMode;
 
-enum SpGnssFixType { FixInvalid = 0, Fix2D = 1, Fix3D = 2 };
+enum SpGnssFixType { FixInvalid = 1, Fix2D = 2, Fix3D = 3 };
 typedef SpGnssFixType SpFixMode;
 
 struct SpNavTime {
@@ -23,6 +24,7 @@ struct SpNavTime {
   int sec;
   int usec;
 };
+typedef SpNavTime SpGnssTime;
 
 struct SpNavData {
   SpNavTime     time;
@@ -32,6 +34,14 @@ struct SpNavData {
   double        longitude;
   float         altitude; // not used but good to have
   int           numSatellites;
+
+  /**
+   * @brief Helper to move coordinates by meters (approximate)
+   */
+  void moveByMeters(float meters) {
+    // Approx 111,111 meters per degree of latitude
+    latitude += (double)meters / 111111.0;
+  }
 };
 
 class SpGnss {
@@ -46,4 +56,6 @@ public:
   // Mock control
   static SpNavTime mockTimeData;
   static float     mockVelocityData;
+  static int       mockBeginResult;
+  static int       mockStartResult;
 };
